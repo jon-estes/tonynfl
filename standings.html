@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standings — NFL Pick'em League</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <div id="sample-banner"></div>
+
+  <div class="card">
+    <h2>Season Standings</h2>
+    <table id="standings-table"></table>
+  </div>
+
+  <div class="card">
+    <h2>Weekly Breakdown</h2>
+    <div class="week-switcher">
+      <strong>Week</strong>
+      <select id="week-select"></select>
+    </div>
+    <table id="weekly-table"></table>
+  </div>
+</main>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+<script>
+(async function () {
+  renderHeader("standings");
+  const state = await loadLeagueData();
+  renderSampleBanner(state);
+
+  const standings = computeStandings(state.schedule, state.picks);
+  const table = document.getElementById("standings-table");
+  if (!standings.length) {
+    table.innerHTML = `<tr><td class="empty-state">No standings yet — waiting on picks and results.</td></tr>`;
+  } else {
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Win %</th><th>Points</th></tr></thead><tbody>";
+    standings.forEach((s, i) => {
+      const pct = s.played ? Math.round((s.correct / s.played) * 100) : 0;
+      html += `<tr class="rank-${i + 1}">
+        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
+        <td>${s.pending}</td><td>${pct}%</td><td>${s.points}</td></tr>`;
+    });
+    html += "</tbody>";
+    table.innerHTML = html;
+  }
+
+  const weeks = getWeeks(state.schedule);
+  const select = document.getElementById("week-select");
+  weeks.forEach(w => {
+    const opt = document.createElement("option");
+    opt.value = w;
+    opt.textContent = "Week " + w;
+    select.appendChild(opt);
+  });
+  select.value = weeks.includes(LEAGUE_CONFIG.currentWeek) ? LEAGUE_CONFIG.currentWeek : weeks[0];
+
+  function renderWeekly(week) {
+    const games = state.schedule.filter(g => g.week === week);
+    const gamesById = Object.fromEntries(games.map(g => [g.gameId, g]));
+    const players = getPlayers(state.picks);
+    const weekly = players.map(player => {
+      let correct = 0, wrong = 0, pending = 0;
+      state.picks.filter(p => p.player === player && p.week === week).forEach(p => {
+        const r = gameResultForPick(gamesById[p.gameId], p.pick);
+        if (r === "correct") correct++;
+        else if (r === "wrong") wrong++;
+        else pending++;
+      });
+      return { player, correct, wrong, pending };
+    }).sort((a, b) => b.correct - a.correct);
+
+    const table = document.getElementById("weekly-table");
+    if (!weekly.length) {
+      table.innerHTML = `<tr><td class="empty-state">No picks for this week yet.</td></tr>`;
+      return;
+    }
+    let html = "<thead><tr><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th></tr></thead><tbody>";
+    weekly.forEach(w => {
+      html += `<tr><td>${w.player}</td><td>${w.correct}</td><td>${w.wrong}</td><td>${w.pending}</td></tr>`;
+    });
+    html += "</tbody>";
+    table.innerHTML = html;
+  }
+
+  select.addEventListener("change", () => renderWeekly(parseInt(select.value, 10)));
+  renderWeekly(parseInt(select.value, 10));
+})();
+</script>
+</body>
+</html>

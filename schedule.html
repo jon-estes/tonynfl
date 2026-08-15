@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Schedule — NFL Pick'em League</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <div id="sample-banner"></div>
+
+  <div class="card">
+    <h2>Full Season Schedule</h2>
+    <p style="color:var(--text-dim); font-size:14px; margin-top:-8px;">
+      Every game in your Google Sheet, grouped by week. Winners show once you fill in the
+      <code>winner</code> column for that game.
+    </p>
+    <div id="schedule-list"></div>
+  </div>
+</main>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+<script>
+(async function () {
+  renderHeader("schedule");
+  const state = await loadLeagueData();
+  renderSampleBanner(state);
+
+  const weeks = getWeeks(state.schedule);
+  const mount = document.getElementById("schedule-list");
+
+  if (!weeks.length) {
+    mount.innerHTML = `<div class="empty-state">No games in the schedule yet.</div>`;
+    return;
+  }
+
+  weeks.forEach(week => {
+    const games = state.schedule.filter(g => g.week === week);
+    const section = document.createElement("div");
+    section.style.marginBottom = "24px";
+    section.innerHTML = `<h3 style="margin-bottom:10px;">Week ${week}</h3>`;
+
+    const grid = document.createElement("div");
+    grid.className = "game-grid";
+
+    games.forEach(g => {
+      const row = document.createElement("div");
+      row.className = "game-row";
+
+      const kickoff = document.createElement("div");
+      kickoff.className = "kickoff";
+      kickoff.textContent = g.kickoff || "";
+      row.appendChild(kickoff);
+
+      const awayChip = document.createElement("div");
+      awayChip.className = "team-chip";
+      awayChip.appendChild(teamBadge(g.away));
+      awayChip.appendChild(document.createTextNode(teamName(g.away)));
+      row.appendChild(awayChip);
+
+      const at = document.createElement("div");
+      at.className = "at";
+      if (g.winner) {
+        const pill = document.createElement("span");
+        pill.className = "pill pill-win";
+        pill.textContent = "FINAL: " + g.winner;
+        at.appendChild(pill);
+      } else {
+        at.textContent = "@";
+      }
+      row.appendChild(at);
+
+      const homeChip = document.createElement("div");
+      homeChip.className = "team-chip";
+      homeChip.appendChild(teamBadge(g.home));
+      homeChip.appendChild(document.createTextNode(teamName(g.home)));
+      row.appendChild(homeChip);
+
+      grid.appendChild(row);
+    });
+
+    section.appendChild(grid);
+    mount.appendChild(section);
+  });
+})();
+</script>
+</body>
+</html>
