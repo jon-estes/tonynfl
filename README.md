@@ -2,9 +2,12 @@
 
 A clean, simple site with two NFL pools:
 
-- **Pick'em** — pick the winner of every game every week; leaderboard ranks
-  everyone by total correct picks, with a dropdown to drill into any one
-  player's picks and results.
+- **Pick'em** — confidence-points format: each week a player picks a
+  winner for every game and assigns each pick a unique point value (e.g.
+  6 points down to 1 point for a 6-game week). Get it right, you win those
+  points; get it wrong, you win nothing for that pick. Leaderboard tracks
+  points per week and cumulative season points, with dropdowns to see any
+  player's picks for any specific week.
 - **Eliminator** — pick one team a week to win; lose once and you're out;
   can't reuse a team. Leaderboard shows who's alive/eliminated, and a
   dropdown shows any player's team grid — every NFL team in color, greyed
@@ -51,9 +54,20 @@ Create one Sheet with three tabs and these exact headers in row 1:
 **Tab: `PickemPicks`** — ideally *is* your Pick'em Google Form's response
 tab (rename/reshape columns to match):
 
-| player | week | gameId | pick |
-|--------|------|--------|------|
-| Jon    | 1    | 1-1    | BAL  |
+| player | week | gameId | pick | points |
+|--------|------|--------|------|--------|
+| Jon    | 1    | 1-1    | BAL  | 6      |
+
+- `points` is the confidence value that player assigned to that pick for
+  that week (highest = most confident). Each player should use every
+  value from 1 up to the number of games that week exactly once — the
+  site doesn't currently enforce uniqueness, so it's worth a quick eyeball
+  check on the sheet each week (or build a `COUNTIFS` validation formula
+  in the sheet if you want it caught automatically).
+- A pick only earns its `points` value if `pick` matches that game's
+  `winner` in the `Schedule` tab; otherwise it earns 0 for the week and
+  season totals, though the assigned value still displays so players can
+  see what they risked.
 
 **Tab: `EliminatorPicks`** — same idea, for the Eliminator form:
 

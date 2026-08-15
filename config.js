@@ -6,7 +6,7 @@
 
 const POOL_CONFIG = {
   siteName: "Vince's Pool",
-  season: 2024,
+  season: 2026,
   currentWeek: 1,
 
   /* ---- Google Sheet CSV links ----
@@ -19,9 +19,7 @@ const POOL_CONFIG = {
 
   /* ---- Google Forms (players submit picks here) ---- */
   pickemFormUrl: "https://forms.gle/REPLACE-WITH-PICKEM-FORM-LINK",
-  eliminatorFormUrl: "https://forms.gle/REPLACE-WITH-ELIMINATOR-FORM-LINK",
-
-  pointsPerWin: 1
+  eliminatorFormUrl: "https://forms.gle/REPLACE-WITH-ELIMINATOR-FORM-LINK"
 };
 
 /* ============================================================
@@ -42,27 +40,42 @@ const SAMPLE_SCHEDULE = [
   { week: 2, gameId: "2-3", away: "DET", home: "TB",  kickoff: "Sun 1:00pm", winner: "" }
 ];
 
+/* Each player assigns a unique confidence point value to every pick,
+   highest = most confident. A pick only scores those points if the
+   picked team wins; otherwise it's worth 0. */
 const SAMPLE_PICKEM_PICKS = [
-  { player: "Jon",  week: 1, gameId: "1-1", pick: "BAL" },
-  { player: "Jon",  week: 1, gameId: "1-2", pick: "DAL" },
-  { player: "Jon",  week: 1, gameId: "1-3", pick: "SF"  },
-  { player: "Jon",  week: 1, gameId: "1-4", pick: "BUF" },
-  { player: "Jon",  week: 1, gameId: "1-5", pick: "GB"  },
-  { player: "Jon",  week: 1, gameId: "1-6", pick: "CIN" },
+  { player: "Jon",  week: 1, gameId: "1-1", pick: "BAL", points: 6 },
+  { player: "Jon",  week: 1, gameId: "1-2", pick: "DAL", points: 5 },
+  { player: "Jon",  week: 1, gameId: "1-3", pick: "SF",  points: 4 },
+  { player: "Jon",  week: 1, gameId: "1-4", pick: "BUF", points: 3 },
+  { player: "Jon",  week: 1, gameId: "1-5", pick: "GB",  points: 2 },
+  { player: "Jon",  week: 1, gameId: "1-6", pick: "CIN", points: 1 },
 
-  { player: "Tony", week: 1, gameId: "1-1", pick: "KC"  },
-  { player: "Tony", week: 1, gameId: "1-2", pick: "PHI" },
-  { player: "Tony", week: 1, gameId: "1-3", pick: "SEA" },
-  { player: "Tony", week: 1, gameId: "1-4", pick: "BUF" },
-  { player: "Tony", week: 1, gameId: "1-5", pick: "MIN" },
-  { player: "Tony", week: 1, gameId: "1-6", pick: "CLE" },
+  { player: "Tony", week: 1, gameId: "1-1", pick: "KC",  points: 3 },
+  { player: "Tony", week: 1, gameId: "1-2", pick: "PHI", points: 6 },
+  { player: "Tony", week: 1, gameId: "1-3", pick: "SEA", points: 5 },
+  { player: "Tony", week: 1, gameId: "1-4", pick: "BUF", points: 4 },
+  { player: "Tony", week: 1, gameId: "1-5", pick: "MIN", points: 2 },
+  { player: "Tony", week: 1, gameId: "1-6", pick: "CLE", points: 1 },
 
-  { player: "Sam",  week: 1, gameId: "1-1", pick: "BAL" },
-  { player: "Sam",  week: 1, gameId: "1-2", pick: "DAL" },
-  { player: "Sam",  week: 1, gameId: "1-3", pick: "SEA" },
-  { player: "Sam",  week: 1, gameId: "1-4", pick: "NYJ" },
-  { player: "Sam",  week: 1, gameId: "1-5", pick: "GB"  },
-  { player: "Sam",  week: 1, gameId: "1-6", pick: "CIN" }
+  { player: "Sam",  week: 1, gameId: "1-1", pick: "BAL", points: 4 },
+  { player: "Sam",  week: 1, gameId: "1-2", pick: "DAL", points: 6 },
+  { player: "Sam",  week: 1, gameId: "1-3", pick: "SEA", points: 5 },
+  { player: "Sam",  week: 1, gameId: "1-4", pick: "NYJ", points: 3 },
+  { player: "Sam",  week: 1, gameId: "1-5", pick: "GB",  points: 2 },
+  { player: "Sam",  week: 1, gameId: "1-6", pick: "CIN", points: 1 },
+
+  { player: "Jon",  week: 2, gameId: "2-1", pick: "BAL", points: 3 },
+  { player: "Jon",  week: 2, gameId: "2-2", pick: "NO",  points: 2 },
+  { player: "Jon",  week: 2, gameId: "2-3", pick: "DET", points: 1 },
+
+  { player: "Tony", week: 2, gameId: "2-1", pick: "LV",  points: 1 },
+  { player: "Tony", week: 2, gameId: "2-2", pick: "DAL", points: 3 },
+  { player: "Tony", week: 2, gameId: "2-3", pick: "TB",  points: 2 },
+
+  { player: "Sam",  week: 2, gameId: "2-1", pick: "BAL", points: 2 },
+  { player: "Sam",  week: 2, gameId: "2-2", pick: "DAL", points: 3 },
+  { player: "Sam",  week: 2, gameId: "2-3", pick: "DET", points: 1 }
 ];
 
 const SAMPLE_ELIMINATOR_PICKS = [

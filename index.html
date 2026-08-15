@@ -9,33 +9,69 @@
 <body>
 <header class="site-header" id="site-header"></header>
 
-<main>
-  <div class="hero">
-    <h1>Welcome to Vince's Pool</h1>
-    <p>Pick your winners. Track the leaderboard. Don't be late on Fridays.</p>
-  </div>
+<section class="hero">
+  <div class="hero-field"></div>
+  <div class="hero-glow glow-a"></div>
+  <div class="hero-glow glow-b"></div>
+  <div class="hero-glow glow-c"></div>
 
+  <div class="hero-content">
+    <div class="hero-kicker">🏈 <span id="hero-season">2026</span> SEASON · TWO POOLS · ONE CHAMP</div>
+    <h1>Welcome to <span class="gradient-text">Vince's Pool</span></h1>
+    <p class="hero-sub">Pick your winners. Climb the leaderboard. Don't be late on Fridays.</p>
+
+    <div class="stat-strip" id="stat-strip">
+      <div class="stat-chip"><span class="stat-num" id="stat-week">W1</span><span class="stat-label">Current Week</span></div>
+      <div class="stat-chip"><span class="stat-num" id="stat-players">–</span><span class="stat-label">Players In</span></div>
+      <div class="stat-chip"><span class="stat-num" id="stat-alive">–</span><span class="stat-label">Still Alive</span></div>
+    </div>
+  </div>
+</section>
+
+<main>
   <div class="pool-cards">
-    <a class="pool-card" href="pickem.html">
-      <div class="icon">📋</div>
+    <a class="pool-card card-pickem" href="pickem.html">
+      <div class="pool-card-glow"></div>
+      <div class="icon-ring"><div class="icon">📋</div></div>
       <h2>Pick'em</h2>
-      <p>Pick the winner of every game, every week. Most correct picks wins.</p>
-      <div class="go">View Leaderboard →</div>
+      <p>Call every game, every week. Stack confidence points on your best bets. Most points wins the season.</p>
+      <div class="go">Enter the Pool <span class="arrow">→</span></div>
     </a>
-    <a class="pool-card" href="eliminator.html">
-      <div class="icon">☠️</div>
+    <a class="pool-card card-eliminator" href="eliminator.html">
+      <div class="pool-card-glow"></div>
+      <div class="icon-ring"><div class="icon">☠️</div></div>
       <h2>Eliminator</h2>
-      <p>Pick one team to win each week. Lose once and you're out. Can't reuse a team.</p>
-      <div class="go">View Leaderboard →</div>
+      <p>One team a week. One loss and you're done. Burn a team once and it's gone for the season.</p>
+      <div class="go">Enter the Pool <span class="arrow">→</span></div>
     </a>
   </div>
 </main>
 
 <footer>Powered by a Google Sheet, not a database</footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
-<script>renderHeader("home");</script>
+<script>
+(async function () {
+  renderHeader("home");
+  document.getElementById("hero-season").textContent = POOL_CONFIG.season;
+  document.getElementById("stat-week").textContent = "W" + POOL_CONFIG.currentWeek;
+
+  try {
+    const state = await loadPoolData();
+    const pickemPlayers = getPlayers(state.pickemPicks);
+    const eliminatorBoard = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
+    const allPlayers = new Set([...pickemPlayers, ...eliminatorBoard.map(p => p.player)]);
+    const alive = eliminatorBoard.filter(p => p.alive).length;
+
+    document.getElementById("stat-players").textContent = allPlayers.size || "–";
+    document.getElementById("stat-alive").textContent = eliminatorBoard.length ? `${alive}/${eliminatorBoard.length}` : "–";
+  } catch (e) {
+    console.error(e);
+  }
+})();
+</script>
 </body>
 </html>

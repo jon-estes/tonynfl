@@ -26,7 +26,8 @@ function normalizePickemPicks(rows) {
     player: String(r.player).trim(),
     week: parseInt(r.week, 10),
     gameId: String(r.gameId).trim(),
-    pick: String(r.pick).trim().toUpperCase()
+    pick: String(r.pick).trim().toUpperCase(),
+    points: parseInt(r.points, 10) || 0
   }));
 }
 
@@ -87,33 +88,62 @@ function gameResultForPick(game, pick) {
   return game.winner === pick ? "correct" : "wrong";
 }
 
-/* ---------- Pick'em ---------- */
+/* ---------- Pick'em (confidence points) ----------
+   Each week, a player assigns a unique point value to every pick
+   (e.g. 6 down to 1 for a 6-game week). A pick scores those points
+   only if the picked team wins; a wrong or not-yet-final pick scores 0
+   toward "earned" points (but the assigned value still shows on the
+   picks screen so players can see what they risked). */
 
-function computePickemStandings(schedule, picks) {
+function pointsEarnedForPick(game, pick) {
+  const result = gameResultForPick(game, pick.pick);
+  if (result === "correct") return { result, earned: pick.points };
+  return { result, earned: 0 };
+}
+
+/* Cumulative season leaderboard: total points earned across all weeks. */
+function computePickemSeasonLeaderboard(schedule, picks) {
   const gamesById = Object.fromEntries(schedule.map(g => [g.gameId, g]));
   const players = getPlayers(picks);
 
-  const standings = players.map(player => {
+  const board = players.map(player => {
     const playerPicks = picks.filter(p => p.player === player);
-    let correct = 0, wrong = 0, pending = 0;
+    let total = 0, correct = 0, wrong = 0, pending = 0, possible = 0;
     playerPicks.forEach(p => {
-      const result = gameResultForPick(gamesById[p.gameId], p.pick);
+      const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
+      total += earned;
+      possible += p.points;
       if (result === "correct") correct++;
       else if (result === "wrong") wrong++;
       else pending++;
     });
-    return {
-      player, correct, wrong, pending,
-      points: correct * POOL_CONFIG.pointsPerWin,
-      played: correct + wrong
-    };
+    return { player, total, possible, correct, wrong, pending, played: correct + wrong };
   });
 
-  standings.sort((a, b) =>
-    b.points - a.points ||
-    (b.correct / Math.max(b.played, 1)) - (a.correct / Math.max(a.played, 1))
-  );
-  return standings;
+  board.sort((a, b) => b.total - a.total);
+  return board;
+}
+
+/* Points earned by each player for a single week. */
+function computePickemWeekLeaderboard(schedule, picks, week) {
+  const gamesById = Object.fromEntries(schedule.map(g => [g.gameId, g]));
+  const players = getPlayers(picks);
+
+  const board = players.map(player => {
+    const weekPicks = picks.filter(p => p.player === player && p.week === week);
+    let total = 0, correct = 0, wrong = 0, pending = 0;
+    weekPicks.forEach(p => {
+      const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
+      total += earned;
+      if (result === "correct") correct++;
+      else if (result === "wrong") wrong++;
+      else pending++;
+    });
+    return { player, total, correct, wrong, pending, picksMade: weekPicks.length };
+  });
+
+  board.sort((a, b) => b.total - a.total);
+  return board;
 }
 
 /* ---------- Eliminator ---------- */
