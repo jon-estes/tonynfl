@@ -6,43 +6,82 @@
 <title>Pick'em — Vince's Pool</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="pk-page">
 <header class="site-header" id="site-header"></header>
 
-<main>
+<div class="pk-outer">
   <div id="sample-banner"></div>
 
-  <div class="card">
-    <h2>Season Leaderboard</h2>
-    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
-      Cumulative points earned across every week. A pick only scores its
-      assigned points if that team wins.
-    </p>
-    <table id="season-table"></table>
-  </div>
+  <div class="pk-card">
+    <span class="corner tl"></span>
+    <span class="corner br"></span>
 
-  <div class="card">
-    <div class="week-switcher">
-      <strong>Weekly points for</strong>
-      <select id="leaderboard-week-select"></select>
+    <div class="pk-card-head">
+      <div>
+        <h1>Football Pick'em Challenge</h1>
+        <p class="pk-sub" id="pk-week-label">Weekly Pool Card</p>
+      </div>
     </div>
-    <h2 id="week-heading">Week Leaderboard</h2>
-    <table id="week-table"></table>
-  </div>
 
-  <div class="card">
-    <div class="week-switcher">
-      <strong>View picks for</strong>
-      <select id="player-select"></select>
-      <select id="player-week-select"></select>
-      <a class="btn" id="form-link" target="_blank" rel="noopener" style="margin-left:auto;">Submit Picks ↗</a>
+    <div class="pk-layout">
+      <div class="pk-scoreboard">
+        <h3>Scoreboard</h3>
+        <div class="pk-scoreboard-row"><span>Total Points</span><strong id="sb-points">0</strong></div>
+        <div class="pk-scoreboard-row"><span>Rank</span><strong id="sb-rank">–</strong></div>
+        <div class="pk-scoreboard-row"><span>This Week</span><strong id="sb-week-points">0</strong></div>
+
+        <div class="pk-selects">
+          <div>
+            <label for="player-select">Viewing Player</label>
+            <select id="player-select" class="pk-select"></select>
+          </div>
+          <div>
+            <label for="week-select">Week</label>
+            <select id="week-select" class="pk-select"></select>
+          </div>
+        </div>
+
+        <div class="pk-tabs">
+          <button class="pk-tab active" data-pane="pane-picks">My Picks</button>
+          <button class="pk-tab" data-pane="pane-standings">Standings</button>
+          <button class="pk-tab" data-pane="pane-history">History</button>
+        </div>
+      </div>
+
+      <div class="pk-panes">
+        <div class="pk-pane active" id="pane-picks">
+          <div class="pk-row-header">
+            <span>Week</span><span>Matchup</span><span style="text-align:center;">My Pick</span><span style="text-align:center;">Points</span><span style="text-align:center;">Winner</span>
+          </div>
+          <div id="picks-rows"></div>
+        </div>
+
+        <div class="pk-pane" id="pane-standings">
+          <div class="pk-row-header" style="grid-template-columns: 50px 1fr 70px 70px 70px 90px;">
+            <span>#</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Total</span>
+          </div>
+          <table id="standings-table"></table>
+        </div>
+
+        <div class="pk-pane" id="pane-history">
+          <div class="pk-row-header" style="grid-template-columns: 90px 1fr 70px 70px 70px 90px;">
+            <span>Week</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Points</span>
+          </div>
+          <table id="history-table"></table>
+        </div>
+      </div>
     </div>
-    <h2 id="player-heading">Player Picks</h2>
-    <div class="pick-grid-wrap">
-      <table id="player-picks-table"></table>
+
+    <div class="pk-footer-bar">
+      <div class="pk-footer-left">
+        <div class="pk-complete-text" id="pk-complete-text">Submission status: <strong>0/0 completed</strong></div>
+        <div class="pk-progress-wrap" id="pk-progress"></div>
+      </div>
+      <a class="pk-btn" id="form-link" target="_blank" rel="noopener">Submit / Update Picks</a>
+      <div class="pk-season-tag">Picks lock Friday · 12:00 PM PT</div>
     </div>
   </div>
-</main>
+</div>
 
 <footer>Powered by a Google Sheet, not a database</footer>
 
@@ -60,120 +99,150 @@
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const weeks = getWeeks(state.schedule);
   const players = getPlayers(state.pickemPicks);
+  const defaultWeek = weeks.includes(POOL_CONFIG.currentWeek) ? POOL_CONFIG.currentWeek : weeks[0];
 
-  /* ---- Season leaderboard ---- */
-  function renderSeason() {
-    const board = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
-    const table = document.getElementById("season-table");
-    if (!board.length) {
-      table.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
-      return;
-    }
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Total Points</th></tr></thead><tbody>";
-    board.forEach((s, i) => {
-      html += `<tr class="rank-${i + 1}">
-        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
-        <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
-    });
-    html += "</tbody>";
-    table.innerHTML = html;
-  }
-
-  /* ---- Weekly leaderboard ---- */
-  const weekSelect = document.getElementById("leaderboard-week-select");
-  weeks.forEach(w => {
-    const opt = document.createElement("option");
-    opt.value = w;
-    opt.textContent = "Week " + w;
-    weekSelect.appendChild(opt);
-  });
-
-  function renderWeekLeaderboard(week) {
-    document.getElementById("week-heading").textContent = `Week ${week} Leaderboard`;
-    const board = computePickemWeekLeaderboard(state.schedule, state.pickemPicks, week);
-    const table = document.getElementById("week-table");
-    if (!board.length) {
-      table.innerHTML = `<tr><td class="empty-state">No picks for this week yet.</td></tr>`;
-      return;
-    }
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Points This Week</th></tr></thead><tbody>";
-    board.forEach((s, i) => {
-      html += `<tr class="rank-${i + 1}">
-        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
-        <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
-    });
-    html += "</tbody>";
-    table.innerHTML = html;
-  }
-
-  /* ---- Player + week picks detail ---- */
   const playerSelect = document.getElementById("player-select");
   players.forEach(p => {
     const opt = document.createElement("option");
-    opt.value = p;
-    opt.textContent = p;
+    opt.value = p; opt.textContent = p;
     playerSelect.appendChild(opt);
   });
 
-  const playerWeekSelect = document.getElementById("player-week-select");
+  const weekSelect = document.getElementById("week-select");
   weeks.forEach(w => {
     const opt = document.createElement("option");
-    opt.value = w;
-    opt.textContent = "Week " + w;
-    playerWeekSelect.appendChild(opt);
+    opt.value = w; opt.textContent = "Week " + w;
+    weekSelect.appendChild(opt);
   });
 
-  function renderPlayerWeek(player, week) {
-    document.getElementById("player-heading").textContent = `${player} — Week ${week} Picks`;
+  /* ---- Tabs ---- */
+  document.querySelectorAll(".pk-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".pk-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".pk-pane").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.pane).classList.add("active");
+    });
+  });
+
+  /* ---- My Picks pane ---- */
+  function renderPicks(player, week) {
+    document.getElementById("pk-week-label").textContent = `Week ${week} Pool Card`;
     const picks = state.pickemPicks
       .filter(p => p.player === player && p.week === week)
       .sort((a, b) => b.points - a.points);
 
-    const table = document.getElementById("player-picks-table");
+    const mount = document.getElementById("picks-rows");
     if (!picks.length) {
-      table.innerHTML = `<tr><td class="empty-state">No picks found for ${player} in Week ${week}.</td></tr>`;
-      return;
+      mount.innerHTML = `<div class="empty-state">No picks found for ${player} in Week ${week}.</div>`;
+    } else {
+      let html = "";
+      picks.forEach((p, i) => {
+        const game = gamesById[p.gameId];
+        const { result, earned } = pointsEarnedForPick(game, p);
+        const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
+        const kickoff = game ? game.kickoff : "";
+        const winnerText = game && game.winner ? game.winner : "--";
+        html += `
+          <div class="pk-game-row ${result}">
+            <div class="pk-game-label">GAME ${i + 1}</div>
+            <div class="pk-matchup-cell">
+              ${teamBadgeHtml(game ? game.away : "")}
+              <div class="pk-matchup-teams">
+                <span class="teams-line">${matchup}</span>
+                <span class="kickoff-line">${kickoff}</span>
+              </div>
+            </div>
+            <div class="pk-mypick-cell"><div class="pk-mypick-box">${p.pick}</div></div>
+            <div class="pk-points-cell">${result === "wrong" ? p.points : "+" + earned}${result !== "wrong" ? " PTS" : ""}</div>
+            <div class="pk-winner-cell">${winnerText}</div>
+          </div>`;
+      });
+      mount.innerHTML = html;
     }
 
-    let weekTotal = 0;
-    let html = "<thead><tr><th>Points Assigned</th><th>Game</th><th>Pick</th><th>Result</th><th>Points Earned</th></tr></thead><tbody>";
-    picks.forEach(p => {
-      const game = gamesById[p.gameId];
-      const { result, earned } = pointsEarnedForPick(game, p);
-      weekTotal += earned;
-      const matchup = game ? `${game.away} @ ${game.home}` : p.gameId;
-      const pillClass = result === "correct" ? "pill-win" : result === "wrong" ? "pill-loss" : "pill-pending";
-      const pillText = result === "correct" ? "Correct" : result === "wrong" ? "Wrong" : "Pending";
-      html += `<tr>
-        <td><strong>${p.points}</strong></td>
-        <td>${matchup}</td>
-        <td class="pick-cell ${result}">${p.pick}</td>
-        <td><span class="pill ${pillClass}">${pillText}</span></td>
-        <td>${earned}</td>
-      </tr>`;
+    /* scoreboard + progress */
+    const seasonBoard = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
+    const me = seasonBoard.find(s => s.player === player);
+    const rank = seasonBoard.findIndex(s => s.player === player) + 1;
+    document.getElementById("sb-points").textContent = me ? me.total : 0;
+    document.getElementById("sb-rank").textContent = me ? `#${rank} / ${seasonBoard.length}` : "–";
+
+    const weekBoard = computePickemWeekLeaderboard(state.schedule, state.pickemPicks, week);
+    const meWeek = weekBoard.find(s => s.player === player);
+    document.getElementById("sb-week-points").textContent = meWeek ? meWeek.total : 0;
+
+    const gamesThisWeek = state.schedule.filter(g => g.week === week).length;
+    const madeThisWeek = picks.length;
+    document.getElementById("pk-complete-text").innerHTML =
+      `Submission status: <strong>${madeThisWeek}/${gamesThisWeek} completed</strong>`;
+    const progressMount = document.getElementById("pk-progress");
+    progressMount.innerHTML = "";
+    const totalDashes = Math.max(gamesThisWeek, 1);
+    for (let i = 0; i < totalDashes; i++) {
+      const dash = document.createElement("div");
+      dash.className = "pk-dash" + (i < madeThisWeek ? " filled" : "");
+      progressMount.appendChild(dash);
+    }
+  }
+
+  function teamBadgeHtml(abbr) {
+    if (!abbr) return "";
+    const t = NFL_TEAMS[abbr] || { color: "#444", text: "#fff" };
+    return `<span class="team-badge" style="background:${t.color};color:${t.text};">${abbr}</span>`;
+  }
+
+  /* ---- Standings pane ---- */
+  function renderStandings() {
+    const board = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
+    const table = document.getElementById("standings-table");
+    if (!board.length) {
+      table.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
+      return;
+    }
+    let html = "<tbody>";
+    board.forEach((s, i) => {
+      html += `<tr class="rank-${i + 1}">
+        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
+        <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
     });
-    html += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;"><strong>Week Total</strong></td><td><strong>${weekTotal}</strong></td></tr></tfoot>`;
+    html += "</tbody>";
     table.innerHTML = html;
   }
 
-  weekSelect.addEventListener("change", () => renderWeekLeaderboard(parseInt(weekSelect.value, 10)));
-  playerSelect.addEventListener("change", () => renderPlayerWeek(playerSelect.value, parseInt(playerWeekSelect.value, 10)));
-  playerWeekSelect.addEventListener("change", () => renderPlayerWeek(playerSelect.value, parseInt(playerWeekSelect.value, 10)));
-
-  renderSeason();
-
-  const defaultWeek = weeks.includes(POOL_CONFIG.currentWeek) ? POOL_CONFIG.currentWeek : weeks[0];
-  if (defaultWeek !== undefined) {
-    weekSelect.value = defaultWeek;
-    playerWeekSelect.value = defaultWeek;
-    renderWeekLeaderboard(defaultWeek);
+  /* ---- History pane: every player, every week ---- */
+  function renderHistory() {
+    const table = document.getElementById("history-table");
+    if (!players.length || !weeks.length) {
+      table.innerHTML = `<tr><td class="empty-state">No history yet.</td></tr>`;
+      return;
+    }
+    let html = "<tbody>";
+    weeks.forEach(w => {
+      const board = computePickemWeekLeaderboard(state.schedule, state.pickemPicks, w);
+      board.forEach(s => {
+        if (s.picksMade === 0) return;
+        html += `<tr>
+          <td>Week ${w}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
+          <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
+      });
+    });
+    html += "</tbody>";
+    table.innerHTML = html || `<tr><td class="empty-state">No history yet.</td></tr>`;
   }
 
-  if (players.length) {
+  playerSelect.addEventListener("change", () => renderPicks(playerSelect.value, parseInt(weekSelect.value, 10)));
+  weekSelect.addEventListener("change", () => renderPicks(playerSelect.value, parseInt(weekSelect.value, 10)));
+
+  renderStandings();
+  renderHistory();
+
+  if (players.length && defaultWeek !== undefined) {
     playerSelect.value = players[0];
-    renderPlayerWeek(players[0], defaultWeek !== undefined ? defaultWeek : weeks[0]);
+    weekSelect.value = defaultWeek;
+    renderPicks(players[0], defaultWeek);
   } else {
-    document.getElementById("player-picks-table").innerHTML = `<tr><td class="empty-state">No players yet.</td></tr>`;
+    document.getElementById("picks-rows").innerHTML = `<div class="empty-state">No players yet.</div>`;
   }
 })();
 </script>

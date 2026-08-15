@@ -9,7 +9,20 @@
 <body>
 <header class="site-header" id="site-header"></header>
 
-<main>
+<section class="el-hero">
+  <div class="bar left"></div>
+  <div class="bar right"></div>
+  <div class="el-embers" id="el-embers"></div>
+  <div class="el-hero-content">
+    <div class="el-kicker">Survive the Season</div>
+    <h1>Eliminator</h1>
+    <h2>Pool</h2>
+    <p class="el-tagline">The Last One Standing</p>
+    <div class="el-week-badge">🏈 Week <span id="el-week">1</span></div>
+  </div>
+</section>
+
+<div class="el-body">
   <div id="sample-banner"></div>
 
   <div class="card">
@@ -25,15 +38,15 @@
     </div>
     <h2 id="player-heading">Team Availability</h2>
     <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
-      Every NFL team, in color. Once a team has been used by this player, it greys out —
-      it can't be picked again for the rest of the season.
+      Every NFL team, in color. Once a team has been used by this player, it cracks and greys
+      out — it can't be picked again for the rest of the season.
     </p>
     <div class="team-tile-grid" id="team-grid"></div>
 
     <h2 style="margin-top:26px;">Pick History</h2>
     <table id="player-picks-table"></table>
   </div>
-</main>
+</div>
 
 <footer>Powered by a Google Sheet, not a database</footer>
 
@@ -47,6 +60,17 @@
   const state = await loadPoolData();
   renderSampleBanner(state);
   document.getElementById("form-link").href = POOL_CONFIG.eliminatorFormUrl;
+  document.getElementById("el-week").textContent = POOL_CONFIG.currentWeek;
+
+  const emberMount = document.getElementById("el-embers");
+  for (let i = 0; i < 16; i++) {
+    const ember = document.createElement("div");
+    ember.className = "el-ember";
+    ember.style.left = Math.random() * 100 + "%";
+    ember.style.animationDelay = (Math.random() * 6).toFixed(2) + "s";
+    ember.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + "s";
+    emberMount.appendChild(ember);
+  }
 
   const board = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
   const standingsTable = document.getElementById("standings-table");
@@ -82,7 +106,7 @@
     allTeamCodes.forEach(code => {
       const t = NFL_TEAMS[code];
       const tile = document.createElement("div");
-      tile.className = "team-tile" + (used.has(code) ? " used" : "");
+      tile.className = "team-tile" + (used.has(code) ? " used" : " el-alive-tile");
       if (!used.has(code)) {
         tile.style.background = t.color;
         tile.style.color = t.text;
