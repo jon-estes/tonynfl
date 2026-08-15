@@ -139,3 +139,14 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
   tiebreaker) or the **Playoff Team Pool** (random-draw team ownership)
   built out as additional pages once the regular season wraps, just say
   the word — both fit the same Google Sheet + Netlify pattern.
+- **Submit buttons were removed** per your request — the site is now
+  strictly a view-only scoreboard/leaderboard. Share your Google Forms
+  with the group however you'd like (text, email, group chat); the
+  `pickemFormUrl` / `eliminatorFormUrl` fields are still in `config.js`
+  in case you want to add a link back somewhere later, they're just not
+  wired to a button anywhere right now.
+- **Home page hero** is the stadium photo you sent over
+  (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
+  you want a different banner image; no code changes needed.
+- **Favicon**: a football icon (`favicon.svg` + PNG/ICO fallbacks) is
+  wired into all three pages' browser tabs.

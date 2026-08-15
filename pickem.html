@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pick'em — Vince's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="pk-page">
@@ -77,9 +80,16 @@
         <div class="pk-complete-text" id="pk-complete-text">Submission status: <strong>0/0 completed</strong></div>
         <div class="pk-progress-wrap" id="pk-progress"></div>
       </div>
-      <a class="pk-btn" id="form-link" target="_blank" rel="noopener">Submit / Update Picks</a>
       <div class="pk-season-tag">Picks lock Friday · 12:00 PM PT</div>
     </div>
+  </div>
+
+  <div class="card pk-full-leaderboard">
+    <h2>Full Season Leaderboard</h2>
+    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
+      Every player, ranked by total confidence points earned so far this season.
+    </p>
+    <table id="full-standings-table"></table>
   </div>
 </div>
 
@@ -94,7 +104,6 @@
   renderHeader("pickem");
   const state = await loadPoolData();
   renderSampleBanner(state);
-  document.getElementById("form-link").href = POOL_CONFIG.pickemFormUrl;
 
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const weeks = getWeeks(state.schedule);
@@ -192,22 +201,30 @@
     return `<span class="team-badge" style="background:${t.color};color:${t.text};">${abbr}</span>`;
   }
 
-  /* ---- Standings pane ---- */
-  function renderStandings() {
-    const board = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
-    const table = document.getElementById("standings-table");
-    if (!board.length) {
-      table.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
-      return;
-    }
-    let html = "<tbody>";
+  /* ---- Standings pane (inside pool card) + full leaderboard (always visible) ---- */
+  function renderStandingsRows(board) {
+    if (!board.length) return `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
+    let rows = "";
     board.forEach((s, i) => {
-      html += `<tr class="rank-${i + 1}">
+      rows += `<tr class="rank-${i + 1}">
         <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
         <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
     });
-    html += "</tbody>";
-    table.innerHTML = html;
+    return rows;
+  }
+
+  function renderStandings() {
+    const board = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
+    document.getElementById("standings-table").innerHTML = `<tbody>${renderStandingsRows(board)}</tbody>`;
+
+    const fullTable = document.getElementById("full-standings-table");
+    if (!board.length) {
+      fullTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
+      return;
+    }
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Total Points</th></tr></thead>";
+    html += `<tbody>${renderStandingsRows(board)}</tbody>`;
+    fullTable.innerHTML = html;
   }
 
   /* ---- History pane: every player, every week ---- */

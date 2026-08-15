@@ -4,29 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vince's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site-header" id="site-header"></header>
 
-<section class="hero">
-  <div class="hero-field"></div>
-  <div class="hero-glow glow-a"></div>
-  <div class="hero-glow glow-b"></div>
-  <div class="hero-glow glow-c"></div>
-
-  <div class="hero-content">
-    <div class="hero-kicker">🏈 <span id="hero-season">2026</span> SEASON · TWO POOLS · ONE CHAMP</div>
-    <h1>Welcome to <span class="gradient-text">Vince's Pool</span></h1>
-    <p class="hero-sub">Pick your winners. Climb the leaderboard. Don't be late on Fridays.</p>
-
-    <div class="stat-strip" id="stat-strip">
-      <div class="stat-chip"><span class="stat-num" id="stat-week">W1</span><span class="stat-label">Current Week</span></div>
-      <div class="stat-chip"><span class="stat-num" id="stat-players">–</span><span class="stat-label">Players In</span></div>
-      <div class="stat-chip"><span class="stat-num" id="stat-alive">–</span><span class="stat-label">Still Alive</span></div>
-    </div>
-  </div>
+<section class="hero-photo">
+  <img src="assets/hero-stadium.jpg" alt="Vince's Pool — The Ultimate Football Challenge">
+  <div class="hero-photo-fade"></div>
 </section>
+
+<div class="stat-bar">
+  <div class="stat-strip" id="stat-strip">
+    <div class="stat-chip"><span class="stat-num" id="stat-week">W1</span><span class="stat-label">Current Week</span></div>
+    <div class="stat-chip"><span class="stat-num" id="stat-players">–</span><span class="stat-label">Players In</span></div>
+    <div class="stat-chip"><span class="stat-num" id="stat-alive">–</span><span class="stat-label">Still Alive</span></div>
+  </div>
+</div>
 
 <main>
   <div class="pool-cards">
@@ -56,7 +53,6 @@
 <script>
 (async function () {
   renderHeader("home");
-  document.getElementById("hero-season").textContent = POOL_CONFIG.season;
   document.getElementById("stat-week").textContent = "W" + POOL_CONFIG.currentWeek;
 
   try {

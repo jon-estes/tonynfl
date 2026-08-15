@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eliminator — Vince's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,16 +28,20 @@
 <div class="el-body">
   <div id="sample-banner"></div>
 
-  <div class="card">
-    <h2>Eliminator Leaderboard</h2>
-    <table id="standings-table"></table>
+  <div class="card el-status-card">
+    <h2>Who's Still In It</h2>
+    <div class="el-alive-grid" id="alive-grid"></div>
+
+    <div id="eliminated-wrap">
+      <h3 class="el-eliminated-heading">Eliminated</h3>
+      <div class="el-eliminated-list" id="eliminated-list"></div>
+    </div>
   </div>
 
   <div class="card">
     <div class="week-switcher">
       <strong>View picks for</strong>
       <select id="player-select"></select>
-      <a class="btn" id="form-link" target="_blank" rel="noopener" style="margin-left:auto;">Submit This Week's Pick ↗</a>
     </div>
     <h2 id="player-heading">Team Availability</h2>
     <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
@@ -59,7 +66,6 @@
   renderHeader("eliminator");
   const state = await loadPoolData();
   renderSampleBanner(state);
-  document.getElementById("form-link").href = POOL_CONFIG.eliminatorFormUrl;
   document.getElementById("el-week").textContent = POOL_CONFIG.currentWeek;
 
   const emberMount = document.getElementById("el-embers");
@@ -73,19 +79,38 @@
   }
 
   const board = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
-  const standingsTable = document.getElementById("standings-table");
+  const aliveGrid = document.getElementById("alive-grid");
+  const eliminatedWrap = document.getElementById("eliminated-wrap");
+  const eliminatedList = document.getElementById("eliminated-list");
+
+  const alivePlayers = board.filter(p => p.alive);
+  const eliminatedPlayers = board.filter(p => !p.alive);
+
   if (!board.length) {
-    standingsTable.innerHTML = `<tr><td class="empty-state">No eliminator picks submitted yet.</td></tr>`;
+    aliveGrid.innerHTML = `<div class="empty-state">No eliminator picks submitted yet.</div>`;
+    eliminatedWrap.style.display = "none";
+  } else if (!alivePlayers.length) {
+    aliveGrid.innerHTML = `<div class="empty-state">Everyone's out — check the eliminated list below.</div>`;
   } else {
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Status</th><th>Weeks Survived</th></tr></thead><tbody>";
-    board.forEach((p, i) => {
-      const statusHtml = p.alive
-        ? `<span class="status-alive">● Alive</span>`
-        : `<span class="status-out">✕ Eliminated — Week ${p.eliminatedWeek}</span>`;
-      html += `<tr class="rank-${i + 1}"><td>${i + 1}</td><td>${p.player}</td><td>${statusHtml}</td><td>${p.weeksSurvived}</td></tr>`;
-    });
-    html += "</tbody>";
-    standingsTable.innerHTML = html;
+    aliveGrid.innerHTML = alivePlayers.map(p => `
+      <div class="el-alive-chip">
+        <span class="el-flame">🔥</span>
+        <span class="el-alive-name">${p.player}</span>
+        <span class="el-alive-tag">Still Alive</span>
+      </div>
+    `).join("");
+  }
+
+  if (eliminatedPlayers.length) {
+    eliminatedList.innerHTML = eliminatedPlayers.map(p => `
+      <div class="el-out-chip">
+        <span class="el-skull">☠️</span>
+        <span class="el-out-name">${p.player}</span>
+        <span class="el-out-tag">Out — Week ${p.eliminatedWeek}</span>
+      </div>
+    `).join("");
+  } else {
+    eliminatedWrap.style.display = "none";
   }
 
   const players = getPlayers(state.eliminatorPicks);
