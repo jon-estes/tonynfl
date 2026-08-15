@@ -261,15 +261,27 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
 
 .hero-photo {
   width: 100%;
-  max-width: 1392px;
-  margin: 0 auto;
-  border-bottom: 1px solid var(--border);
+  max-width: 780px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+  box-sizing: content-box;
+}
+
+.hero-photo .hero-photo-frame {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.4);
 }
 
 .hero-photo img {
   width: 100%;
   height: auto;
   display: block;
+}
+
+@media (max-width: 620px) {
+  .hero-photo { max-width: 100%; margin-top: 16px; }
 }
 
 /* ---------- Home page hero (legacy animated version, unused but kept for reference) ---------- */
