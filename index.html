@@ -3,169 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NFL Pick'em League</title>
+<title>Vince's Pool</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site-header" id="site-header"></header>
 
 <main>
-  <div id="sample-banner"></div>
-
-  <div class="card">
-    <div class="week-switcher">
-      <strong>Week</strong>
-      <select id="week-select"></select>
-      <a class="btn" id="form-link" target="_blank" rel="noopener">Submit / Update Your Picks ↗</a>
-    </div>
-    <h2 id="week-heading">This Week's Games</h2>
-    <div class="game-grid" id="game-grid"></div>
+  <div class="hero">
+    <h1>Welcome to Vince's Pool</h1>
+    <p>Pick your winners. Track the leaderboard. Don't be late on Fridays.</p>
   </div>
 
-  <div class="card">
-    <h2>Picks Grid</h2>
-    <div class="pick-grid-wrap">
-      <table id="picks-table"></table>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Top of the Standings</h2>
-    <table id="mini-standings"></table>
-    <p style="margin-top:10px;"><a href="standings.html">See full standings →</a></p>
+  <div class="pool-cards">
+    <a class="pool-card" href="pickem.html">
+      <div class="icon">📋</div>
+      <h2>Pick'em</h2>
+      <p>Pick the winner of every game, every week. Most correct picks wins.</p>
+      <div class="go">View Leaderboard →</div>
+    </a>
+    <a class="pool-card" href="eliminator.html">
+      <div class="icon">☠️</div>
+      <h2>Eliminator</h2>
+      <p>Pick one team to win each week. Lose once and you're out. Can't reuse a team.</p>
+      <div class="go">View Leaderboard →</div>
+    </a>
   </div>
 </main>
 
-<footer id="site-footer">Powered by a Google Sheet, not a database</footer>
+<footer>Powered by a Google Sheet, not a database</footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
-<script src="script.js"></script>
-<script>
-(async function () {
-  renderHeader("home");
-  const state = await loadLeagueData();
-  renderSampleBanner(state);
-
-  const weeks = getWeeks(state.schedule);
-  const select = document.getElementById("week-select");
-  weeks.forEach(w => {
-    const opt = document.createElement("option");
-    opt.value = w;
-    opt.textContent = "Week " + w;
-    select.appendChild(opt);
-  });
-  const defaultWeek = weeks.includes(LEAGUE_CONFIG.currentWeek) ? LEAGUE_CONFIG.currentWeek : weeks[0];
-  select.value = defaultWeek;
-
-  document.getElementById("form-link").href = LEAGUE_CONFIG.formUrl;
-
-  function renderWeek(week) {
-    document.getElementById("week-heading").textContent = `Week ${week} Games`;
-    const games = state.schedule.filter(g => g.week === week);
-    const grid = document.getElementById("game-grid");
-    grid.innerHTML = "";
-
-    if (!games.length) {
-      grid.innerHTML = `<div class="empty-state">No games found for this week yet.</div>`;
-    }
-
-    games.forEach(g => {
-      const row = document.createElement("div");
-      row.className = "game-row";
-
-      const kickoff = document.createElement("div");
-      kickoff.className = "kickoff";
-      kickoff.textContent = g.kickoff || "";
-      row.appendChild(kickoff);
-
-      const awayChip = document.createElement("div");
-      awayChip.className = "team-chip";
-      awayChip.appendChild(teamBadge(g.away));
-      awayChip.appendChild(document.createTextNode(teamName(g.away)));
-      row.appendChild(awayChip);
-
-      const at = document.createElement("div");
-      at.className = "at";
-      if (g.winner) {
-        const pill = document.createElement("span");
-        pill.className = "pill pill-win";
-        pill.textContent = "FINAL: " + g.winner;
-        at.appendChild(pill);
-      } else {
-        at.textContent = "@";
-      }
-      row.appendChild(at);
-
-      const homeChip = document.createElement("div");
-      homeChip.className = "team-chip";
-      homeChip.appendChild(teamBadge(g.home));
-      homeChip.appendChild(document.createTextNode(teamName(g.home)));
-      row.appendChild(homeChip);
-
-      grid.appendChild(row);
-    });
-
-    renderPicksTable(week, games);
-  }
-
-  function renderPicksTable(week, games) {
-    const table = document.getElementById("picks-table");
-    const players = getPlayers(state.picks);
-    const gamesById = Object.fromEntries(games.map(g => [g.gameId, g]));
-
-    if (!players.length || !games.length) {
-      table.innerHTML = `<tr><td class="empty-state">No picks submitted for this week yet.</td></tr>`;
-      return;
-    }
-
-    let thead = "<thead><tr><th>Player</th>";
-    games.forEach(g => { thead += `<th>${g.away}@${g.home}</th>`; });
-    thead += "<th>Record</th></tr></thead>";
-
-    let tbody = "<tbody>";
-    players.forEach(player => {
-      let correct = 0, wrong = 0;
-      let row = `<tr><td>${player}</td>`;
-      games.forEach(g => {
-        const pickRow = state.picks.find(p => p.player === player && p.gameId === g.gameId);
-        if (!pickRow) {
-          row += `<td class="pick-cell pending">—</td>`;
-          return;
-        }
-        const result = gameResultForPick(gamesById[g.gameId], pickRow.pick);
-        if (result === "correct") correct++;
-        if (result === "wrong") wrong++;
-        row += `<td class="pick-cell ${result}">${pickRow.pick}</td>`;
-      });
-      row += `<td>${correct}-${wrong}</td></tr>`;
-      tbody += row;
-    });
-    tbody += "</tbody>";
-
-    table.innerHTML = thead + tbody;
-  }
-
-  function renderMiniStandings() {
-    const standings = computeStandings(state.schedule, state.picks).slice(0, 5);
-    const table = document.getElementById("mini-standings");
-    if (!standings.length) {
-      table.innerHTML = `<tr><td class="empty-state">No standings yet — waiting on picks and results.</td></tr>`;
-      return;
-    }
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Record</th><th>Points</th></tr></thead><tbody>";
-    standings.forEach((s, i) => {
-      html += `<tr class="rank-${i + 1}"><td>${i + 1}</td><td>${s.player}</td><td>${fmtRecord(s)}</td><td>${s.points}</td></tr>`;
-    });
-    html += "</tbody>";
-    table.innerHTML = html;
-  }
-
-  select.addEventListener("change", () => renderWeek(parseInt(select.value, 10)));
-  renderWeek(defaultWeek);
-  renderMiniStandings();
-})();
-</script>
+<script src="shared.js"></script>
+<script>renderHeader("home");</script>
 </body>
 </html>

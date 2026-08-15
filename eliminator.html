@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eliminator — Vince's Pool</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <div id="sample-banner"></div>
+
+  <div class="card">
+    <h2>Eliminator Leaderboard</h2>
+    <table id="standings-table"></table>
+  </div>
+
+  <div class="card">
+    <div class="week-switcher">
+      <strong>View picks for</strong>
+      <select id="player-select"></select>
+      <a class="btn" id="form-link" target="_blank" rel="noopener" style="margin-left:auto;">Submit This Week's Pick ↗</a>
+    </div>
+    <h2 id="player-heading">Team Availability</h2>
+    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
+      Every NFL team, in color. Once a team has been used by this player, it greys out —
+      it can't be picked again for the rest of the season.
+    </p>
+    <div class="team-tile-grid" id="team-grid"></div>
+
+    <h2 style="margin-top:26px;">Pick History</h2>
+    <table id="player-picks-table"></table>
+  </div>
+</main>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("eliminator");
+  const state = await loadPoolData();
+  renderSampleBanner(state);
+  document.getElementById("form-link").href = POOL_CONFIG.eliminatorFormUrl;
+
+  const board = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
+  const standingsTable = document.getElementById("standings-table");
+  if (!board.length) {
+    standingsTable.innerHTML = `<tr><td class="empty-state">No eliminator picks submitted yet.</td></tr>`;
+  } else {
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Status</th><th>Weeks Survived</th></tr></thead><tbody>";
+    board.forEach((p, i) => {
+      const statusHtml = p.alive
+        ? `<span class="status-alive">● Alive</span>`
+        : `<span class="status-out">✕ Eliminated — Week ${p.eliminatedWeek}</span>`;
+      html += `<tr class="rank-${i + 1}"><td>${i + 1}</td><td>${p.player}</td><td>${statusHtml}</td><td>${p.weeksSurvived}</td></tr>`;
+    });
+    html += "</tbody>";
+    standingsTable.innerHTML = html;
+  }
+
+  const players = getPlayers(state.eliminatorPicks);
+  const select = document.getElementById("player-select");
+  players.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+
+  const allTeamCodes = Object.keys(NFL_TEAMS).sort();
+
+  function renderTeamGrid(player) {
+    const used = usedTeamsForPlayer(state.eliminatorPicks, player);
+    const grid = document.getElementById("team-grid");
+    grid.innerHTML = "";
+    allTeamCodes.forEach(code => {
+      const t = NFL_TEAMS[code];
+      const tile = document.createElement("div");
+      tile.className = "team-tile" + (used.has(code) ? " used" : "");
+      if (!used.has(code)) {
+        tile.style.background = t.color;
+        tile.style.color = t.text;
+        tile.style.borderColor = "transparent";
+      }
+      tile.innerHTML = `<span class="team-badge" style="background:${t.color};color:${t.text};">${code}</span>
+        <span>${t.name}</span>
+        ${used.has(code) ? `<span class="team-tag" style="background:rgba(0,0,0,0.4);color:#fff;">USED</span>` : ""}`;
+      grid.appendChild(tile);
+    });
+  }
+
+  const gamesForLookup = state.schedule;
+
+  function renderHistory(player) {
+    document.getElementById("player-heading").textContent = `${player} — Team Availability`;
+    const picks = state.eliminatorPicks
+      .filter(p => p.player === player)
+      .sort((a, b) => a.week - b.week);
+
+    const table = document.getElementById("player-picks-table");
+    if (!picks.length) {
+      table.innerHTML = `<tr><td class="empty-state">No picks found for ${player}.</td></tr>`;
+      return;
+    }
+
+    let html = "<thead><tr><th>Week</th><th>Team Picked</th><th>Result</th></tr></thead><tbody>";
+    picks.forEach(p => {
+      const game = findGameForTeamWeek(gamesForLookup, p.week, p.team);
+      let result = "pending", pillClass = "pill-pending", pillText = "Pending";
+      if (game && game.winner) {
+        result = game.winner === p.team ? "correct" : "wrong";
+        pillClass = result === "correct" ? "pill-win" : "pill-loss";
+        pillText = result === "correct" ? "Survived" : "Eliminated";
+      }
+      html += `<tr>
+        <td>${p.week}</td>
+        <td class="pick-cell ${result}">${p.team} — ${teamName(p.team)}</td>
+        <td><span class="pill ${pillClass}">${pillText}</span></td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    table.innerHTML = html;
+  }
+
+  function renderPlayer(player) {
+    renderTeamGrid(player);
+    renderHistory(player);
+  }
+
+  if (players.length) {
+    select.value = players[0];
+    renderPlayer(players[0]);
+  } else {
+    document.getElementById("team-grid").innerHTML = `<div class="empty-state">No players yet.</div>`;
+  }
+
+  select.addEventListener("change", () => renderPlayer(select.value));
+})();
+</script>
+</body>
+</html>

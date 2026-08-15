@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick'em — Vince's Pool</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <div id="sample-banner"></div>
+
+  <div class="card">
+    <h2>Pick'em Leaderboard</h2>
+    <table id="standings-table"></table>
+  </div>
+
+  <div class="card">
+    <div class="week-switcher">
+      <strong>View picks for</strong>
+      <select id="player-select"></select>
+      <a class="btn" id="form-link" target="_blank" rel="noopener" style="margin-left:auto;">Submit Picks ↗</a>
+    </div>
+    <h2 id="player-heading">Player Picks</h2>
+    <div class="pick-grid-wrap">
+      <table id="player-picks-table"></table>
+    </div>
+  </div>
+</main>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("pickem");
+  const state = await loadPoolData();
+  renderSampleBanner(state);
+  document.getElementById("form-link").href = POOL_CONFIG.pickemFormUrl;
+
+  const standings = computePickemStandings(state.schedule, state.pickemPicks);
+  const standingsTable = document.getElementById("standings-table");
+  if (!standings.length) {
+    standingsTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
+  } else {
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Win %</th><th>Points</th></tr></thead><tbody>";
+    standings.forEach((s, i) => {
+      const pct = s.played ? Math.round((s.correct / s.played) * 100) : 0;
+      html += `<tr class="rank-${i + 1}">
+        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
+        <td>${s.pending}</td><td>${pct}%</td><td>${s.points}</td></tr>`;
+    });
+    html += "</tbody>";
+    standingsTable.innerHTML = html;
+  }
+
+  const players = getPlayers(state.pickemPicks);
+  const select = document.getElementById("player-select");
+  players.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+
+  const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
+
+  function renderPlayer(player) {
+    document.getElementById("player-heading").textContent = `${player}'s Picks — All Weeks`;
+    const picks = state.pickemPicks
+      .filter(p => p.player === player)
+      .sort((a, b) => a.week - b.week || a.gameId.localeCompare(b.gameId));
+
+    const table = document.getElementById("player-picks-table");
+    if (!picks.length) {
+      table.innerHTML = `<tr><td class="empty-state">No picks found for ${player}.</td></tr>`;
+      return;
+    }
+
+    let html = "<thead><tr><th>Week</th><th>Game</th><th>Pick</th><th>Result</th></tr></thead><tbody>";
+    picks.forEach(p => {
+      const game = gamesById[p.gameId];
+      const result = gameResultForPick(game, p.pick);
+      const matchup = game ? `${game.away} @ ${game.home}` : p.gameId;
+      const pillClass = result === "correct" ? "pill-win" : result === "wrong" ? "pill-loss" : "pill-pending";
+      const pillText = result === "correct" ? "Correct" : result === "wrong" ? "Wrong" : "Pending";
+      html += `<tr>
+        <td>${p.week}</td>
+        <td>${matchup}</td>
+        <td class="pick-cell ${result}">${p.pick}</td>
+        <td><span class="pill ${pillClass}">${pillText}</span></td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    table.innerHTML = html;
+  }
+
+  if (players.length) {
+    select.value = players[0];
+    renderPlayer(players[0]);
+  } else {
+    document.getElementById("player-picks-table").innerHTML = `<tr><td class="empty-state">No players yet.</td></tr>`;
+  }
+
+  select.addEventListener("change", () => renderPlayer(select.value));
+})();
+</script>
+</body>
+</html>
