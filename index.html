@@ -10,20 +10,9 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="site-header" id="site-header"></header>
-
 <section class="hero-photo">
   <img src="assets/hero-stadium.jpg" alt="Vince's Pool — The Ultimate Football Challenge">
-  <div class="hero-photo-fade"></div>
 </section>
-
-<div class="stat-bar">
-  <div class="stat-strip" id="stat-strip">
-    <div class="stat-chip"><span class="stat-num" id="stat-week">W1</span><span class="stat-label">Current Week</span></div>
-    <div class="stat-chip"><span class="stat-num" id="stat-players">–</span><span class="stat-label">Players In</span></div>
-    <div class="stat-chip"><span class="stat-num" id="stat-alive">–</span><span class="stat-label">Still Alive</span></div>
-  </div>
-</div>
 
 <main>
   <div class="pool-cards">
@@ -45,29 +34,5 @@
 </main>
 
 <footer>Powered by a Google Sheet, not a database</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="teams.js"></script>
-<script src="config.js"></script>
-<script src="shared.js"></script>
-<script>
-(async function () {
-  renderHeader("home");
-  document.getElementById("stat-week").textContent = "W" + POOL_CONFIG.currentWeek;
-
-  try {
-    const state = await loadPoolData();
-    const pickemPlayers = getPlayers(state.pickemPicks);
-    const eliminatorBoard = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
-    const allPlayers = new Set([...pickemPlayers, ...eliminatorBoard.map(p => p.player)]);
-    const alive = eliminatorBoard.filter(p => p.alive).length;
-
-    document.getElementById("stat-players").textContent = allPlayers.size || "–";
-    document.getElementById("stat-alive").textContent = eliminatorBoard.length ? `${alive}/${eliminatorBoard.length}` : "–";
-  } catch (e) {
-    console.error(e);
-  }
-})();
-</script>
 </body>
 </html>

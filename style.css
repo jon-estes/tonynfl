@@ -26,13 +26,48 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 header.site-header {
-  background: linear-gradient(135deg, #13213b, #0d1117 70%);
+  --hdr-accent: #4f8ef7;
+  --hdr-accent-dim: rgba(79,142,247,0.16);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,14,22,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
-  padding: 24px 20px;
+  padding: 16px 20px;
+  overflow: hidden;
 }
 
+header.site-header::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--hdr-accent), transparent);
+  opacity: 0.7;
+}
+
+header.site-header::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  width: 340px;
+  height: 140px;
+  transform: translateX(-50%);
+  background: var(--hdr-accent);
+  opacity: 0.10;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.pk-page header.site-header { --hdr-accent: #39ff8c; --hdr-accent-dim: rgba(57,255,140,0.16); }
+.el-page header.site-header { --hdr-accent: #ff8a3d; --hdr-accent-dim: rgba(255,138,61,0.16); }
+
 .header-inner {
-  max-width: 1000px;
+  position: relative;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -48,22 +83,59 @@ header.site-header {
   color: var(--text);
 }
 
-.brand .logo { font-size: 26px; }
-.brand h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
-.brand .sub { margin: 2px 0 0; font-size: 12px; color: var(--text-dim); }
+.brand .logo {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--hdr-accent-dim);
+  border: 1px solid color-mix(in srgb, var(--hdr-accent) 45%, transparent);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--hdr-accent) 55%, transparent));
+  transition: transform 0.2s ease;
+}
+
+.brand:hover .logo { transform: rotate(-18deg) scale(1.06); }
+
+.brand h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.brand .sub {
+  margin: 1px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--hdr-accent);
+  opacity: 0.85;
+}
 
 nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 
 nav.tabs a {
+  position: relative;
   color: var(--text-dim);
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   border: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-nav.tabs a:hover { color: var(--text); text-decoration: none; }
-nav.tabs a.active { color: var(--text); background: var(--panel-2); border-color: var(--border); }
+nav.tabs a:hover { color: var(--text); text-decoration: none; border-color: var(--border); }
+
+nav.tabs a.active {
+  color: var(--text);
+  background: var(--hdr-accent-dim);
+  border-color: color-mix(in srgb, var(--hdr-accent) 55%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hdr-accent) 35%, transparent);
+}
 
 main {
   max-width: 1000px;
@@ -188,41 +260,16 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
 /* ---------- Home page hero (photo) ---------- */
 
 .hero-photo {
-  position: relative;
   width: 100%;
-  max-height: 460px;
-  overflow: hidden;
+  max-width: 1392px;
+  margin: 0 auto;
   border-bottom: 1px solid var(--border);
 }
 
 .hero-photo img {
   width: 100%;
-  height: 100%;
-  max-height: 460px;
-  object-fit: cover;
-  object-position: center 35%;
+  height: auto;
   display: block;
-}
-
-.hero-photo-fade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 55%, var(--bg) 100%);
-  pointer-events: none;
-}
-
-.stat-bar {
-  background: var(--bg);
-  padding: 26px 20px 6px;
-}
-
-.stat-bar .stat-strip {
-  margin-top: 0;
-}
-
-@media (max-width: 620px) {
-  .hero-photo { max-height: 220px; }
-  .hero-photo img { max-height: 220px; }
 }
 
 /* ---------- Home page hero (legacy animated version, unused but kept for reference) ---------- */
