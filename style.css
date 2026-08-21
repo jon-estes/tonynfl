@@ -116,6 +116,23 @@ header.site-header::after {
   opacity: 0.9;
 }
 
+.theme-toggle {
+  appearance: none;
+  margin-left: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--hdr-accent) 45%, transparent);
+  background: var(--hdr-accent-dim);
+  color: var(--hdr-accent);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.theme-toggle:hover { background: color-mix(in srgb, var(--hdr-accent) 20%, transparent); }
+
 nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 
 nav.tabs a {
@@ -550,45 +567,85 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   /* root-level tokens: everything built on .card/table/pill/select/banner
      inherits these automatically, flipping to glass-on-photo */
   --bg: #04140b;
-  --panel: rgba(8,24,16,0.60);
-  --panel-2: rgba(12,32,21,0.55);
-  --border: rgba(148,255,190,0.22);
-  --text: #eafff5;
-  --text-dim: #a9e6c4;
+  --panel: rgba(8,26,17,0.76);
+  --panel-2: rgba(13,34,23,0.7);
+  --border: rgba(148,255,190,0.3);
+  --text: #f4fffa;
+  --text-dim: #bdeed3;
   --accent: #39ff8c;
 
   --pk-bg: #04140b;
-  --pk-panel: rgba(8,24,16,0.60);
-  --pk-panel-2: rgba(12,32,21,0.55);
-  --pk-border: rgba(148,255,190,0.22);
+  --pk-panel: rgba(8,26,17,0.76);
+  --pk-panel-2: rgba(13,34,23,0.7);
+  --pk-border: rgba(148,255,190,0.3);
   --pk-green: #39ff8c;
   --pk-green-dim: rgba(57,255,140,0.16);
   --pk-cyan: #22d3ee;
-  --pk-text-dim: #a9e6c4;
+  --pk-text-dim: #bdeed3;
 
-  background-image:
-    linear-gradient(180deg, rgba(2,9,5,0.82) 0%, rgba(2,12,7,0.90) 55%, rgba(1,6,3,0.95) 100%),
-    url("assets/hero-stadium.jpg");
-  background-size: cover, cover;
-  background-position: center, center;
-  background-attachment: fixed, fixed;
-  background-repeat: no-repeat, no-repeat;
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
 }
 
-.pk-page select { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); }
+.pk-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg, rgba(2,9,5,0.72) 0%, rgba(2,12,7,0.85) 45%, rgba(1,6,3,0.94) 100%),
+    url("assets/hero-stadium.jpg");
+  background-size: cover, cover;
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
+}
+
+.pk-photo-hero {
+  position: relative;
+  height: 220px;
+  border-bottom: 1px solid var(--pk-border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 18px;
+  background: linear-gradient(180deg, transparent 0%, rgba(2,12,7,0.55) 100%);
+}
+
+.pk-photo-hero .pk-photo-hero-tag {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #b6ffd9;
+  background: rgba(4,20,11,0.55);
+  border: 1px solid rgba(57,255,140,0.4);
+  padding: 7px 18px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.pk-page select { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--border); }
 .pk-page .pill-win { color: #6ee7a8; }
 .pk-page .pill-loss { color: #ff8b8b; }
 .pk-page .pick-cell.correct { color: #6ee7a8; }
 .pk-page .pick-cell.wrong { color: #ff8b8b; }
-.pk-page .banner { background: rgba(57,255,140,0.10); border-color: rgba(57,255,140,0.3); color: #b6ffd9; }
+.pk-page .banner { background: rgba(57,255,140,0.12); border-color: rgba(57,255,140,0.35); color: #ccffe4; }
 .pk-page .rank-1 td:first-child { color: #ffd54a; }
-.pk-page .rank-2 td:first-child { color: #d7dee6; }
-.pk-page .rank-3 td:first-child { color: #d9a066; }
-.pk-page .card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 34px rgba(0,0,0,0.35); }
+.pk-page .rank-2 td:first-child { color: #e4e9ee; }
+.pk-page .rank-3 td:first-child { color: #e2b183; }
+.pk-page .card {
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.pk-page .card h2 { color: var(--text); }
+.pk-page thead th { color: #d3f5e3; }
 
 @media (max-width: 620px) {
-  .pk-page { background-attachment: scroll, scroll; }
+  .pk-photo-hero { height: 150px; }
+  .pk-photo-hero .pk-photo-hero-tag { font-size: 10px; letter-spacing: 2px; padding: 6px 14px; }
 }
 
 .pk-hero {
@@ -1246,37 +1303,47 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   /* root-level tokens: everything built on .card/table/pill/select/banner
      inherits these automatically, flipping to glass-on-photo */
   --bg: #170905;
-  --panel: rgba(30,13,6,0.60);
-  --panel-2: rgba(38,18,9,0.55);
-  --border: rgba(255,180,120,0.24);
-  --text: #fff3e6;
-  --text-dim: #f0c8a8;
+  --panel: rgba(32,15,7,0.76);
+  --panel-2: rgba(40,20,10,0.7);
+  --border: rgba(255,180,120,0.32);
+  --text: #fff8f0;
+  --text-dim: #ffd9b3;
   --accent: #ff8a3d;
 
-  background-image:
-    linear-gradient(180deg, rgba(10,4,2,0.82) 0%, rgba(12,6,3,0.90) 55%, rgba(6,2,1,0.95) 100%),
-    url("assets/hero-stadium.jpg");
-  background-size: cover, cover;
-  background-position: center, center;
-  background-attachment: fixed, fixed;
-  background-repeat: no-repeat, no-repeat;
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
 }
 
-.el-page select { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); }
+.el-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg, rgba(8,3,2,0.68) 0%, rgba(10,5,3,0.84) 45%, rgba(5,2,1,0.94) 100%),
+    url("assets/hero-stadium.jpg");
+  background-size: cover, cover;
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
+}
+
+.el-page select { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--border); }
 .el-page .pill-win { color: #6ee7a8; }
 .el-page .pill-loss { color: #ff8b8b; }
 .el-page .pick-cell.correct { color: #6ee7a8; }
 .el-page .pick-cell.wrong { color: #ff8b8b; }
-.el-page .banner { background: rgba(234,88,12,0.12); border-color: rgba(234,88,12,0.35); color: #ffd2ac; }
+.el-page .banner { background: rgba(234,88,12,0.14); border-color: rgba(234,88,12,0.4); color: #ffdcb8; }
 .el-page .rank-1 td:first-child { color: #ffb35c; }
-.el-page .rank-2 td:first-child { color: #d7dee6; }
-.el-page .rank-3 td:first-child { color: #d9a066; }
-.el-page .card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 34px rgba(0,0,0,0.35); }
-
-@media (max-width: 620px) {
-  .el-page { background-attachment: scroll, scroll; }
+.el-page .rank-2 td:first-child { color: #e4e9ee; }
+.el-page .rank-3 td:first-child { color: #e2b183; }
+.el-page .card {
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
 }
+.el-page .card h2 { color: var(--text); }
+.el-page thead th { color: #ffe6cc; }
 
 .el-hero {
   position: relative;
@@ -1572,3 +1639,123 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   font-size: 11px;
   color: var(--text-dim);
 }
+
+/* ============================================================
+   WHITE MODE — toggled via the header button, overrides the
+   immersive stadium-photo theme on Pick'em / Eliminator only
+   ============================================================ */
+
+body.pk-page.theme-light {
+  --bg: #ffffff;
+  --panel: #f7f9fb;
+  --panel-2: #f2f8f4;
+  --border: #dbe8e0;
+  --text: #12151a;
+  --text-dim: #5b6472;
+  --accent: #16a34a;
+
+  --pk-bg: #ffffff;
+  --pk-panel: #ffffff;
+  --pk-panel-2: #f2f8f4;
+  --pk-border: #dbe8e0;
+  --pk-green: #16a34a;
+  --pk-green-dim: rgba(22,163,74,0.10);
+  --pk-cyan: #0891b2;
+  --pk-text-dim: #5b6472;
+}
+
+body.el-page.theme-light {
+  --bg: #ffffff;
+  --panel: #f7f9fb;
+  --panel-2: #f2f8f4;
+  --border: #f0e2d6;
+  --text: #12151a;
+  --text-dim: #5b6472;
+  --accent: #ea580c;
+}
+
+body.pk-page.theme-light::before,
+body.el-page.theme-light::before { display: none; }
+
+body.pk-page.theme-light,
+body.el-page.theme-light { background: #ffffff; }
+
+.theme-light .pk-photo-hero { display: none; }
+
+.theme-light .el-hero {
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 30%, rgba(234,88,12,0.09), transparent 70%),
+    linear-gradient(180deg, #fffaf5 0%, #ffffff 60%, var(--bg) 100%);
+}
+
+.theme-light .el-hero h1 {
+  background: linear-gradient(180deg, #ea580c 0%, #c2410c 55%, #9a3412 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: none;
+}
+
+.theme-light .el-hero h2 { color: #7c2d12; }
+.theme-light .el-kicker,
+.theme-light .el-hero .el-tagline { color: #c2410c; }
+.theme-light .el-week-badge { background: rgba(234,88,12,0.06); border-color: rgba(234,88,12,0.35); color: #9a3412; }
+
+.theme-light .card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 4px 18px rgba(18,21,26,0.05);
+}
+.theme-light .card h2 { color: var(--text); }
+.theme-light thead th { color: var(--text-dim); }
+
+.theme-light select { background: #ffffff; color: var(--text); border-color: var(--border); }
+
+.theme-light .pill-win { color: #15803d; }
+.theme-light .pill-loss { color: #b91c1c; }
+.theme-light .pick-cell.correct { color: #15803d; }
+.theme-light .pick-cell.wrong { color: #b91c1c; }
+.theme-light .banner { background: rgba(47,111,237,0.07); border-color: rgba(47,111,237,0.25); color: #1d4ed8; }
+.theme-light .rank-1 td:first-child { color: #b8860b; }
+.theme-light .rank-2 td:first-child { color: #6b7280; }
+.theme-light .rank-3 td:first-child { color: #b06a2e; }
+
+.theme-light .pk-tab { background: #ffffff; }
+.theme-light .pk-game-row { background: #ffffff; }
+.theme-light .pk-pane .rank-1 td:first-child,
+.theme-light .pk-tables .rank-1 td:first-child { color: var(--pk-green); }
+.theme-light .pk-game-row.wrong .pk-mypick-box { background: #dc2626; color: #fff5f5; border-color: #dc2626; }
+.theme-light .pk-game-row.wrong .pk-points-cell { color: #dc2626; }
+.theme-light .pk-card-head h1 { color: var(--text); }
+
+.theme-light .el-body .status-alive { color: #c2410c; }
+.theme-light .el-body .status-out { color: var(--text-dim); }
+.theme-light .el-body .rank-1 td:first-child { color: #c2410c; }
+
+.theme-light .team-tile.used {
+  background: var(--panel-2) !important;
+  color: #9aa1ab;
+}
+.theme-light .team-tile.used::after {
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0px, transparent 9px,
+    rgba(18,21,26,0.10) 9px, rgba(18,21,26,0.10) 10px
+  );
+}
+.theme-light .team-tile.used .team-tag { background: rgba(234,88,12,0.14) !important; color: #9a3412 !important; }
+
+.theme-light .el-alive-chip {
+  background: linear-gradient(180deg, rgba(234,88,12,0.08), rgba(234,88,12,0.02));
+  border-color: rgba(234,88,12,0.4);
+  box-shadow: 0 4px 16px rgba(234,88,12,0.10);
+  animation: none;
+}
+.theme-light .el-flame { filter: none; }
+.theme-light .el-alive-name { color: #7c2d12; text-shadow: none; }
+.theme-light .el-alive-tag { color: #c2410c; }
+
+.theme-light .el-notice-heading { color: #92650a; }
+.theme-light .el-notice-chip { background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.45); color: #92650a; }
+.theme-light .el-notice-name { color: #7a5205; }
+.theme-light .el-notice-tag { color: #92650a; }

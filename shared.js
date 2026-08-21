@@ -241,6 +241,7 @@ function teamName(abbr) {
 function renderHeader(activePage) {
   const mount = document.getElementById("site-header");
   if (!mount) return;
+  const showToggle = document.body.classList.contains("pk-page") || document.body.classList.contains("el-page");
   mount.innerHTML = `
     <div class="header-inner">
       <a href="index.html" class="brand" style="text-decoration:none;">
@@ -255,8 +256,35 @@ function renderHeader(activePage) {
         <a href="pickem.html" class="${activePage === "pickem" ? "active" : ""}">Pick'em</a>
         <a href="eliminator.html" class="${activePage === "eliminator" ? "active" : ""}">Eliminator</a>
       </nav>
+      ${showToggle ? `<button type="button" class="theme-toggle" id="theme-toggle"></button>` : ""}
     </div>
   `;
+  if (showToggle) initThemeToggle();
+}
+
+/* ---------- Light/photo theme toggle (Pick'em + Eliminator only) ---------- */
+
+const THEME_KEY = "vdpool-theme"; // "photo" (default) or "white"
+
+function applyTheme(theme) {
+  document.body.classList.toggle("theme-light", theme === "white");
+  const btn = document.getElementById("theme-toggle");
+  if (btn) {
+    btn.textContent = theme === "white" ? "🌇 Photo Mode" : "☀️ White Mode";
+  }
+}
+
+function initThemeToggle() {
+  let theme = "photo";
+  try { theme = localStorage.getItem(THEME_KEY) || "photo"; } catch (e) {}
+  applyTheme(theme);
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const next = document.body.classList.contains("theme-light") ? "photo" : "white";
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
 }
 
 function renderSampleBanner(state) {

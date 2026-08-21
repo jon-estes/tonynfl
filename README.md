@@ -161,9 +161,13 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
   onto the white background — swap those files (same filenames) any time.
 - **Favicon**: a football icon (`favicon.svg` + PNG/ICO fallbacks) is
   wired into all three pages' browser tabs.
-- **Theme**: the whole site (home, Pick'em, Eliminator) runs on a clean
-  white background with green/orange accents per pool. All colors live in
-  CSS variables at the top of `style.css` if you ever want to retheme it.
+- **Theme**: the home page always runs on a clean white background. Pick'em
+  and Eliminator default to an immersive look with the stadium photo behind
+  glass cards (green accents on Pick'em, fire/orange on Eliminator) — there's
+  a "☀️ White Mode" button in the top-right of the header on both pages that
+  switches them to the same plain white theme as the home page. The choice
+  is remembered per-browser (saved to `localStorage`), and it's just as easy
+  to flip back to the photo look with the same button.
 - **Rules text**: the full Pick'em and Eliminator rules you sent are now
   printed verbatim on their respective pages, and condensed versions
   appear on the two home page cards.
