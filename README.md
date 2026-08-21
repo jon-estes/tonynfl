@@ -1,4 +1,4 @@
-# Vince's Pool
+# Vince and Dave's Pool
 
 A clean, simple site with two NFL pools:
 
@@ -8,12 +8,14 @@ A clean, simple site with two NFL pools:
   points; get it wrong, you win nothing for that pick. Leaderboard tracks
   points per week and cumulative season points, with dropdowns to see any
   player's picks for any specific week.
-- **Eliminator** — pick one team a week to win; lose once and you're out;
-  can't reuse a team. Leaderboard shows who's alive/eliminated, and a
+- **Eliminator** — double elimination: pick one team a week to win, can't
+  reuse a team, and it takes **two** losses to be out. One loss puts a
+  player "on notice" (shown in yellow); a second loss eliminates them.
+  Leaderboard shows who's still alive / on notice / eliminated, and a
   dropdown shows any player's team grid — every NFL team in color, greyed
   out once that player has used it.
 
-The home page is just "Welcome to Vince's Pool" with two cards linking to
+The home page is just "Welcome to Vince and Dave's Pool" with two cards linking to
 each pool.
 
 It's a static site (HTML/CSS/JS) that deploys on Netlify with no backend.
@@ -79,6 +81,11 @@ One row per player per week — just the team they're picking to win that
 week. No `gameId` needed; the site matches the team to that week's game
 in `Schedule` automatically to check the result.
 
+If a player has no eligible team left to pick in a given week, add a row
+for them with `team` set to the special value `MISS` — the site treats
+that as an automatic loss for that week, per the "no teams available =
+loss" rule.
+
 ### 2. Publish each tab as CSV
 
 For **each** of the three tabs: File → Share → Publish to web → choose
@@ -108,24 +115,25 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
 
 ## Eliminator logic notes
 
-- A player is **eliminated** the first week their picked team loses. Their
-  leaderboard row shows "Eliminated — Week X".
+- **Double elimination**: a player is only fully **eliminated** after
+  their *second* losing pick. After the first loss they're marked
+  **"On Notice"** (yellow chip) — still alive, one mistake from being out.
+  Their leaderboard row shows "Eliminated — Week X" once the second loss
+  lands.
 - **"Used" teams** (greyed out in the team grid) are every team that
   player has ever picked, win or lose — since the rule is you can't pick
   the same team twice regardless of outcome.
-- If everyone is eliminated the same week, they're tied — the sheet-based
-  version doesn't auto-split a jackpot dollar amount; that's a judgment
-  call for you as commissioner per your rules ("last survivors go out the
-  same week" = split). The leaderboard sort ranks tied-out players by
-  weeks survived so it's easy to see who to split with.
-- Missing a pick for a week currently just shows nothing for that week
-  rather than auto-counting as a loss (per your rule "no teams available
-  = loss") — let me know if you want a "Bye/Missed" pick to auto-count as
-  eliminated and I'll wire that in.
+- A `MISS` row in `EliminatorPicks` (see above) auto-counts as a loss for
+  that week, per the "no teams available = loss" rule.
+- If multiple players go out in the same week with the same loss count,
+  they're tied for last — per your rules that's a split of the jackpot.
+  That's a judgment call for you as commissioner; the leaderboard groups
+  eliminated players by the week they went out so it's easy to see who to
+  split with.
 
 ## Files
 
-- `index.html` — home page ("Welcome to Vince's Pool" + two pool cards)
+- `index.html` — home page ("Welcome to Vince and Dave's Pool" + two pool cards)
 - `pickem.html` — Pick'em leaderboard + player picks dropdown
 - `eliminator.html` — Eliminator leaderboard + player team-grid dropdown
 - `config.js` — **the file you edit**: sheet links, form links, season info
@@ -148,5 +156,14 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.
+- **Pool card art** on the home page (`assets/pickem-icon.png` and
+  `assets/eliminator-icon.png`) are transparent PNGs, so they drop cleanly
+  onto the white background — swap those files (same filenames) any time.
 - **Favicon**: a football icon (`favicon.svg` + PNG/ICO fallbacks) is
   wired into all three pages' browser tabs.
+- **Theme**: the whole site (home, Pick'em, Eliminator) runs on a clean
+  white background with green/orange accents per pool. All colors live in
+  CSS variables at the top of `style.css` if you ever want to retheme it.
+- **Rules text**: the full Pick'em and Eliminator rules you sent are now
+  printed verbatim on their respective pages, and condensed versions
+  appear on the two home page cards.

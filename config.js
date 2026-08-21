@@ -5,7 +5,7 @@
    ============================================================ */
 
 const POOL_CONFIG = {
-  siteName: "Vince's Pool",
+  siteName: "Vince and Dave's Pool",
   season: 2026,
   currentWeek: 1,
 
@@ -35,9 +35,9 @@ const SAMPLE_SCHEDULE = [
   { week: 1, gameId: "1-5", away: "GB",  home: "MIN", kickoff: "Sun 8:20pm", winner: "" },
   { week: 1, gameId: "1-6", away: "CIN", home: "CLE", kickoff: "Mon 8:15pm", winner: "" },
 
-  { week: 2, gameId: "2-1", away: "BAL", home: "LV",  kickoff: "Sun 1:00pm", winner: "" },
-  { week: 2, gameId: "2-2", away: "DAL", home: "NO",  kickoff: "Sun 1:00pm", winner: "" },
-  { week: 2, gameId: "2-3", away: "DET", home: "TB",  kickoff: "Sun 1:00pm", winner: "" }
+  { week: 2, gameId: "2-1", away: "BAL", home: "LV",  kickoff: "Sun 1:00pm", winner: "BAL" },
+  { week: 2, gameId: "2-2", away: "DAL", home: "NO",  kickoff: "Sun 1:00pm", winner: "NO"  },
+  { week: 2, gameId: "2-3", away: "DET", home: "TB",  kickoff: "Sun 1:00pm", winner: "DET" }
 ];
 
 /* Each player assigns a unique confidence point value to every pick,
@@ -84,5 +84,6 @@ const SAMPLE_ELIMINATOR_PICKS = [
   { player: "Sam",  week: 1, team: "KC"  },
 
   { player: "Jon",  week: 2, team: "DET" },
-  { player: "Tony", week: 2, team: "DAL" }
+  { player: "Tony", week: 2, team: "DAL" },
+  { player: "Sam",  week: 2, team: "LV"  }
 ];

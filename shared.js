@@ -1,4 +1,4 @@
-/* Shared logic for Vince's Pool: loading data from Google Sheets
+/* Shared logic for Vince and Dave's Pool: loading data from Google Sheets
    (CSV) or sample data, and computing Pick'em / Eliminator results. */
 
 /* ---------- Data loading ---------- */
@@ -152,6 +152,19 @@ function findGameForTeamWeek(schedule, week, team) {
   return schedule.find(g => g.week === week && (g.away === team || g.home === team));
 }
 
+/* A pick's team can be a real NFL code, or the special marker "MISS" —
+   used when a player had no eligible teams left to pick that week,
+   which the rules count as an automatic loss. */
+function eliminatorPickResult(schedule, pick) {
+  if (String(pick.team).toUpperCase() === "MISS") return "wrong";
+  const game = findGameForTeamWeek(schedule, pick.week, pick.team);
+  if (!game || !game.winner) return "pending";
+  return game.winner === pick.team ? "correct" : "wrong";
+}
+
+/* Double-elimination: a player is only OUT after their 2nd loss.
+   After their 1st loss they're "on notice" — still alive, one
+   mistake from elimination. */
 function computeEliminatorBoard(schedule, picks) {
   const players = getPlayers(picks);
 
@@ -160,34 +173,42 @@ function computeEliminatorBoard(schedule, picks) {
       .filter(p => p.player === player)
       .sort((a, b) => a.week - b.week);
 
+    let losses = 0;
+    let firstLossWeek = null;
     let eliminatedWeek = null;
     let weeksSurvived = 0;
     const detail = [];
 
     playerPicks.forEach(p => {
-      const game = findGameForTeamWeek(schedule, p.week, p.team);
-      let result = "pending";
-      if (game && game.winner) {
-        result = game.winner === p.team ? "correct" : "wrong";
-      }
+      const result = eliminatorPickResult(schedule, p);
       if (result === "correct") weeksSurvived++;
-      if (result === "wrong" && eliminatedWeek === null) eliminatedWeek = p.week;
+      if (result === "wrong") {
+        losses++;
+        if (losses === 1) firstLossWeek = p.week;
+        if (losses === 2 && eliminatedWeek === null) eliminatedWeek = p.week;
+      }
       detail.push({ week: p.week, team: p.team, result });
     });
+
+    const status = losses >= 2 ? "eliminated" : (losses === 1 ? "onNotice" : "alive");
 
     return {
       player,
       picks: playerPicks,
       detail,
+      losses,
+      firstLossWeek,
       eliminatedWeek,
-      alive: eliminatedWeek === null,
+      status,
+      alive: status !== "eliminated",
       weeksSurvived
     };
   });
 
+  const statusRank = { alive: 0, onNotice: 1, eliminated: 2 };
   board.sort((a, b) => {
-    if (a.alive !== b.alive) return a.alive ? -1 : 1;
-    if (!a.alive && !b.alive) return b.eliminatedWeek - a.eliminatedWeek;
+    if (a.status !== b.status) return statusRank[a.status] - statusRank[b.status];
+    if (a.status === "eliminated") return b.eliminatedWeek - a.eliminatedWeek;
     return b.weeksSurvived - a.weeksSurvived;
   });
 
