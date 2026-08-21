@@ -255,8 +255,8 @@ function renderHeader(activePage) {
         <a href="index.html" class="${activePage === "home" ? "active" : ""}">Home</a>
         <a href="pickem.html" class="${activePage === "pickem" ? "active" : ""}">Pick'em</a>
         <a href="eliminator.html" class="${activePage === "eliminator" ? "active" : ""}">Eliminator</a>
+        ${showToggle ? `<button type="button" class="theme-toggle" id="theme-toggle"></button>` : ""}
       </nav>
-      ${showToggle ? `<button type="button" class="theme-toggle" id="theme-toggle"></button>` : ""}
     </div>
   `;
   if (showToggle) initThemeToggle();
@@ -270,7 +270,7 @@ function applyTheme(theme) {
   document.body.classList.toggle("theme-light", theme === "white");
   const btn = document.getElementById("theme-toggle");
   if (btn) {
-    btn.textContent = theme === "white" ? "🌇 Photo Mode" : "☀️ White Mode";
+    btn.textContent = theme === "white" ? "Dave's View" : "Vince's View";
   }
 }
 
