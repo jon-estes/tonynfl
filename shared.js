@@ -16,9 +16,33 @@ function normalizeSchedule(rows) {
     gameId: String(r.gameId).trim(),
     away: String(r.away).trim().toUpperCase(),
     home: String(r.home).trim().toUpperCase(),
+    date: r.date || "",
     kickoff: r.kickoff || "",
     winner: (r.winner || "").trim().toUpperCase()
   }));
+}
+
+/* A game's "day" label for the print sheet's day-grouped layout.
+   Prefers an explicit `date` column (e.g. "Sun Sep 13"); falls back to
+   splitting an old-style combined kickoff string like "Sun 1:00pm". */
+function dayLabelForGame(g) {
+  if (g.date) return g.date;
+  if (g.kickoff) {
+    const parts = String(g.kickoff).trim().split(/\s+/);
+    if (parts.length > 1) return parts[0];
+  }
+  return "";
+}
+
+/* The time-only portion of a game's kickoff, for use alongside
+   dayLabelForGame() above. */
+function timeOnlyForGame(g) {
+  if (g.date) return g.kickoff || "";
+  if (g.kickoff) {
+    const parts = String(g.kickoff).trim().split(/\s+/);
+    if (parts.length > 1) return parts.slice(1).join(" ");
+  }
+  return g.kickoff || "";
 }
 
 function normalizePickemPicks(rows) {

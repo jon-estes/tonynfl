@@ -17,22 +17,41 @@
 
   <div class="card print-sheet-head" id="week-head">
     <a href="schedule.html" class="back-link" data-no-print>← All Weeks</a>
-    <h2 id="week-title">Week —</h2>
-    <p>Fill in the team you're picking and the confidence points you're assigning (1 to the number of games that week, no repeats), then submit your numbers on the Google Form below.</p>
     <div class="print-actions" data-no-print>
-      <a class="btn" id="form-link" href="#" target="_blank" rel="noopener">Submit Your Picks →</a>
-      <button type="button" class="btn btn-secondary" id="print-btn">🖨️ Print This Sheet</button>
+      <button type="button" class="btn btn-secondary" id="print-btn">⬇️ Download / Print Sheet</button>
+      <a class="btn" id="form-link" href="#" target="_blank" rel="noopener">📝 Submit on Google Form</a>
     </div>
   </div>
 
-  <div class="card">
-    <div class="print-sheet-table-wrap">
-      <table class="print-sheet-table" id="sheet-table"></table>
+  <div class="card ps-sheet" id="ps-sheet">
+    <div class="ps-title-wrap">
+      <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
+    <p class="ps-instructions">Check the team you're picking to win each game, then assign it a confidence point (1 up to the number of games this week — use each value only once). Fill in your name and submit your numbers on the Google Form.</p>
+
+    <div id="ps-groups"></div>
+
+    <div class="ps-tiebreak" id="ps-tiebreak" hidden>
+      <span class="ps-tiebreak-label">Tiebreaker — total combined points, <span id="ps-tiebreak-game"></span>:</span>
+      <input type="text" class="ps-input ps-tiebreak-input" aria-label="Tiebreaker guess">
+    </div>
+
+    <div class="ps-footer">
+      <div class="ps-footer-field">
+        <label for="ps-name">Name</label>
+        <input type="text" id="ps-name" class="ps-input">
+      </div>
+      <div class="ps-footer-field">
+        <label for="ps-total">Total Correct</label>
+        <input type="text" id="ps-total" class="ps-input ps-footer-narrow">
+      </div>
+    </div>
+
+    <p class="ps-brand">Vince and Dave's Pool</p>
   </div>
 
   <div class="card" data-no-print>
-    <a class="btn" id="form-link-2" href="#" target="_blank" rel="noopener">Submit Your Picks →</a>
+    <a class="btn" id="form-link-2" href="#" target="_blank" rel="noopener">📝 Submit on Google Form</a>
   </div>
 </main>
 
@@ -50,33 +69,79 @@
 
   const params = new URLSearchParams(window.location.search);
   const week = parseInt(params.get("week"), 10);
-  const games = state.schedule.filter(g => g.week === week).slice().sort((a, b) => String(a.gameId).localeCompare(String(b.gameId)));
+  const gameIdNum = id => {
+    const parts = String(id).split("-");
+    return parseInt(parts[parts.length - 1], 10) || 0;
+  };
+  const games = state.schedule.filter(g => g.week === week).slice().sort((a, b) => gameIdNum(a.gameId) - gameIdNum(b.gameId));
 
   document.getElementById("form-link").href = POOL_CONFIG.pickemFormUrl;
   document.getElementById("form-link-2").href = POOL_CONFIG.pickemFormUrl;
 
   if (!week || !games.length) {
-    document.getElementById("week-title").textContent = "Week not found";
-    document.querySelector(".print-sheet-table-wrap").innerHTML =
+    document.getElementById("ps-title").textContent = "Week not found";
+    document.getElementById("ps-instructions").textContent = "";
+    document.getElementById("ps-groups").innerHTML =
       `<div class="empty-state">Couldn't find that week. <a href="schedule.html">Pick a week from the list</a>.</div>`;
     return;
   }
 
-  document.getElementById("week-title").textContent = `Week ${week} — Print & Fill Sheet`;
+  document.getElementById("ps-title").textContent = `WEEK ${week} PICK SHEET ${POOL_CONFIG.season}`;
+  document.querySelector(".ps-brand").textContent = `Vince and Dave's Pool — ${POOL_CONFIG.season} Season, Week ${week}`;
 
-  const table = document.getElementById("sheet-table");
-  let html = "<thead><tr><th>Matchup</th><th>Kickoff</th><th>My Pick</th><th>Points</th></tr></thead><tbody>";
-  games.forEach((g, i) => {
-    html += `
-      <tr>
-        <td class="ps-matchup">${teamName(g.away)} <span class="ps-at">@</span> ${teamName(g.home)}</td>
-        <td class="ps-kickoff">${g.kickoff || ""}</td>
-        <td class="ps-fill"><input type="text" class="ps-input" placeholder="team" aria-label="Pick for game ${i + 1}"></td>
-        <td class="ps-fill ps-fill-narrow"><input type="text" class="ps-input" placeholder="pts" aria-label="Points for game ${i + 1}"></td>
-      </tr>`;
+  /* Group games by day, in original schedule order */
+  const groups = [];
+  games.forEach(g => {
+    const label = dayLabelForGame(g) || "Game Day";
+    let grp = groups.find(x => x.label === label);
+    if (!grp) { grp = { label, games: [] }; groups.push(grp); }
+    grp.games.push(g);
   });
-  html += "</tbody>";
-  table.innerHTML = html;
+
+  const groupsHtml = groups.map(grp => `
+    <div class="ps-day-block">
+      <div class="ps-day-heading">${grp.label}</div>
+      <div class="ps-day-rows">
+        ${grp.games.map((g, i) => {
+          const idx = games.indexOf(g);
+          return `
+          <div class="ps-day-row">
+            <label class="ps-team ps-team-away">
+              <input type="checkbox" class="ps-check" data-row="${idx}" data-side="away">
+              <span>${teamName(g.away)}</span>
+            </label>
+            <span class="ps-vs">@</span>
+            <label class="ps-team ps-team-home">
+              <input type="checkbox" class="ps-check" data-row="${idx}" data-side="home">
+              <span>${teamName(g.home)}</span>
+            </label>
+            <span class="ps-time">${timeOnlyForGame(g)}</span>
+            <input type="text" class="ps-input ps-pts" placeholder="pts" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  document.getElementById("ps-groups").innerHTML = groupsHtml;
+
+  /* Make the away/home checkboxes for each row mutually exclusive */
+  document.querySelectorAll(".ps-check").forEach(box => {
+    box.addEventListener("change", () => {
+      if (!box.checked) return;
+      const row = box.getAttribute("data-row");
+      document.querySelectorAll(`.ps-check[data-row="${row}"]`).forEach(other => {
+        if (other !== box) other.checked = false;
+      });
+    });
+  });
+
+  /* Tiebreaker: total combined points of the week's last game */
+  const lastGame = games[games.length - 1];
+  if (lastGame) {
+    document.getElementById("ps-tiebreak").hidden = false;
+    document.getElementById("ps-tiebreak-game").textContent = `${teamName(lastGame.away)} @ ${teamName(lastGame.home)}`;
+  }
 
   document.getElementById("print-btn").addEventListener("click", () => window.print());
 })();

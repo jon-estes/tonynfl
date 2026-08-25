@@ -45,11 +45,14 @@
 
   mount.innerHTML = weeks.map(w => {
     const games = state.schedule.filter(g => g.week === w);
-    const firstKickoff = games[0] ? games[0].kickoff : "";
+    const first = games[0];
+    const day = first ? dayLabelForGame(first) : "";
+    const time = first ? timeOnlyForGame(first) : "";
+    const starts = [day, time].filter(Boolean).join(" ");
     return `
       <a class="week-card" href="week.html?week=${w}">
         <div class="week-card-num">Week ${w}</div>
-        <div class="week-card-meta">${games.length} game${games.length === 1 ? "" : "s"}${firstKickoff ? " · starts " + firstKickoff : ""}</div>
+        <div class="week-card-meta">${games.length} game${games.length === 1 ? "" : "s"}${starts ? " · starts " + starts : ""}</div>
         <div class="go">Print Sheet <span class="arrow">→</span></div>
       </a>
     `;
