@@ -52,9 +52,22 @@ const SAMPLE_SCHEDULE = [
   { week: 1, gameId: "1-15", away: "DAL", home: "NYG", date: "Sun Sep 13", kickoff: "5:20pm",  winner: "" },
   { week: 1, gameId: "1-16", away: "DEN", home: "KC",  date: "Mon Sep 14", kickoff: "5:15pm",  winner: "" },
 
-  { week: 2, gameId: "2-1", away: "BAL", home: "LV",  kickoff: "Sun 1:00pm", winner: "BAL" },
-  { week: 2, gameId: "2-2", away: "DAL", home: "NO",  kickoff: "Sun 1:00pm", winner: "NO"  },
-  { week: 2, gameId: "2-3", away: "DET", home: "TB",  kickoff: "Sun 1:00pm", winner: "DET" }
+  { week: 2, gameId: "2-1",  away: "DET", home: "BUF", date: "Thu Sep 17", kickoff: "5:15pm",  winner: "DET" },
+  { week: 2, gameId: "2-2",  away: "CAR", home: "ATL", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-3",  away: "MIN", home: "CHI", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-4",  away: "PHI", home: "TEN", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-5",  away: "PIT", home: "NE",  date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-6",  away: "GB",  home: "NYJ", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-7",  away: "CLE", home: "TB",  date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-8",  away: "NO",  home: "BAL", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-9",  away: "CIN", home: "HOU", date: "Sun Sep 20", kickoff: "10:00am", winner: "" },
+  { week: 2, gameId: "2-10", away: "JAX", home: "DEN", date: "Sun Sep 20", kickoff: "1:05pm",  winner: "" },
+  { week: 2, gameId: "2-11", away: "LV",  home: "LAC", date: "Sun Sep 20", kickoff: "1:05pm",  winner: "" },
+  { week: 2, gameId: "2-12", away: "WAS", home: "DAL", date: "Sun Sep 20", kickoff: "1:25pm",  winner: "" },
+  { week: 2, gameId: "2-13", away: "SEA", home: "ARI", date: "Sun Sep 20", kickoff: "1:25pm",  winner: "" },
+  { week: 2, gameId: "2-14", away: "MIA", home: "SF",  date: "Sun Sep 20", kickoff: "1:25pm",  winner: "SF" },
+  { week: 2, gameId: "2-15", away: "IND", home: "KC",  date: "Sun Sep 20", kickoff: "5:20pm",  winner: "" },
+  { week: 2, gameId: "2-16", away: "NYG", home: "LAR", date: "Mon Sep 21", kickoff: "5:15pm",  winner: "" }
 ];
 
 /* Each player assigns a unique confidence point value to every pick,
@@ -113,17 +126,57 @@ const SAMPLE_PICKEM_PICKS = [
   { player: "Sam",  week: 1, gameId: "1-15", pick: "NYG", points: 15 },
   { player: "Sam",  week: 1, gameId: "1-16", pick: "KC",  points: 16 },
 
-  { player: "Jon",  week: 2, gameId: "2-1", pick: "BAL", points: 3 },
-  { player: "Jon",  week: 2, gameId: "2-2", pick: "NO",  points: 2 },
-  { player: "Jon",  week: 2, gameId: "2-3", pick: "DET", points: 1 },
+  // Week 2 — all 16 real games, confidence points 1-16 (unique per player)
+  { player: "Jon",  week: 2, gameId: "2-1",  pick: "DET", points: 16 },
+  { player: "Jon",  week: 2, gameId: "2-2",  pick: "CAR", points: 14 },
+  { player: "Jon",  week: 2, gameId: "2-3",  pick: "MIN", points: 13 },
+  { player: "Jon",  week: 2, gameId: "2-4",  pick: "PHI", points: 12 },
+  { player: "Jon",  week: 2, gameId: "2-5",  pick: "PIT", points: 11 },
+  { player: "Jon",  week: 2, gameId: "2-6",  pick: "GB",  points: 10 },
+  { player: "Jon",  week: 2, gameId: "2-7",  pick: "CLE", points: 9 },
+  { player: "Jon",  week: 2, gameId: "2-8",  pick: "NO",  points: 8 },
+  { player: "Jon",  week: 2, gameId: "2-9",  pick: "CIN", points: 7 },
+  { player: "Jon",  week: 2, gameId: "2-10", pick: "JAX", points: 6 },
+  { player: "Jon",  week: 2, gameId: "2-11", pick: "LV",  points: 5 },
+  { player: "Jon",  week: 2, gameId: "2-12", pick: "WAS", points: 4 },
+  { player: "Jon",  week: 2, gameId: "2-13", pick: "SEA", points: 3 },
+  { player: "Jon",  week: 2, gameId: "2-14", pick: "SF",  points: 15 },
+  { player: "Jon",  week: 2, gameId: "2-15", pick: "IND", points: 2 },
+  { player: "Jon",  week: 2, gameId: "2-16", pick: "NYG", points: 1 },
 
-  { player: "Tony", week: 2, gameId: "2-1", pick: "LV",  points: 1 },
-  { player: "Tony", week: 2, gameId: "2-2", pick: "DAL", points: 3 },
-  { player: "Tony", week: 2, gameId: "2-3", pick: "TB",  points: 2 },
+  { player: "Tony", week: 2, gameId: "2-1",  pick: "BUF", points: 1 },
+  { player: "Tony", week: 2, gameId: "2-2",  pick: "ATL", points: 3 },
+  { player: "Tony", week: 2, gameId: "2-3",  pick: "CHI", points: 4 },
+  { player: "Tony", week: 2, gameId: "2-4",  pick: "TEN", points: 5 },
+  { player: "Tony", week: 2, gameId: "2-5",  pick: "NE",  points: 6 },
+  { player: "Tony", week: 2, gameId: "2-6",  pick: "NYJ", points: 7 },
+  { player: "Tony", week: 2, gameId: "2-7",  pick: "TB",  points: 8 },
+  { player: "Tony", week: 2, gameId: "2-8",  pick: "BAL", points: 9 },
+  { player: "Tony", week: 2, gameId: "2-9",  pick: "HOU", points: 10 },
+  { player: "Tony", week: 2, gameId: "2-10", pick: "DEN", points: 11 },
+  { player: "Tony", week: 2, gameId: "2-11", pick: "LAC", points: 12 },
+  { player: "Tony", week: 2, gameId: "2-12", pick: "DAL", points: 13 },
+  { player: "Tony", week: 2, gameId: "2-13", pick: "ARI", points: 14 },
+  { player: "Tony", week: 2, gameId: "2-14", pick: "MIA", points: 2 },
+  { player: "Tony", week: 2, gameId: "2-15", pick: "KC",  points: 15 },
+  { player: "Tony", week: 2, gameId: "2-16", pick: "LAR", points: 16 },
 
-  { player: "Sam",  week: 2, gameId: "2-1", pick: "BAL", points: 2 },
-  { player: "Sam",  week: 2, gameId: "2-2", pick: "DAL", points: 3 },
-  { player: "Sam",  week: 2, gameId: "2-3", pick: "DET", points: 1 }
+  { player: "Sam",  week: 2, gameId: "2-1",  pick: "DET", points: 9 },
+  { player: "Sam",  week: 2, gameId: "2-2",  pick: "CAR", points: 1 },
+  { player: "Sam",  week: 2, gameId: "2-3",  pick: "MIN", points: 2 },
+  { player: "Sam",  week: 2, gameId: "2-4",  pick: "PHI", points: 3 },
+  { player: "Sam",  week: 2, gameId: "2-5",  pick: "PIT", points: 4 },
+  { player: "Sam",  week: 2, gameId: "2-6",  pick: "GB",  points: 5 },
+  { player: "Sam",  week: 2, gameId: "2-7",  pick: "CLE", points: 6 },
+  { player: "Sam",  week: 2, gameId: "2-8",  pick: "NO",  points: 7 },
+  { player: "Sam",  week: 2, gameId: "2-9",  pick: "CIN", points: 8 },
+  { player: "Sam",  week: 2, gameId: "2-10", pick: "JAX", points: 10 },
+  { player: "Sam",  week: 2, gameId: "2-11", pick: "LV",  points: 11 },
+  { player: "Sam",  week: 2, gameId: "2-12", pick: "WAS", points: 12 },
+  { player: "Sam",  week: 2, gameId: "2-13", pick: "SEA", points: 13 },
+  { player: "Sam",  week: 2, gameId: "2-14", pick: "SF",  points: 14 },
+  { player: "Sam",  week: 2, gameId: "2-15", pick: "IND", points: 15 },
+  { player: "Sam",  week: 2, gameId: "2-16", pick: "NYG", points: 16 }
 ];
 
 /* ============================================================
@@ -161,6 +214,6 @@ const SAMPLE_ELIMINATOR_PICKS = [
   { player: "Sam",  week: 1, team: "HOU" },
 
   { player: "Jon",  week: 2, team: "DET" },
-  { player: "Tony", week: 2, team: "DAL" },
-  { player: "Sam",  week: 2, team: "LV"  }
+  { player: "Tony", week: 2, team: "BUF" },
+  { player: "Sam",  week: 2, team: "MIA" }
 ];
