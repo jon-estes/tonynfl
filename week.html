@@ -28,6 +28,7 @@
     <p class="ps-honeypot"><label>Don't fill this out: <input name="bot-field"></label></p>
     <input type="hidden" name="week" id="ps-field-week">
     <input type="hidden" name="season" id="ps-field-season">
+    <input type="hidden" name="picks_json" id="ps-field-picks-json">
 
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
@@ -68,7 +69,14 @@
   could ever be submitted so it registers the form and its columns. The real,
   visible form above (built dynamically per-week by JavaScript) reuses these
   exact field names when it submits, since Netlify can't see JS-rendered
-  markup on its own. Covers up to 16 games, the most any NFL week has.
+  markup on its own.
+
+  All the individual per-game picks travel in ONE field (picks_json, a JSON
+  string) rather than separate pick_1/points_1/pick_2/points_2/... fields —
+  Netlify silently drops fields on forms with a lot of them (a form with a
+  couple dozen dynamically-named fields loses everything past the basics),
+  so packing them into a single field keeps the field count small and fixed
+  no matter how many games are in a week.
 -->
 <form name="picks" data-netlify="true" netlify-honeypot="bot-field" hidden>
   <input name="bot-field">
@@ -76,70 +84,7 @@
   <input name="season">
   <input name="player">
   <input name="eliminator_team">
-  <input name="matchup_1">
-  <input name="gameid_1">
-  <input name="pick_1">
-  <input name="points_1">
-  <input name="matchup_2">
-  <input name="gameid_2">
-  <input name="pick_2">
-  <input name="points_2">
-  <input name="matchup_3">
-  <input name="gameid_3">
-  <input name="pick_3">
-  <input name="points_3">
-  <input name="matchup_4">
-  <input name="gameid_4">
-  <input name="pick_4">
-  <input name="points_4">
-  <input name="matchup_5">
-  <input name="gameid_5">
-  <input name="pick_5">
-  <input name="points_5">
-  <input name="matchup_6">
-  <input name="gameid_6">
-  <input name="pick_6">
-  <input name="points_6">
-  <input name="matchup_7">
-  <input name="gameid_7">
-  <input name="pick_7">
-  <input name="points_7">
-  <input name="matchup_8">
-  <input name="gameid_8">
-  <input name="pick_8">
-  <input name="points_8">
-  <input name="matchup_9">
-  <input name="gameid_9">
-  <input name="pick_9">
-  <input name="points_9">
-  <input name="matchup_10">
-  <input name="gameid_10">
-  <input name="pick_10">
-  <input name="points_10">
-  <input name="matchup_11">
-  <input name="gameid_11">
-  <input name="pick_11">
-  <input name="points_11">
-  <input name="matchup_12">
-  <input name="gameid_12">
-  <input name="pick_12">
-  <input name="points_12">
-  <input name="matchup_13">
-  <input name="gameid_13">
-  <input name="pick_13">
-  <input name="points_13">
-  <input name="matchup_14">
-  <input name="gameid_14">
-  <input name="pick_14">
-  <input name="points_14">
-  <input name="matchup_15">
-  <input name="gameid_15">
-  <input name="pick_15">
-  <input name="points_15">
-  <input name="matchup_16">
-  <input name="gameid_16">
-  <input name="pick_16">
-  <input name="points_16">
+  <input name="picks_json">
 </form>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -188,9 +133,9 @@
       <div class="ps-day-heading">${grp.label}</div>
       <div class="ps-day-rows">
         ${grp.games.map(g => {
-          const idx = games.indexOf(g) + 1; // 1-based, matches pick_N / points_N field names
+          const idx = games.indexOf(g) + 1; // 1-based row id, used only to group each game's controls
           return `
-          <div class="ps-day-row" data-row="${idx}">
+          <div class="ps-day-row" data-row="${idx}" data-gameid="${g.gameId}" data-matchup="${teamName(g.away)} @ ${teamName(g.home)}">
             <label class="ps-team ps-team-away">
               <input type="checkbox" class="ps-check" data-row="${idx}" data-side="away" data-code="${g.away}">
               <span>${teamName(g.away)}</span>
@@ -201,13 +146,10 @@
               <span>${teamName(g.home)}</span>
             </label>
             <span class="ps-time">${timeOnlyForGame(g)}</span>
-            <select class="ps-input ps-pts ps-pts-select" name="points_${idx}" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
+            <select class="ps-input ps-pts ps-pts-select" data-row="${idx}" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
               <option value="">pts</option>
               ${games.map((_, n) => `<option value="${n + 1}">${n + 1}</option>`).join("")}
             </select>
-            <input type="hidden" name="pick_${idx}" data-row="${idx}" value="">
-            <input type="hidden" name="gameid_${idx}" value="${g.gameId}">
-            <input type="hidden" name="matchup_${idx}" value="${teamName(g.away)} @ ${teamName(g.home)}">
           </div>`;
         }).join("")}
       </div>
@@ -216,20 +158,14 @@
 
   document.getElementById("ps-groups").innerHTML = groupsHtml;
 
-  /* Make the away/home checkboxes for each row mutually exclusive, and
-     record the picked team's code into that row's hidden pick_N field. */
+  /* Make the away/home checkboxes for each row mutually exclusive. */
   document.querySelectorAll(".ps-check").forEach(box => {
     box.addEventListener("change", () => {
+      if (!box.checked) return;
       const row = box.getAttribute("data-row");
-      const hiddenPick = document.querySelector(`input[type="hidden"][name="pick_${row}"]`);
-      if (box.checked) {
-        document.querySelectorAll(`.ps-check[data-row="${row}"]`).forEach(other => {
-          if (other !== box) other.checked = false;
-        });
-        if (hiddenPick) hiddenPick.value = box.getAttribute("data-code");
-      } else if (hiddenPick) {
-        hiddenPick.value = "";
-      }
+      document.querySelectorAll(`.ps-check[data-row="${row}"]`).forEach(other => {
+        if (other !== box) other.checked = false;
+      });
     });
   });
 
@@ -289,21 +225,38 @@
     return new URLSearchParams(new FormData(form)).toString();
   }
 
+  /* Reads the current checkbox/dropdown state straight out of the DOM and
+     packs it into one JSON array — this is what actually gets submitted,
+     instead of dozens of separate pick_N/points_N fields (see the bait-form
+     comment above for why). */
+  function collectPicks() {
+    const rows = Array.from(document.querySelectorAll(".ps-day-row"));
+    return rows.map(row => {
+      const idx = row.getAttribute("data-row");
+      const checked = row.querySelector(".ps-check:checked");
+      const pointsSelect = row.querySelector(".ps-pts-select");
+      return {
+        gameId: row.getAttribute("data-gameid"),
+        matchup: row.getAttribute("data-matchup"),
+        pick: checked ? checked.getAttribute("data-code") : "",
+        points: pointsSelect ? pointsSelect.value : ""
+      };
+    }).filter(p => p.pick || p.points);
+  }
+
   sheetForm.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!sheetForm.reportValidity()) return;
 
-    const anyPickemPick = games.some((g, n) => {
-      const idx = n + 1;
-      const hidden = document.querySelector(`input[type="hidden"][name="pick_${idx}"]`);
-      return hidden && hidden.value;
-    });
+    const picks = collectPicks();
     const hasElimPick = !!elimSelect.value;
-    if (!anyPickemPick && !hasElimPick) {
+    if (!picks.length && !hasElimPick) {
       statusEl.textContent = "Pick at least one team (Pick'em or Eliminator) before submitting.";
       statusEl.className = "ps-submit-status ps-submit-error";
       return;
     }
+
+    document.getElementById("ps-field-picks-json").value = JSON.stringify(picks);
 
     statusEl.textContent = "Submitting…";
     statusEl.className = "ps-submit-status";
