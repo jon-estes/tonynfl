@@ -1953,6 +1953,17 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .ps-footer-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
 .ps-footer-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); font-weight: 700; }
 
+.ps-footer-top {
+  margin-top: 0;
+  margin-bottom: 18px;
+  padding-top: 0;
+  padding-bottom: 16px;
+  border-top: none;
+  border-bottom: 1px solid var(--border);
+}
+.ps-footer-top .ps-footer-field { max-width: 280px; }
+.ps-footer-top select.ps-input { appearance: auto; cursor: pointer; }
+
 .ps-brand {
   text-align: center;
   font-size: 11px;

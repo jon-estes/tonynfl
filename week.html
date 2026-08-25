@@ -33,23 +33,25 @@
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
-    <p class="ps-instructions">Check the team you're picking to win each game, then assign it a confidence point from the dropdown (1 up to the number of games this week — each value can only be used once). Fill in your name below and hit Submit My Picks — no separate form to visit.</p>
+    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown (1 up to the number of games this week — each value can only be used once). Hit Submit My Picks when you're done — no separate form to visit.</p>
+
+    <div class="ps-footer ps-footer-top">
+      <div class="ps-footer-field">
+        <label for="ps-name">Name</label>
+        <select id="ps-name" name="player" class="ps-input" required>
+          <option value="">— select your name —</option>
+        </select>
+      </div>
+    </div>
 
     <div id="ps-groups"></div>
 
     <div class="ps-elim-block" id="ps-elim-block">
       <div class="ps-elim-heading">Eliminator Pick</div>
-      <p class="ps-elim-hint">Pick one team from this week's games to win. Teams you've already used this season are greyed out — fill in your name above first so we can check.</p>
+      <p class="ps-elim-hint">Pick one team from this week's games to win. Teams you've already used this season are greyed out — pick your name above first so we can check.</p>
       <select class="ps-input ps-elim-select" id="ps-elim-select" name="eliminator_team">
         <option value="">— no eliminator pick this week —</option>
       </select>
-    </div>
-
-    <div class="ps-footer">
-      <div class="ps-footer-field">
-        <label for="ps-name">Name</label>
-        <input type="text" id="ps-name" name="player" class="ps-input" required>
-      </div>
     </div>
 
     <div class="ps-submit-row" data-no-print>
@@ -186,8 +188,19 @@
   ptsSelects.forEach(select => select.addEventListener("change", refreshPointsOptions));
   refreshPointsOptions();
 
+  /* Name dropdown, populated from POOL_CONFIG.players so submissions
+     always match a real roster name — that's what lets the Eliminator
+     pick reliably check "which teams has this player already used". */
+  const nameSelect = document.getElementById("ps-name");
+  (POOL_CONFIG.players || []).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    nameSelect.appendChild(opt);
+  });
+
   /* Eliminator pick: one dropdown of this week's teams. Greys out any
-     team the typed-in player has already used in a previous (or this)
+     team the selected player has already used in a previous (or this)
      week, matched case-insensitively against EliminatorPicks. */
   const elimSelect = document.getElementById("ps-elim-select");
   const weekTeamCodes = [...new Set(games.flatMap(g => [g.away, g.home]))]
@@ -200,8 +213,8 @@
   });
 
   function refreshEliminatorOptions() {
-    const typedName = document.getElementById("ps-name").value.trim().toLowerCase();
-    const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === typedName);
+    const selectedName = nameSelect.value.trim().toLowerCase();
+    const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === selectedName);
     const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer) : new Set();
     Array.from(elimSelect.options).forEach(opt => {
       if (!opt.value) return;
@@ -210,7 +223,7 @@
       opt.textContent = alreadyUsed ? `${teamName(opt.value)} (already used)` : teamName(opt.value);
     });
   }
-  document.getElementById("ps-name").addEventListener("input", refreshEliminatorOptions);
+  nameSelect.addEventListener("change", refreshEliminatorOptions);
   refreshEliminatorOptions();
 
   document.getElementById("print-btn").addEventListener("click", () => window.print());

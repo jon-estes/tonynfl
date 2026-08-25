@@ -24,7 +24,15 @@ const POOL_CONFIG = {
      unused — kept only in case you ever want a fallback link somewhere.
      Eliminator picks still go through this combined Google Form. */
   pickemFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform",
-  eliminatorFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform"
+  eliminatorFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform",
+
+  /* ---- Player list ----
+     The Name field on the print sheet (week.html) is a dropdown built
+     from this list, so submissions always match a real player and we
+     can reliably check "which teams has this player already used" for
+     the Eliminator pick. Replace with the final roster whenever you're
+     ready — just names, in whatever order you want them to appear. */
+  players: ["Jon", "Tony", "Sam"]
 };
 
 /* ============================================================
