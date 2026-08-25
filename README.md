@@ -16,9 +16,12 @@ A clean, simple site with two NFL pools:
   out once that player has used it.
 
 There's also a **Weekly Print Sheets** page: pick a week, get a clean
-printable (or fill-in-on-screen) sheet of that week's Pick'em matchups
-with blank spots for your team pick and points, plus a link straight to
-the Google Form to submit them.
+printable (or fill-in-on-screen) sheet of that week's Pick'em matchups,
+grouped by day, with checkboxes for your picks and a spot for your
+confidence points. Submissions go straight to **Netlify Forms** —
+right there on the page, no separate Google Form to visit — and (once
+you wire up the optional automation below) they land in the
+PickemPicks tab automatically.
 
 The home page is "Welcome to Vince and Dave's Pool" with three cards
 linking to Pick'em, Eliminator, and the Weekly Print Sheets.
@@ -30,13 +33,18 @@ spreadsheet, not touching code.
 
 ## How it works
 
-- **Two Google Forms** — one for Pick'em picks, one for Eliminator picks.
-  Responses land automatically in Google Sheets.
+- **Pick'em picks** are submitted right on the `week.html` print sheet via
+  **Netlify Forms** — no separate form to visit. **Eliminator picks** still
+  go through a Google Form for now (see `eliminatorFormUrl` in
+  `config.js`) — this could move to Netlify Forms too later if you want.
 - **One Google Sheet, four tabs** — `Schedule`, `PickemPicks`,
   `EliminatorPicks`, `Content` — each published as a CSV link.
 - **The website** fetches those CSV links live in the browser and renders
   both leaderboards (and the rules text). No database, no server, no
   rebuild needed to post new results or edit copy — just edit the sheet.
+- **Optional automation** (see below): a free Google Apps Script can pull
+  Netlify Form submissions and ESPN's final scores into the Sheet
+  automatically, so the whole thing runs itself week to week.
 
 Until you connect a real sheet, the site shows built-in sample data so you
 can see exactly how it will look and feel.
@@ -142,6 +150,73 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
 2. That's it — both leaderboards, the Pick'em player detail view, and the
    Eliminator team-availability grid all recompute automatically.
 
+(Steps 1–2 above happen automatically once you set up the optional
+automation below — see "Automating submissions & scores.")
+
+## Automating submissions & scores (optional)
+
+Everything above works with zero automation — you just type into the
+Sheet. But two parts of that weekly routine can run themselves for free,
+using a small script that lives inside the Google Sheet itself (Google
+Apps Script — no separate hosting, no cost, no credit card):
+
+1. **Pick'em submissions → PickemPicks tab, automatically.** Right now,
+   when someone submits picks on `week.html`, Netlify stores that
+   submission in its own dashboard. This automation has Netlify notify
+   your Sheet the instant a submission comes in, and the Sheet adds the
+   row itself.
+2. **Final scores → Schedule tab's `winner` column, automatically.** A
+   timer inside the Sheet checks ESPN's public scoreboard once an hour
+   and fills in `winner` for any finished game it can match up. (There's
+   no official free NFL scores API — this uses the same public,
+   unofficial endpoint a lot of hobby scoreboards use. If it ever breaks,
+   you just fall back to typing winners in by hand like before.)
+
+I've included `apps-script.gs` alongside this project — open it, copy
+everything in it, and follow these one-time steps:
+
+**A. Paste the script into your Sheet**
+
+1. Open your Google Sheet → **Extensions → Apps Script**.
+2. Delete anything in the default `Code.gs` file, paste in the full
+   contents of `apps-script.gs`, and save (Ctrl/Cmd+S).
+
+**B. Turn on automatic score syncing**
+
+1. In the Apps Script editor, pick `setUpScoreSyncTrigger` from the
+   function dropdown at the top, then click **Run**.
+2. The first time, Google will ask you to authorize the script (it needs
+   permission to edit your own Sheet and to fetch a URL) — click through
+   the prompts and allow it.
+3. That's it — it now checks ESPN every hour and fills in winners on its
+   own. No need to run anything again.
+
+**C. Turn on automatic Pick'em submission syncing**
+
+1. In the Apps Script editor: **Deploy → New deployment**.
+2. Click the gear icon next to "Select type" → choose **Web app**.
+3. Set **Execute as: Me**, **Who has access: Anyone**, then **Deploy**.
+4. Authorize it if asked, then copy the **Web app URL** it gives you.
+5. Go to your Netlify site → **Site settings → Forms → Notifications →
+   Add notification → Outgoing webhook**.
+6. Set **Event to listen for: Form submission**, **Form: picks**, and
+   paste the Web app URL from step 4 as the **URL to notify**. Save.
+
+From then on, submitting the print sheet on `week.html` adds a row to
+PickemPicks within a few seconds — resubmitting (if someone changes
+their mind before the deadline) replaces their previous picks for that
+week instead of duplicating them.
+
+**Notes / limits:**
+
+- Netlify's free plan includes 100 form submissions per month across the
+  whole site — plenty for a friends-and-family pool, but worth knowing.
+- The ESPN endpoint is unofficial. It's reliable in practice but not
+  guaranteed by ESPN, so treat it as a convenience, not a dependency —
+  you can always fill in `winner` by hand if a game doesn't sync.
+- Neither piece touches the `EliminatorPicks` tab — Eliminator picks
+  still come in through the Google Form as before.
+
 ## Eliminator logic notes
 
 - **Double elimination**: a player is only fully **eliminated** after
@@ -179,11 +254,12 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
   built out as additional pages once the regular season wraps, just say
   the word — both fit the same Google Sheet + Netlify pattern.
 - **Submit buttons**: the leaderboard pages (Pick'em / Eliminator) stay
-  view-only, no submit button, per your original request. The one place
-  a form link *does* appear is the new **Weekly Print Sheets** page
-  (`week.html`) — "Submit Your Picks" there opens `pickemFormUrl`. Share
-  the Eliminator form (`eliminatorFormUrl`) with the group however you'd
-  like; it's still in `config.js` if you want to wire it up somewhere.
+  view-only, no submit button, per your original request. Pick'em picks
+  are submitted right on the **Weekly Print Sheets** page (`week.html`)
+  via an embedded Netlify Form — check your teams, fill in points and
+  your name, hit "Submit My Picks." Share the Eliminator Google Form
+  (`eliminatorFormUrl` in `config.js`) with the group however you'd like
+  for now.
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.

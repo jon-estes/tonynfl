@@ -18,11 +18,11 @@ const POOL_CONFIG = {
   eliminatorPicksCsvUrl: null, // "EliminatorPicks" tab: one team picked per week per player
   contentCsvUrl: null,         // "Content" tab: editable rules text + homepage blurbs — see README.md
 
-  /* ---- Google Forms (players submit picks here) ----
-     Real Week 1 form — one combined Google Form covers both Pick'em
-     and Eliminator sections, so both links point at it for now.
-     If you split them into two separate forms later, just update
-     eliminatorFormUrl below. */
+  /* ---- Google Forms ----
+     Pick'em picks are now submitted directly on week.html via an
+     embedded Netlify Form (see README.md), so pickemFormUrl below is
+     unused — kept only in case you ever want a fallback link somewhere.
+     Eliminator picks still go through this combined Google Form. */
   pickemFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform",
   eliminatorFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform"
 };
