@@ -32,23 +32,22 @@
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
-    <p class="ps-instructions">Check the team you're picking to win each game, then assign it a confidence point (1 up to the number of games this week — use each value only once). Fill in your name below and hit Submit My Picks — no separate form to visit.</p>
+    <p class="ps-instructions">Check the team you're picking to win each game, then assign it a confidence point from the dropdown (1 up to the number of games this week — each value can only be used once). Fill in your name below and hit Submit My Picks — no separate form to visit.</p>
 
     <div id="ps-groups"></div>
 
-    <div class="ps-tiebreak" id="ps-tiebreak" hidden>
-      <span class="ps-tiebreak-label">Tiebreaker — total combined points, <span id="ps-tiebreak-game"></span>:</span>
-      <input type="text" class="ps-input ps-tiebreak-input" name="tiebreaker" aria-label="Tiebreaker guess">
+    <div class="ps-elim-block" id="ps-elim-block">
+      <div class="ps-elim-heading">Eliminator Pick</div>
+      <p class="ps-elim-hint">Pick one team from this week's games to win. Teams you've already used this season are greyed out — fill in your name above first so we can check.</p>
+      <select class="ps-input ps-elim-select" id="ps-elim-select" name="eliminator_team">
+        <option value="">— no eliminator pick this week —</option>
+      </select>
     </div>
 
     <div class="ps-footer">
       <div class="ps-footer-field">
         <label for="ps-name">Name</label>
         <input type="text" id="ps-name" name="player" class="ps-input" required>
-      </div>
-      <div class="ps-footer-field">
-        <label for="ps-total">Total Correct</label>
-        <input type="text" id="ps-total" class="ps-input ps-footer-narrow">
       </div>
     </div>
 
@@ -76,7 +75,7 @@
   <input name="week">
   <input name="season">
   <input name="player">
-  <input name="tiebreaker">
+  <input name="eliminator_team">
   <input name="matchup_1">
   <input name="gameid_1">
   <input name="pick_1">
@@ -202,7 +201,10 @@
               <span>${teamName(g.home)}</span>
             </label>
             <span class="ps-time">${timeOnlyForGame(g)}</span>
-            <input type="text" class="ps-input ps-pts" name="points_${idx}" placeholder="pts" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
+            <select class="ps-input ps-pts ps-pts-select" name="points_${idx}" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
+              <option value="">pts</option>
+              ${games.map((_, n) => `<option value="${n + 1}">${n + 1}</option>`).join("")}
+            </select>
             <input type="hidden" name="pick_${idx}" data-row="${idx}" value="">
             <input type="hidden" name="gameid_${idx}" value="${g.gameId}">
             <input type="hidden" name="matchup_${idx}" value="${teamName(g.away)} @ ${teamName(g.home)}">
@@ -231,12 +233,49 @@
     });
   });
 
-  /* Tiebreaker: total combined points of the week's last game */
-  const lastGame = games[games.length - 1];
-  if (lastGame) {
-    document.getElementById("ps-tiebreak").hidden = false;
-    document.getElementById("ps-tiebreak-game").textContent = `${teamName(lastGame.away)} @ ${teamName(lastGame.home)}`;
+  /* Points dropdowns: each confidence value (1..number of games) can only
+     be used once across the whole sheet. Whenever any dropdown changes,
+     disable that value in every other dropdown (but leave each select's
+     own current value selectable, so it doesn't get wiped out). */
+  const ptsSelects = Array.from(document.querySelectorAll(".ps-pts-select"));
+  function refreshPointsOptions() {
+    const taken = ptsSelects.map(s => s.value).filter(Boolean);
+    ptsSelects.forEach(select => {
+      Array.from(select.options).forEach(opt => {
+        if (!opt.value) return;
+        opt.disabled = taken.includes(opt.value) && select.value !== opt.value;
+      });
+    });
   }
+  ptsSelects.forEach(select => select.addEventListener("change", refreshPointsOptions));
+  refreshPointsOptions();
+
+  /* Eliminator pick: one dropdown of this week's teams. Greys out any
+     team the typed-in player has already used in a previous (or this)
+     week, matched case-insensitively against EliminatorPicks. */
+  const elimSelect = document.getElementById("ps-elim-select");
+  const weekTeamCodes = [...new Set(games.flatMap(g => [g.away, g.home]))]
+    .sort((a, b) => teamName(a).localeCompare(teamName(b)));
+  weekTeamCodes.forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = teamName(code);
+    elimSelect.appendChild(opt);
+  });
+
+  function refreshEliminatorOptions() {
+    const typedName = document.getElementById("ps-name").value.trim().toLowerCase();
+    const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === typedName);
+    const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer) : new Set();
+    Array.from(elimSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      const alreadyUsed = used.has(opt.value) && opt.value !== elimSelect.value;
+      opt.disabled = alreadyUsed;
+      opt.textContent = alreadyUsed ? `${teamName(opt.value)} (already used)` : teamName(opt.value);
+    });
+  }
+  document.getElementById("ps-name").addEventListener("input", refreshEliminatorOptions);
+  refreshEliminatorOptions();
 
   document.getElementById("print-btn").addEventListener("click", () => window.print());
 
@@ -254,13 +293,14 @@
     e.preventDefault();
     if (!sheetForm.reportValidity()) return;
 
-    const anyPick = games.some((g, n) => {
+    const anyPickemPick = games.some((g, n) => {
       const idx = n + 1;
       const hidden = document.querySelector(`input[type="hidden"][name="pick_${idx}"]`);
       return hidden && hidden.value;
     });
-    if (!anyPick) {
-      statusEl.textContent = "Pick at least one team before submitting.";
+    const hasElimPick = !!elimSelect.value;
+    if (!anyPickemPick && !hasElimPick) {
+      statusEl.textContent = "Pick at least one team (Pick'em or Eliminator) before submitting.";
       statusEl.className = "ps-submit-status ps-submit-error";
       return;
     }

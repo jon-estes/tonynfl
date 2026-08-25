@@ -1909,7 +1909,7 @@ body.el-page.theme-light { background: #ffffff; }
 .ps-time { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 
 .ps-pts {
-  width: 52px;
+  width: 64px;
   text-align: center;
 }
 
@@ -1924,18 +1924,23 @@ body.el-page.theme-light { background: #ffffff; }
 }
 .ps-input:focus { outline: none; border-bottom-color: var(--accent); }
 
-.ps-tiebreak {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 20px 0 10px;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
+select.ps-pts-select {
+  appearance: auto;
+  cursor: pointer;
+  background: transparent;
 }
-.ps-tiebreak-label { font-size: 13px; font-weight: 600; color: var(--text); }
-.ps-tiebreak-input { width: 90px; }
+select.ps-pts-select option:disabled { color: #b9b9b9; }
+
+.ps-elim-block {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.015);
+}
+.ps-elim-heading { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.ps-elim-hint { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
+.ps-elim-select { width: 100%; max-width: 320px; }
 
 .ps-footer {
   display: flex;
@@ -1947,7 +1952,6 @@ body.el-page.theme-light { background: #ffffff; }
 }
 .ps-footer-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
 .ps-footer-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); font-weight: 700; }
-.ps-footer-narrow { max-width: 120px; }
 
 .ps-brand {
   text-align: center;
