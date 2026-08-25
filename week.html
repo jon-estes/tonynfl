@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week Print Sheet — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header" data-no-print></header>
+
+<main>
+  <div id="sample-banner" data-no-print></div>
+
+  <div class="card print-sheet-head" id="week-head">
+    <a href="schedule.html" class="back-link" data-no-print>← All Weeks</a>
+    <h2 id="week-title">Week —</h2>
+    <p>Fill in the team you're picking and the confidence points you're assigning (1 to the number of games that week, no repeats), then submit your numbers on the Google Form below.</p>
+    <div class="print-actions" data-no-print>
+      <a class="btn" id="form-link" href="#" target="_blank" rel="noopener">Submit Your Picks →</a>
+      <button type="button" class="btn btn-secondary" id="print-btn">🖨️ Print This Sheet</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="print-sheet-table-wrap">
+      <table class="print-sheet-table" id="sheet-table"></table>
+    </div>
+  </div>
+
+  <div class="card" data-no-print>
+    <a class="btn" id="form-link-2" href="#" target="_blank" rel="noopener">Submit Your Picks →</a>
+  </div>
+</main>
+
+<footer data-no-print>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("schedule");
+  const state = await loadPoolData();
+  renderSampleBanner(state);
+
+  const params = new URLSearchParams(window.location.search);
+  const week = parseInt(params.get("week"), 10);
+  const games = state.schedule.filter(g => g.week === week).slice().sort((a, b) => String(a.gameId).localeCompare(String(b.gameId)));
+
+  document.getElementById("form-link").href = POOL_CONFIG.pickemFormUrl;
+  document.getElementById("form-link-2").href = POOL_CONFIG.pickemFormUrl;
+
+  if (!week || !games.length) {
+    document.getElementById("week-title").textContent = "Week not found";
+    document.querySelector(".print-sheet-table-wrap").innerHTML =
+      `<div class="empty-state">Couldn't find that week. <a href="schedule.html">Pick a week from the list</a>.</div>`;
+    return;
+  }
+
+  document.getElementById("week-title").textContent = `Week ${week} — Print & Fill Sheet`;
+
+  const table = document.getElementById("sheet-table");
+  let html = "<thead><tr><th>Matchup</th><th>Kickoff</th><th>My Pick</th><th>Points</th></tr></thead><tbody>";
+  games.forEach((g, i) => {
+    html += `
+      <tr>
+        <td class="ps-matchup">${teamName(g.away)} <span class="ps-at">@</span> ${teamName(g.home)}</td>
+        <td class="ps-kickoff">${g.kickoff || ""}</td>
+        <td class="ps-fill"><input type="text" class="ps-input" placeholder="team" aria-label="Pick for game ${i + 1}"></td>
+        <td class="ps-fill ps-fill-narrow"><input type="text" class="ps-input" placeholder="pts" aria-label="Points for game ${i + 1}"></td>
+      </tr>`;
+  });
+  html += "</tbody>";
+  table.innerHTML = html;
+
+  document.getElementById("print-btn").addEventListener("click", () => window.print());
+})();
+</script>
+</body>
+</html>

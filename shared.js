@@ -39,13 +39,39 @@ function normalizeEliminatorPicks(rows) {
   }));
 }
 
+/* Content tab: two columns, "key" and "text". Any key missing from the
+   sheet (or if there's no sheet connected yet) falls back to
+   SAMPLE_CONTENT so the site always has something sensible to show. */
+function normalizeContent(rows) {
+  const content = Object.assign({}, SAMPLE_CONTENT);
+  rows.forEach(r => {
+    const key = String(r.key || "").trim();
+    if (!key) return;
+    content[key] = String(r.text || "");
+  });
+  return content;
+}
+
+async function loadContent() {
+  if (!POOL_CONFIG.contentCsvUrl) return Object.assign({}, SAMPLE_CONTENT);
+  try {
+    const rows = await fetchCsv(POOL_CONFIG.contentCsvUrl);
+    return normalizeContent(rows);
+  } catch (err) {
+    console.error("Falling back to sample content:", err);
+    return Object.assign({}, SAMPLE_CONTENT);
+  }
+}
+
 async function loadPoolData() {
   const usingSample = !POOL_CONFIG.scheduleCsvUrl || !POOL_CONFIG.pickemPicksCsvUrl || !POOL_CONFIG.eliminatorPicksCsvUrl;
+  const content = await loadContent();
   if (usingSample) {
     return {
       schedule: SAMPLE_SCHEDULE,
       pickemPicks: SAMPLE_PICKEM_PICKS,
       eliminatorPicks: SAMPLE_ELIMINATOR_PICKS,
+      content,
       sample: true
     };
   }
@@ -59,6 +85,7 @@ async function loadPoolData() {
       schedule: normalizeSchedule(scheduleRows),
       pickemPicks: normalizePickemPicks(pickemRows),
       eliminatorPicks: normalizeEliminatorPicks(eliminatorRows),
+      content,
       sample: false
     };
   } catch (err) {
@@ -67,6 +94,7 @@ async function loadPoolData() {
       schedule: SAMPLE_SCHEDULE,
       pickemPicks: SAMPLE_PICKEM_PICKS,
       eliminatorPicks: SAMPLE_ELIMINATOR_PICKS,
+      content,
       sample: true,
       error: true
     };
@@ -221,6 +249,63 @@ function usedTeamsForPlayer(picks, player) {
   );
 }
 
+/* ---------- Rich text (Content tab rendering) ----------
+   Turns a plain-text block into HTML paragraphs/bullets:
+     - a blank line starts a new paragraph
+     - a line starting with "- " becomes a bullet
+     - a line starting with "  - " (indented) becomes a sub-bullet */
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function parseBulletLines(lines) {
+  const items = [];
+  let current = null;
+  lines.forEach(line => {
+    const subMatch = line.match(/^\s{2,}-\s+(.*)$/);
+    const topMatch = !subMatch && line.match(/^-\s+(.*)$/);
+    if (topMatch) {
+      current = { text: topMatch[1].trim(), children: [] };
+      items.push(current);
+    } else if (subMatch && current) {
+      current.children.push(subMatch[1].trim());
+    }
+  });
+  return items;
+}
+
+function renderRichText(rawText) {
+  if (!rawText) return "";
+  const blocks = String(rawText).replace(/\r\n/g, "\n").trim().split(/\n\s*\n/);
+  return blocks.map(block => {
+    const lines = block.split("\n").filter(l => l.trim().length);
+    if (!lines.length) return "";
+    const isList = lines.every(l => /^\s*-\s+/.test(l));
+    if (isList) {
+      const items = parseBulletLines(lines);
+      return `<ul class="rich-list">${items.map(it => `<li>${escapeHtml(it.text)}${
+        it.children.length
+          ? `<ul class="rich-sublist">${it.children.map(c => `<li>${escapeHtml(c)}</li>`).join("")}</ul>`
+          : ""
+      }</li>`).join("")}</ul>`;
+    }
+    return `<p>${lines.map(escapeHtml).join(" ")}</p>`;
+  }).join("");
+}
+
+/* Fills every element with a data-content="key" attribute using the
+   loaded Content tab (or SAMPLE_CONTENT). Call after loadPoolData(). */
+function renderContent(content) {
+  document.querySelectorAll("[data-content]").forEach(el => {
+    const key = el.getAttribute("data-content");
+    el.innerHTML = renderRichText(content[key] || "");
+  });
+}
+
 /* ---------- Rendering helpers ---------- */
 
 function teamBadge(abbr) {
@@ -255,6 +340,7 @@ function renderHeader(activePage) {
         <a href="index.html" class="${activePage === "home" ? "active" : ""}">Home</a>
         <a href="pickem.html" class="${activePage === "pickem" ? "active" : ""}">Pick'em</a>
         <a href="eliminator.html" class="${activePage === "eliminator" ? "active" : ""}">Eliminator</a>
+        <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Print Sheets</a>
         ${showToggle ? `<button type="button" class="theme-toggle" id="theme-toggle"></button>` : ""}
       </nav>
     </div>

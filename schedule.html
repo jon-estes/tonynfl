@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Full Schedule — NFL Pick'em League</title>
+<title>Weekly Print Sheets — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,13 +16,11 @@
   <div id="sample-banner"></div>
 
   <div class="card">
-    <h2>Full Season Schedule</h2>
-    <p style="color:var(--text-dim); font-size:14px; margin-top:-8px;">
-      Every game in your Google Sheet, grouped by week. Winners show once you fill in the
-      <code>winner</code> column for that game.
-    </p>
-    <div id="schedule-list"></div>
+    <h2>Weekly Print Sheets</h2>
+    <p>Pick a week below to see the full matchup sheet — print it out or fill it in on screen, then submit your numbers on the Google Form.</p>
   </div>
+
+  <div class="week-grid" id="week-grid"></div>
 </main>
 
 <footer>Powered by a Google Sheet, not a database</footer>
@@ -27,69 +28,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
-<script src="script.js"></script>
+<script src="shared.js"></script>
 <script>
 (async function () {
   renderHeader("schedule");
-  const state = await loadLeagueData();
+  const state = await loadPoolData();
   renderSampleBanner(state);
 
   const weeks = getWeeks(state.schedule);
-  const mount = document.getElementById("schedule-list");
+  const mount = document.getElementById("week-grid");
 
   if (!weeks.length) {
-    mount.innerHTML = `<div class="empty-state">No games in the schedule yet.</div>`;
+    mount.innerHTML = `<div class="empty-state">No schedule loaded yet.</div>`;
     return;
   }
 
-  weeks.forEach(week => {
-    const games = state.schedule.filter(g => g.week === week);
-    const section = document.createElement("div");
-    section.style.marginBottom = "24px";
-    section.innerHTML = `<h3 style="margin-bottom:10px;">Week ${week}</h3>`;
-
-    const grid = document.createElement("div");
-    grid.className = "game-grid";
-
-    games.forEach(g => {
-      const row = document.createElement("div");
-      row.className = "game-row";
-
-      const kickoff = document.createElement("div");
-      kickoff.className = "kickoff";
-      kickoff.textContent = g.kickoff || "";
-      row.appendChild(kickoff);
-
-      const awayChip = document.createElement("div");
-      awayChip.className = "team-chip";
-      awayChip.appendChild(teamBadge(g.away));
-      awayChip.appendChild(document.createTextNode(teamName(g.away)));
-      row.appendChild(awayChip);
-
-      const at = document.createElement("div");
-      at.className = "at";
-      if (g.winner) {
-        const pill = document.createElement("span");
-        pill.className = "pill pill-win";
-        pill.textContent = "FINAL: " + g.winner;
-        at.appendChild(pill);
-      } else {
-        at.textContent = "@";
-      }
-      row.appendChild(at);
-
-      const homeChip = document.createElement("div");
-      homeChip.className = "team-chip";
-      homeChip.appendChild(teamBadge(g.home));
-      homeChip.appendChild(document.createTextNode(teamName(g.home)));
-      row.appendChild(homeChip);
-
-      grid.appendChild(row);
-    });
-
-    section.appendChild(grid);
-    mount.appendChild(section);
-  });
+  mount.innerHTML = weeks.map(w => {
+    const games = state.schedule.filter(g => g.week === w);
+    const firstKickoff = games[0] ? games[0].kickoff : "";
+    return `
+      <a class="week-card" href="week.html?week=${w}">
+        <div class="week-card-num">Week ${w}</div>
+        <div class="week-card-meta">${games.length} game${games.length === 1 ? "" : "s"}${firstKickoff ? " · starts " + firstKickoff : ""}</div>
+        <div class="go">Print Sheet <span class="arrow">→</span></div>
+      </a>
+    `;
+  }).join("");
 })();
 </script>
 </body>

@@ -30,20 +30,7 @@
 
   <div class="card el-rules-card">
     <h2>Pool Rules</h2>
-    <p>$25 buyin, prize determined on entries. Double elimination – lose twice and you are eliminated.</p>
-    <ul class="el-rules-list">
-      <li>Pick one team each week that you think will win</li>
-      <li>Can't pick that team again</li>
-      <li>All playoff teams are available until eliminated</li>
-      <li>If you have no teams available to pick any week it counts as a loss</li>
-      <li>Winner(s) decided by:
-        <ul class="el-rules-sublist">
-          <li>First – No Loss</li>
-          <li>Second – Last survivors go out the same week</li>
-        </ul>
-      </li>
-      <li>The person or people left in the pool will win or split the jackpot.</li>
-    </ul>
+    <div data-content="eliminator_rules"></div>
   </div>
 
   <div class="card el-status-card">
@@ -89,6 +76,7 @@
   renderHeader("eliminator");
   const state = await loadPoolData();
   renderSampleBanner(state);
+  renderContent(state.content);
   document.getElementById("el-week").textContent = POOL_CONFIG.currentWeek;
 
   const emberMount = document.getElementById("el-embers");

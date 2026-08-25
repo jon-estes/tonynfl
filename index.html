@@ -22,19 +22,36 @@
       <div class="pool-card-glow"></div>
       <h2 class="sr-only">Pick'em</h2>
       <img class="pool-card-art" src="assets/pickem-icon.png" alt="Pick'em Football Pool">
-      <p>This pool is for all playoff games, including the Super Bowl. There are 13 playoff games including the Super Bowl. Each week pick the winners and assign a point between 1 and 13. You can only use the point once. Grand total if you pick them all right is 91 points. The tiebreaker is total points for the Super Bowl game. Whoever is closer, over or under. If still a tie, split the Jackpot. The payout will be determined after the first week.</p>
+      <p data-content="home_pickem_summary"></p>
       <div class="go">Enter the Pool <span class="arrow">→</span></div>
     </a>
     <a class="pool-card card-eliminator" href="eliminator.html">
       <div class="pool-card-glow"></div>
       <h2 class="sr-only">Eliminator</h2>
       <img class="pool-card-art" src="assets/eliminator-icon.png" alt="Eliminator Football Pool">
-      <p>$25 buy-in. Double elimination — lose twice and you're out. Pick one team a week to win, can't reuse a team, all playoff teams available until you're eliminated. No pick available = a loss. Last one(s) standing with no losses win it — if the field goes out together, they split the jackpot.</p>
+      <p data-content="home_eliminator_summary"></p>
       <div class="go">Enter the Pool <span class="arrow">→</span></div>
+    </a>
+    <a class="pool-card card-schedule" href="schedule.html">
+      <div class="pool-card-glow"></div>
+      <h2 class="sr-only">Weekly Print Sheets</h2>
+      <div class="pool-card-icon">🗓️</div>
+      <p>Pick a week, print the full matchup sheet, and fill in your Pick'em numbers before you submit them on the form.</p>
+      <div class="go">View Weeks <span class="arrow">→</span></div>
     </a>
   </div>
 </main>
 
 <footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  const state = await loadPoolData();
+  renderContent(state.content);
+})();
+</script>
 </body>
 </html>

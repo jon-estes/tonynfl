@@ -19,7 +19,7 @@
 
   <div class="card pk-rules-card">
     <h2>Pool Rules</h2>
-    <p>This pool is for all playoff games, including the Super Bowl. There are 13 playoff games including the Super Bowl. Each week pick the winners and assign a point between 1 and 13. You can only use the point once. Grand total if you pick them all right is 91 points. The tiebreaker is total points for the Super Bowl game. Whoever is closer, over or under. If still a tie, split the Jackpot. The payout will be determined after the first week.</p>
+    <div data-content="pickem_rules"></div>
   </div>
 
   <div class="card pk-full-leaderboard">
@@ -111,6 +111,7 @@
   renderHeader("pickem");
   const state = await loadPoolData();
   renderSampleBanner(state);
+  renderContent(state.content);
 
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const weeks = getWeeks(state.schedule);

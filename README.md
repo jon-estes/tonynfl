@@ -15,8 +15,13 @@ A clean, simple site with two NFL pools:
   dropdown shows any player's team grid — every NFL team in color, greyed
   out once that player has used it.
 
-The home page is just "Welcome to Vince and Dave's Pool" with two cards linking to
-each pool.
+There's also a **Weekly Print Sheets** page: pick a week, get a clean
+printable (or fill-in-on-screen) sheet of that week's Pick'em matchups
+with blank spots for your team pick and points, plus a link straight to
+the Google Form to submit them.
+
+The home page is "Welcome to Vince and Dave's Pool" with three cards
+linking to Pick'em, Eliminator, and the Weekly Print Sheets.
 
 It's a static site (HTML/CSS/JS) that deploys on Netlify with no backend.
 All live data — schedules, results, and everyone's picks — comes from a
@@ -27,11 +32,11 @@ spreadsheet, not touching code.
 
 - **Two Google Forms** — one for Pick'em picks, one for Eliminator picks.
   Responses land automatically in Google Sheets.
-- **One Google Sheet, three tabs** — `Schedule`, `PickemPicks`,
-  `EliminatorPicks` — each published as a CSV link.
-- **The website** fetches those three CSV links live in the browser and
-  renders both leaderboards. No database, no server, no rebuild needed
-  to post new results — just edit the sheet.
+- **One Google Sheet, four tabs** — `Schedule`, `PickemPicks`,
+  `EliminatorPicks`, `Content` — each published as a CSV link.
+- **The website** fetches those CSV links live in the browser and renders
+  both leaderboards (and the rules text). No database, no server, no
+  rebuild needed to post new results or edit copy — just edit the sheet.
 
 Until you connect a real sheet, the site shows built-in sample data so you
 can see exactly how it will look and feel.
@@ -86,9 +91,32 @@ for them with `team` set to the special value `MISS` — the site treats
 that as an automatic loss for that week, per the "no teams available =
 loss" rule.
 
+**Tab: `Content`** — this is what makes the rules text and homepage
+blurbs editable without touching code:
+
+| key | text |
+|-----|------|
+| home_pickem_summary | This pool is for all playoff games... |
+| home_eliminator_summary | $25 buy-in. Double elimination... |
+| pickem_rules | This pool is for all playoff games... |
+| eliminator_rules | $25 buyin, prize determined on entries... |
+
+- `home_pickem_summary` / `home_eliminator_summary` are the short blurbs
+  on the two homepage cards.
+- `pickem_rules` / `eliminator_rules` are the full rules text shown on
+  each pool's own page.
+- Any row you leave out of the sheet just falls back to the built-in
+  default text, so you only need to add rows for what you want to change.
+- **Formatting a cell**: a blank line starts a new paragraph. A line
+  starting with `- ` becomes a bullet. A line starting with two spaces
+  then `- ` becomes a sub-bullet (nested under the bullet above it). In
+  Google Sheets, press **Alt+Enter** (Windows) or **Option+Return** (Mac)
+  inside a cell to add a line break without leaving the cell — that's how
+  you get multiple paragraphs/bullets into one `text` cell.
+
 ### 2. Publish each tab as CSV
 
-For **each** of the three tabs: File → Share → Publish to web → choose
+For **each** of the four tabs: File → Share → Publish to web → choose
 that specific sheet/tab → format **CSV** → Publish → copy the link.
 
 ### 3. Wire up `config.js`
@@ -97,6 +125,7 @@ that specific sheet/tab → format **CSV** → Publish → copy the link.
 scheduleCsvUrl: "...",
 pickemPicksCsvUrl: "...",
 eliminatorPicksCsvUrl: "...",
+contentCsvUrl: "...",
 pickemFormUrl: "your Pick'em Google Form link",
 eliminatorFormUrl: "your Eliminator Google Form link",
 ```
@@ -133,9 +162,11 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
 
 ## Files
 
-- `index.html` — home page ("Welcome to Vince and Dave's Pool" + two pool cards)
+- `index.html` — home page ("Welcome to Vince and Dave's Pool" + three cards)
 - `pickem.html` — Pick'em leaderboard + player picks dropdown
 - `eliminator.html` — Eliminator leaderboard + player team-grid dropdown
+- `schedule.html` — list of weeks, links into the print sheets
+- `week.html` — one week's printable/fillable Pick'em matchup sheet + form link
 - `config.js` — **the file you edit**: sheet links, form links, season info
 - `teams.js` — NFL team names/colors
 - `shared.js` / `style.css` — site logic and styling, no edits needed
@@ -147,12 +178,12 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
   tiebreaker) or the **Playoff Team Pool** (random-draw team ownership)
   built out as additional pages once the regular season wraps, just say
   the word — both fit the same Google Sheet + Netlify pattern.
-- **Submit buttons were removed** per your request — the site is now
-  strictly a view-only scoreboard/leaderboard. Share your Google Forms
-  with the group however you'd like (text, email, group chat); the
-  `pickemFormUrl` / `eliminatorFormUrl` fields are still in `config.js`
-  in case you want to add a link back somewhere later, they're just not
-  wired to a button anywhere right now.
+- **Submit buttons**: the leaderboard pages (Pick'em / Eliminator) stay
+  view-only, no submit button, per your original request. The one place
+  a form link *does* appear is the new **Weekly Print Sheets** page
+  (`week.html`) — "Submit Your Picks" there opens `pickemFormUrl`. Share
+  the Eliminator form (`eliminatorFormUrl`) with the group however you'd
+  like; it's still in `config.js` if you want to wire it up somewhere.
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.
@@ -164,10 +195,9 @@ Drag this whole folder onto [app.netlify.com/drop](https://app.netlify.com/drop)
 - **Theme**: the home page always runs on a clean white background. Pick'em
   and Eliminator default to an immersive look with the stadium photo behind
   glass cards (green accents on Pick'em, fire/orange on Eliminator) — there's
-  a "☀️ White Mode" button in the top-right of the header on both pages that
-  switches them to the same plain white theme as the home page. The choice
-  is remembered per-browser (saved to `localStorage`), and it's just as easy
-  to flip back to the photo look with the same button.
-- **Rules text**: the full Pick'em and Eliminator rules you sent are now
-  printed verbatim on their respective pages, and condensed versions
-  appear on the two home page cards.
+  a button next to the nav links ("Vince's View" / "Dave's View") that
+  switches them to the same plain white theme as the home page and back.
+  The choice is remembered per-browser (saved to `localStorage`).
+- **Rules text and homepage blurbs are now editable** — see the `Content`
+  tab above. Until you wire one up, everything shows the same text as
+  before.
