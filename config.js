@@ -13,10 +13,10 @@ const POOL_CONFIG = {
      File > Share > Publish to web > choose the specific SHEET
      (tab) > format CSV > paste the link below.
      Leave null to preview with sample data. */
-  scheduleCsvUrl: null,        // "Schedule" tab: the season's games + winners
-  pickemPicksCsvUrl: null,     // "PickemPicks" tab: weekly straight-up picks
-  eliminatorPicksCsvUrl: null, // "EliminatorPicks" tab: one team picked per week per player
-  contentCsvUrl: null,         // "Content" tab: editable rules text + homepage blurbs — see README.md
+  scheduleCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1198981568&single=true&output=csv",        // "Schedule" tab: the season's games + winners
+  pickemPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1100375573&single=true&output=csv",     // "PickemPicks" tab: weekly straight-up picks
+  eliminatorPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1333697856&single=true&output=csv", // "EliminatorPicks" tab: one team picked per week per player
+  contentCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1079837670&single=true&output=csv",         // "Content" tab: editable rules text + homepage blurbs — see README.md
 
   /* ---- Google Forms ----
      Pick'em picks are now submitted directly on week.html via an
