@@ -1,11 +1,16 @@
 /* ============================================================
    ESPN SCORES RELAY
    ============================================================
-   Why this exists: Google Apps Script's outbound requests get blocked
-   with a 403 "Access Denied" by ESPN's CDN (Akamai blocks Google Cloud's
-   shared IP ranges wholesale). Requests from here — Netlify's servers —
-   are not Google's IPs, so this small function fetches ESPN's public
-   scoreboard JSON on Apps Script's behalf and hands it back unchanged.
+   Why this exists: ESPN's main API subdomain (site.api.espn.com) blocks
+   requests from cloud/datacenter IP ranges wholesale (a generic Akamai
+   bot-protection rule) — confirmed to block both Google Apps Script's
+   servers AND Netlify's, with a 403 "Access Denied" either way.
+
+   Workaround: ESPN's own website loads its scoreboard from a DIFFERENT
+   subdomain (cdn.espn.com/core/...) which is not behind that same
+   blanket block, so this relay calls that endpoint instead. The game
+   data is nested one level deeper in the response (content.sbData.events
+   instead of a top-level events array) but is otherwise the same shape.
 
    Apps Script's fetchEspnWeekResults() calls this instead of calling
    ESPN directly.
@@ -24,14 +29,14 @@ exports.handler = async (event) => {
     };
   }
 
-  const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${encodeURIComponent(week)}&dates=${encodeURIComponent(year)}`;
+  const url = `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&year=${encodeURIComponent(year)}&week=${encodeURIComponent(week)}&seasontype=2`;
 
   try {
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
-        "Referer": "https://www.espn.com/nfl/schedule"
+        "Referer": "https://www.espn.com/nfl/scoreboard"
       }
     });
 
