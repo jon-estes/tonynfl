@@ -33,7 +33,7 @@
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
-    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown (1 up to the number of games this week — each value can only be used once). Hit Submit My Picks when you're done — no separate form to visit.</p>
+    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. Hit Submit My Picks when you're done — no separate form to visit.</p>
 
     <div class="ps-footer ps-footer-top">
       <div class="ps-footer-field">
@@ -107,6 +107,18 @@
   };
   const games = state.schedule.filter(g => g.week === week).slice().sort((a, b) => gameIdNum(a.gameId) - gameIdNum(b.gameId));
 
+  /* Confidence points always come from the top of a fixed 1-16 scale, not
+     1-through-however-many-games-this-week. A full 16-game week uses every
+     value 1-16; a 14-game week (like a bye week) uses 3-16, skipping 1 and
+     2 entirely — the two lowest values just go unused that week. This
+     keeps a "16" always meaning the same thing (your single most
+     confident pick of the week) no matter how many games are on the
+     slate. */
+  const SEASON_MAX_POINTS = 16;
+  const minPoint = SEASON_MAX_POINTS - games.length + 1;
+  const pointOptions = [];
+  for (let v = SEASON_MAX_POINTS; v >= minPoint; v--) pointOptions.push(v);
+
   if (!week || !games.length) {
     document.getElementById("ps-title").textContent = "Week not found";
     document.getElementById("ps-instructions").textContent = "";
@@ -150,7 +162,7 @@
             <span class="ps-time">${timeOnlyForGame(g)}</span>
             <select class="ps-input ps-pts ps-pts-select" data-row="${idx}" aria-label="Points for ${teamName(g.away)} at ${teamName(g.home)}">
               <option value="">pts</option>
-              ${games.map((_, n) => `<option value="${n + 1}">${n + 1}</option>`).join("")}
+              ${pointOptions.map(v => `<option value="${v}">${v}</option>`).join("")}
             </select>
           </div>`;
         }).join("")}

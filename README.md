@@ -74,11 +74,14 @@ tab (rename/reshape columns to match):
 | Jon    | 1    | 1-1    | BAL  | 6      |
 
 - `points` is the confidence value that player assigned to that pick for
-  that week (highest = most confident). Each player should use every
-  value from 1 up to the number of games that week exactly once — the
-  site doesn't currently enforce uniqueness, so it's worth a quick eyeball
-  check on the sheet each week (or build a `COUNTIFS` validation formula
-  in the sheet if you want it caught automatically).
+  that week (highest = most confident). Points always come off the top of
+  a fixed 1-16 scale, not 1-up-to-however-many-games-are-that-week: a full
+  16-game week uses every value 1-16, but a 14-game week uses 3-16 (skipping
+  1 and 2 entirely), so "16" always means the same thing — your single most
+  confident pick — no matter the week's game count. The print sheet's point
+  dropdown enforces both this range and no-repeats automatically; if you're
+  ever entering picks by hand instead, it's worth a quick eyeball check
+  each week (or a `COUNTIFS` validation formula in the sheet).
 - A pick only earns its `points` value if `pick` matches that game's
   `winner` in the `Schedule` tab; otherwise it earns 0 for the week and
   season totals, though the assigned value still displays so players can
