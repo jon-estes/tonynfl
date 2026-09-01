@@ -411,6 +411,80 @@ function renderSampleBanner(state) {
   }
 }
 
+/* ---------- Pick lock deadline ----------
+   Picks for a week lock at 12:00 AM Pacific Time on that week's Thursday
+   (the same fixed day/time every week — not tied to the exact minute of
+   the first kickoff). Used by week.html to disable submissions once the
+   deadline passes. The Apps Script enforces the same rule server-side —
+   see computeWeekDeadlineUtcMs() in apps-script.gs, which must be kept
+   in sync with the logic here if this ever changes. */
+
+/* Parses a schedule "date" string like "Thu Dec 10" into a real Date,
+   inferring the year from POOL_CONFIG.season (Aug-Dec = season year,
+   Jan-Feb = season year + 1, since the NFL season spans the new year). */
+function parseScheduleDate(dateStr) {
+  const parts = String(dateStr).trim().split(/\s+/); // ["Thu", "Dec", "10"]
+  if (parts.length < 3) return null;
+  const month = parts[1], day = parseInt(parts[2], 10);
+  const monthIndex = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].indexOf(month);
+  if (monthIndex === -1 || isNaN(day)) return null;
+  const seasonYear = (POOL_CONFIG && POOL_CONFIG.season) || new Date().getFullYear();
+  const year = monthIndex <= 1 ? seasonYear + 1 : seasonYear; // Jan/Feb -> next calendar year
+  return new Date(year, monthIndex, day);
+}
+
+/* Returns the UTC-offset (in minutes) of America/Los_Angeles at the given
+   instant, correctly handling PST/PDT, using the standard Intl round-trip
+   trick (no external timezone library needed). */
+function pacificOffsetMinutes(date) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles", hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  });
+  const parts = dtf.formatToParts(date).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, hour, parts.minute, parts.second);
+  return (asUtc - date.getTime()) / 60000;
+}
+
+/* Builds a real Date instant for a given Y/M/D at 12:00 AM Pacific Time. */
+function pacificMidnight(year, monthIndex, day) {
+  // First guess using a fixed offset, then refine once against the real
+  // PST/PDT offset for that date (two passes is enough since the offset
+  // only ever takes one of two values).
+  let guess = new Date(Date.UTC(year, monthIndex, day, 8, 0, 0)); // UTC-8 guess
+  const offset = pacificOffsetMinutes(guess);
+  return new Date(Date.UTC(year, monthIndex, day, 0, 0, 0) - offset * 60000);
+}
+
+/* Returns the Date instant (UTC-correct) at which picks for `week` lock:
+   12:00 AM Pacific on that week's Thursday. Falls back to null if the
+   week's games can't be found/parsed (deadline enforcement is skipped
+   in that case rather than incorrectly locking everything). */
+function getWeekDeadline(schedule, week) {
+  const games = schedule.filter(g => g.week === week && g.date);
+  if (!games.length) return null;
+  const dates = games.map(g => parseScheduleDate(g.date)).filter(Boolean);
+  if (!dates.length) return null;
+
+  // For each game, walk back to "its" Thursday. Almost every game agrees
+  // on the same Thursday; the one exception is an outlier game earlier in
+  // the week than Thursday (e.g. a Wednesday season-opener) — walking back
+  // from that one alone would land on the PREVIOUS week's Thursday. Taking
+  // the latest (max) candidate across all of the week's games is immune to
+  // that: an erroneous backward wrap is always earlier, never later, than
+  // the real answer the majority of games agree on.
+  const thursdayCandidates = dates.map(d => {
+    const daysBack = (d.getDay() - 4 + 7) % 7; // 0=Sun ... 4=Thu ... 6=Sat
+    const t = new Date(d);
+    t.setDate(t.getDate() - daysBack);
+    return t;
+  });
+  const thursday = thursdayCandidates.reduce((a, b) => (a > b ? a : b));
+  return pacificMidnight(thursday.getFullYear(), thursday.getMonth(), thursday.getDate());
+}
+
 function fmtRecord(s) {
   return `${s.correct}-${s.wrong}${s.pending ? ` (${s.pending} pending)` : ""}`;
 }

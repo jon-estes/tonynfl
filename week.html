@@ -34,6 +34,7 @@
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
     <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. Hit Submit My Picks when you're done — no separate form to visit.</p>
+    <div class="ps-lock-banner" id="ps-lock-banner" hidden data-no-print></div>
 
     <div class="ps-footer ps-footer-top">
       <div class="ps-footer-field">
@@ -132,6 +133,19 @@
   document.querySelector(".ps-brand").textContent = `Vince and Dave's Pool — ${POOL_CONFIG.season} Season, Week ${week}`;
   document.getElementById("ps-field-week").value = week;
   document.getElementById("ps-field-season").value = POOL_CONFIG.season;
+
+  /* Picks lock at 12:00 AM Pacific on this week's Thursday (see
+     getWeekDeadline() in shared.js). Past the deadline, the form is
+     disabled here in the browser — the Apps Script backend enforces the
+     same cutoff independently, so a late submission is rejected even if
+     someone bypasses this page. */
+  const deadline = getWeekDeadline(state.schedule, week);
+  const isLocked = !!deadline && new Date() >= deadline;
+  const lockBanner = document.getElementById("ps-lock-banner");
+  if (isLocked) {
+    lockBanner.hidden = false;
+    lockBanner.textContent = `🔒 Picks for Week ${week} are locked — the deadline (Thursday 12:00 AM PT) has passed. You can still print this sheet, but new submissions for this week won't be accepted.`;
+  }
 
   /* Group games by day, in original schedule order */
   const groups = [];
@@ -238,6 +252,19 @@
   nameSelect.addEventListener("change", refreshEliminatorOptions);
   refreshEliminatorOptions();
 
+  /* If the deadline has passed, disable every interactive control so the
+     sheet is view/print-only. Submit buttons get a clear label change
+     too, not just a disabled state, so it's obvious why nothing happens. */
+  if (isLocked) {
+    document.querySelectorAll(
+      "#ps-sheet input, #ps-sheet select, #ps-sheet button[type=submit], #submit-btn-top"
+    ).forEach(el => { el.disabled = true; });
+    ["submit-btn-top", "submit-btn-bottom"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.textContent = "🔒 Picks Locked";
+    });
+  }
+
   document.getElementById("print-btn").addEventListener("click", () => window.print());
 
   /* Submit picks straight to Netlify Forms via fetch, so players never
@@ -271,6 +298,11 @@
 
   sheetForm.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (isLocked) {
+      statusEl.textContent = "🔒 Picks for this week are locked — the deadline has passed.";
+      statusEl.className = "ps-submit-status ps-submit-error";
+      return;
+    }
     if (!sheetForm.reportValidity()) return;
 
     const picks = collectPicks();

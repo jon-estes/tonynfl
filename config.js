@@ -32,7 +32,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Jon", "Tony", "Vince"]
+  players: ["Jon", "Tony", "Sam"]
 };
 
 /* ============================================================

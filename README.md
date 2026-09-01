@@ -217,6 +217,25 @@ week instead of duplicating them.
 - The ESPN endpoint is unofficial. It's reliable in practice but not
   guaranteed by ESPN, so treat it as a convenience, not a dependency —
   you can always fill in `winner` by hand if a game doesn't sync.
+
+**D. Picks lock automatically — no manual step needed**
+
+Picks for a week close at **12:00 AM Pacific Time on that week's
+Thursday**, computed automatically from that week's earliest game in the
+Schedule tab — no deadline column to maintain by hand. This is enforced
+in two places:
+
+- **On the website** (`week.html`): once the deadline passes, the print
+  sheet disables its Submit buttons and shows a "🔒 Picks Locked" message.
+- **In the Apps Script** (`doPost`): rejects any late submission outright,
+  even one sent straight to the Web App URL bypassing the website —
+  see `getWeekDeadline()` near the bottom of `apps-script.gs`.
+
+Only one thing to keep in sync if you ever reuse this for a new season:
+`SEASON_YEAR` at the top of `apps-script.gs` must match `POOL_CONFIG.season`
+in `config.js` on the website — both are used to figure out the real year
+for schedule dates like "Thu Dec 10" (the Schedule tab doesn't store a
+year, since the season crosses New Year's).
 - Neither piece touches the `EliminatorPicks` tab — Eliminator picks
   still come in through the Google Form as before.
 
