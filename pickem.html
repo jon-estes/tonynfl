@@ -171,7 +171,11 @@
               </div>
             </div>
             <div class="pk-mypick-cell"><div class="pk-mypick-box">${p.pick}</div></div>
-            <div class="pk-points-cell">${result === "wrong" ? p.points : "+" + earned}${result !== "wrong" ? " PTS" : ""}</div>
+            <div class="pk-points-cell">${
+              result === "correct" ? "+" + earned + " PTS" :
+              result === "wrong" ? p.points :
+              p.points + " PTS"
+            }</div>
             <div class="pk-winner-cell">${winnerText}</div>
           </div>`;
       });

@@ -541,6 +541,20 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   border: 1px solid rgba(47,111,237,0.25);
 }
 
+.pool-card-title {
+  position: relative;
+  z-index: 1;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.card-pickem .pool-card-title { color: #16a34a; }
+.card-eliminator .pool-card-title { color: #ea580c; }
+.card-schedule .pool-card-title { color: #2f6fed; }
+
 .pool-card p { color: var(--text-dim); font-size: 13.5px; margin: 0 0 20px; position: relative; z-index: 1; text-align: left; }
 
 .pool-card .go {
