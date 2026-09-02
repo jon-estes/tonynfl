@@ -12,9 +12,10 @@
 <body>
 <section class="hero-photo">
   <div class="hero-photo-frame">
-    <video autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
+    <video id="hero-video" autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
       <source src="assets/hero-video.mp4" type="video/mp4">
     </video>
+    <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
   </div>
 </section>
 
@@ -58,6 +59,20 @@
 (async function () {
   const state = await loadPoolData();
   renderContent(state.content);
+})();
+
+/* Hero video starts muted so autoplay is allowed everywhere — this button
+   lets a visitor turn sound on (and back off) themselves. */
+(function () {
+  const video = document.getElementById("hero-video");
+  const btn = document.getElementById("hero-mute-btn");
+  if (!video || !btn) return;
+  btn.addEventListener("click", () => {
+    video.muted = !video.muted;
+    btn.textContent = video.muted ? "🔇" : "🔊";
+    btn.setAttribute("aria-label", video.muted ? "Unmute video" : "Mute video");
+    btn.setAttribute("aria-pressed", String(!video.muted));
+  });
 })();
 </script>
 </body>
