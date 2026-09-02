@@ -9,7 +9,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="schedule-page">
+<div class="schedule-bg" aria-hidden="true"></div>
 <header class="site-header" id="site-header"></header>
 
 <main>
@@ -43,17 +44,56 @@
     return;
   }
 
+  /* A week is "locked" once its pick deadline (12:00 AM Pacific that
+     week's Thursday — same rule week.html enforces) has passed. The
+     "current" week is simply the first one that ISN'T locked yet — no
+     manual bookkeeping required, it just moves forward on its own as
+     Thursdays pass. If every week is locked (season's over), nothing
+     gets the "current" treatment. */
+  const now = new Date();
+  const weekStatus = {};
+  let currentAssigned = false;
+  weeks.forEach(w => {
+    const deadline = getWeekDeadline(state.schedule, w);
+    const locked = !!deadline && now >= deadline;
+    if (locked) {
+      weekStatus[w] = "locked";
+    } else if (!currentAssigned) {
+      weekStatus[w] = "current";
+      currentAssigned = true;
+    } else {
+      weekStatus[w] = "upcoming";
+    }
+  });
+
+  const footballRow = n => {
+    const capped = Math.min(n, 16);
+    return `<div class="week-card-footballs" aria-hidden="true">${"🏈".repeat(capped)}</div>`;
+  };
+
   mount.innerHTML = weeks.map(w => {
     const games = state.schedule.filter(g => g.week === w);
     const first = games[0];
     const day = first ? dayLabelForGame(first) : "";
     const time = first ? timeOnlyForGame(first) : "";
     const starts = [day, time].filter(Boolean).join(" ");
+    const status = weekStatus[w];
+
+    const badge = status === "current" ? `<div class="week-card-badge">Current Week</div>`
+      : status === "locked" ? `<div class="week-card-badge week-card-badge-locked">🔒 Locked</div>`
+      : "";
+
+    const cta = status === "locked"
+      ? `<div class="go">View Sheet <span class="arrow">→</span></div>`
+      : `<div class="go">Print Sheet <span class="arrow">→</span></div>`;
+
     return `
-      <a class="week-card" href="week.html?week=${w}">
+      <a class="week-card week-card-${status}" href="week.html?week=${w}">
+        ${badge}
         <div class="week-card-num">Week ${w}</div>
         <div class="week-card-meta">${games.length} game${games.length === 1 ? "" : "s"}${starts ? " · starts " + starts : ""}</div>
-        <div class="go">Print Sheet <span class="arrow">→</span></div>
+        ${footballRow(games.length)}
+        ${cta}
       </a>
     `;
   }).join("");

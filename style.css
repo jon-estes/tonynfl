@@ -1845,21 +1845,58 @@ body.el-page.theme-light { background: #ffffff; }
    WEEKLY PRINT SHEETS — schedule.html + week.html
    ============================================================ */
 
+/* Full-bleed stadium photo behind schedule.html, with a dark gradient so
+   the glass cards on top stay readable. A fixed-position layer (rather
+   than background-attachment:fixed on body) keeps this smooth on iOS,
+   which handles fixed backgrounds poorly. */
+body.schedule-page { background: #0e1522; }
+.schedule-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(180deg, rgba(10,14,22,0.55) 0%, rgba(10,14,22,0.72) 55%, rgba(10,14,22,0.88) 100%),
+    url("assets/hero-stadium-bg.jpg");
+  background-size: cover;
+  background-position: center 20%;
+  filter: saturate(1.05);
+}
+.schedule-page header.site-header,
+.schedule-page main,
+.schedule-page footer {
+  position: relative;
+  z-index: 1;
+}
+.schedule-page header.site-header {
+  background: rgba(255,255,255,0.92);
+}
+.schedule-page main .card {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 14px 34px rgba(6,10,20,0.25);
+}
+.schedule-page main .card h2,
+.schedule-page main .card p { color: var(--text); }
+.schedule-page footer { color: rgba(255,255,255,0.75); }
+
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
 }
 
 .week-card {
+  position: relative;
   display: block;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 20px 18px;
   text-decoration: none;
   color: var(--text);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .week-card:hover {
@@ -1870,10 +1907,66 @@ body.el-page.theme-light { background: #ffffff; }
 }
 
 .week-card-num { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-.week-card-meta { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
+.week-card-meta { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+.week-card-footballs { font-size: 11px; line-height: 1.5; letter-spacing: 1px; margin-bottom: 12px; opacity: 0.8; filter: grayscale(0.15); }
 .week-card .go { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 700; font-size: 13px; }
 .week-card .arrow { transition: transform 0.15s ease; }
 .week-card:hover .arrow { transform: translateX(4px); }
+
+.week-card-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+/* Glass card background on schedule.html only (see .schedule-page main
+   .card above for the plain-card equivalent used elsewhere). */
+.schedule-page .week-card {
+  background: rgba(255,255,255,0.90);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255,255,255,0.55);
+  box-shadow: 0 8px 22px rgba(6,10,20,0.18);
+}
+
+/* Current week: the one that should visually pop. */
+.week-card-current {
+  border-color: rgba(47,111,237,0.55);
+  box-shadow: 0 0 0 2px rgba(47,111,237,0.18), 0 14px 30px rgba(47,111,237,0.22);
+  animation: week-current-glow 2.6s ease-in-out infinite;
+}
+.schedule-page .week-card-current { background: rgba(255,255,255,0.97); }
+.week-card-current .week-card-num { color: var(--accent); font-size: 20px; }
+.week-card-current .week-card-badge { background: rgba(47,111,237,0.14); color: var(--accent); }
+
+@keyframes week-current-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(47,111,237,0.18), 0 14px 30px rgba(47,111,237,0.22); }
+  50% { box-shadow: 0 0 0 3px rgba(47,111,237,0.30), 0 16px 36px rgba(47,111,237,0.34); }
+}
+
+/* Locked (past-deadline) week: muted and out of the way, but still a
+   working link — the sheet is view/print-only past its deadline. */
+.week-card-locked {
+  opacity: 0.6;
+  filter: grayscale(0.35);
+}
+.week-card-locked:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(220,38,38,0.35);
+}
+.week-card-locked .week-card-badge-locked { background: rgba(220,38,38,0.12); color: var(--loss); }
+.week-card-locked .go { color: var(--text-dim); }
+.week-card-locked:hover .arrow { transform: none; }
+
+@media (max-width: 620px) {
+  .schedule-bg { background-attachment: scroll; }
+}
 
 .back-link { display: inline-block; margin-bottom: 14px; font-weight: 600; font-size: 13px; }
 
