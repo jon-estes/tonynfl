@@ -32,7 +32,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Jon", "Tony", "Sam"],
+  players: ["Jon", "Tony", "Sam", "Vince"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE
@@ -50,7 +50,7 @@ const POOL_CONFIG = {
      its own player: "Name (Entry 2)". Just list the exact names from
      `players` above that have a 2nd entry — leave the array empty if
      nobody does. */
-  eliminatorDoubleEntryPlayers: []
+  eliminatorDoubleEntryPlayers: ["Jon"]
 };
 
 /* ============================================================
