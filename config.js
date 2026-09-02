@@ -39,7 +39,7 @@ const POOL_CONFIG = {
      EMBED URL here (Share -> Embed on the video, or just
      "https://www.youtube.com/embed/VIDEO_ID") and it'll appear on
      howto.html automatically — no code changes needed. */
-  howToVideoUrl: https://youtu.be/MngABK3w5SA,
+  howToVideoUrl: "<iframe width="560" height="315" src="https://www.youtube.com/embed/MngABK3w5SA?si=S1iGllULDYt_9UaH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>,"
 
   /* ---- Players with a 2nd Eliminator entry ----
      Anyone listed here gets TWO independent Eliminator picks each week
