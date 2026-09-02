@@ -18,11 +18,11 @@ const POOL_CONFIG = {
   eliminatorPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1333697856&single=true&output=csv", // "EliminatorPicks" tab: one team picked per week per player
   contentCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1079837670&single=true&output=csv",         // "Content" tab: editable rules text + homepage blurbs — see README.md
 
-  /* ---- Google Forms ----
-     Pick'em picks are now submitted directly on week.html via an
-     embedded Netlify Form (see README.md), so pickemFormUrl below is
-     unused — kept only in case you ever want a fallback link somewhere.
-     Eliminator picks still go through this combined Google Form. */
+  /* ---- Google Forms (legacy, unused) ----
+     Both Pick'em and Eliminator picks are now submitted together
+     directly on week.html via an embedded Netlify Form (see README.md).
+     These two fields are unused — kept only in case you ever want a
+     fallback link somewhere. */
   pickemFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform",
   eliminatorFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLScl_KDfR0YEsBr3jz4kbu_tR75xdFpyEAfg2hZZAqwiaceakg/viewform",
 
@@ -32,14 +32,25 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Jon", "Tony", "Sam", "Vince"],
+  players: ["Jon", "Tony", "Sam"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE
      EMBED URL here (Share -> Embed on the video, or just
      "https://www.youtube.com/embed/VIDEO_ID") and it'll appear on
      howto.html automatically — no code changes needed. */
-  howToVideoUrl: null
+  howToVideoUrl: null,
+
+  /* ---- Players with a 2nd Eliminator entry ----
+     Anyone listed here gets TWO independent Eliminator picks each week
+     on the print sheet (labeled "Entry 1" / "Entry 2") instead of one —
+     each with its own "already used" team tracking, so the two entries
+     can survive or get eliminated completely separately. Their 2nd
+     entry shows up everywhere on the site (Eliminator, Standings) as
+     its own player: "Name (Entry 2)". Just list the exact names from
+     `players` above that have a 2nd entry — leave the array empty if
+     nobody does. */
+  eliminatorDoubleEntryPlayers: []
 };
 
 /* ============================================================

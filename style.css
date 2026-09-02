@@ -1967,6 +1967,8 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .ps-elim-heading { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .ps-elim-hint { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
 .ps-elim-select { width: 100%; max-width: 320px; }
+#ps-elim-block-2 { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.ps-elim-heading-2 { color: #7c3aed; }
 
 .ps-footer {
   display: flex;
@@ -2239,6 +2241,8 @@ body.stand-page { background: #ffffff; }
 
 #snapshot-table th:first-child, #snapshot-table td:first-child { width: 40px; }
 #snapshot-table th:nth-child(2), #snapshot-table td:nth-child(2) { text-align: left; }
-#snapshot-table td:nth-child(5) { font-weight: 700; }
+#snapshot-table td:nth-child(3) { font-weight: 700; }
+#snapshot-table td:nth-child(7) { color: var(--text-dim); }
+#snapshot-table tr.rank-1 td:nth-child(7) { color: inherit; }
 
 .stand-eliminator-note { margin-top: 16px; font-size: 13px; }

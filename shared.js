@@ -294,6 +294,24 @@ function usedTeamsForPlayer(picks, player) {
   );
 }
 
+/* ---------- Eliminator double entries ----------
+   A handful of players may run TWO independent Eliminator entries at
+   once (POOL_CONFIG.eliminatorDoubleEntryPlayers lists their exact
+   names). Their 2nd entry is treated everywhere as its own player,
+   named "${player} (Entry 2)" — its own row of picks, its own used-teams
+   set, its own alive/on-notice/eliminated status — so no changes are
+   needed to eliminator.html or standings.html; they already iterate
+   over whatever distinct player names show up in the data. */
+
+function isDoubleEntryPlayer(player) {
+  const list = (POOL_CONFIG && POOL_CONFIG.eliminatorDoubleEntryPlayers) || [];
+  return list.includes(player);
+}
+
+function secondEntryName(player) {
+  return `${player} (Entry 2)`;
+}
+
 /* ---------- Rich text (Content tab rendering) ----------
    Turns a plain-text block into HTML paragraphs/bullets:
      - a blank line starts a new paragraph

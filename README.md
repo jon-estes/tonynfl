@@ -42,10 +42,10 @@ spreadsheet, not touching code.
 
 ## How it works
 
-- **Pick'em picks** are submitted right on the `week.html` print sheet via
-  **Netlify Forms** — no separate form to visit. **Eliminator picks** still
-  go through a Google Form for now (see `eliminatorFormUrl` in
-  `config.js`) — this could move to Netlify Forms too later if you want.
+- **Pick'em and Eliminator picks are both submitted right on the
+  `week.html` print sheet** via **Netlify Forms** — no separate form to
+  visit. Below the Pick'em matchups is an Eliminator Pick dropdown; picking
+  your name at the top fills in both.
 - **One Google Sheet, four tabs** — `Schedule`, `PickemPicks`,
   `EliminatorPicks`, `Content` — each published as a CSV link.
 - **The website** fetches those CSV links live in the browser and renders
@@ -146,11 +146,12 @@ scheduleCsvUrl: "...",
 pickemPicksCsvUrl: "...",
 eliminatorPicksCsvUrl: "...",
 contentCsvUrl: "...",
-pickemFormUrl: "your Pick'em Google Form link",
-eliminatorFormUrl: "your Eliminator Google Form link",
 ```
 
-Also set `siteName`, `season`, and `currentWeek`.
+Also set `siteName`, `season`, `currentWeek`, and `players` (the final
+roster — this drives the Name dropdown on the weekly submission sheet).
+`pickemFormUrl` / `eliminatorFormUrl` are legacy and unused now that both
+pools submit through the same embedded Netlify Form on `week.html`.
 
 ### 4. Deploy to Netlify
 
@@ -281,8 +282,9 @@ Only one thing to keep in sync if you ever reuse this for a new season:
 in `config.js` on the website — both are used to figure out the real year
 for schedule dates like "Thu Dec 10" (the Schedule tab doesn't store a
 year, since the season crosses New Year's).
-- Neither piece touches the `EliminatorPicks` tab — Eliminator picks
-  still come in through the Google Form as before.
+- Eliminator picks made on `week.html` land in the `EliminatorPicks` tab
+  the same way Pick'em picks land in `PickemPicks` — same submission,
+  same sync.
 
 ## Eliminator logic notes
 
@@ -321,12 +323,20 @@ year, since the season crosses New Year's).
   built out as additional pages once the regular season wraps, just say
   the word — both fit the same Google Sheet + Netlify pattern.
 - **Submit buttons**: the leaderboard pages (Pick'em / Eliminator) stay
-  view-only, no submit button, per your original request. Pick'em picks
-  are submitted right on the **Weekly Print Sheets** page (`week.html`)
-  via an embedded Netlify Form — check your teams, fill in points and
-  your name, hit "Submit My Picks." Share the Eliminator Google Form
-  (`eliminatorFormUrl` in `config.js`) with the group however you'd like
-  for now.
+  view-only, no submit button, per your original request. Both Pick'em
+  and Eliminator picks are submitted together right on the **Weekly
+  Submissions** page (`week.html`) via an embedded Netlify Form — check
+  your teams, fill in points, pick your Eliminator team, pick your name,
+  hit "Submit My Picks."
+- **Eliminator double entries**: if a player is running two Eliminator
+  entries at once, add their exact name (matching `players` in
+  `config.js`) to `eliminatorDoubleEntryPlayers` in `config.js`. That
+  player's Weekly Submissions sheet then shows a second Eliminator
+  dropdown ("Entry 2") with its own independent "already used" team
+  tracking. Their 2nd entry is stored in the `EliminatorPicks` sheet under
+  the name `"PlayerName (Entry 2)"` and shows up everywhere on the site
+  (Eliminator page, Standings) as its own separate entrant — no other
+  setup needed.
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.

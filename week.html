@@ -48,11 +48,19 @@
     <div id="ps-groups"></div>
 
     <div class="ps-elim-block" id="ps-elim-block">
-      <div class="ps-elim-heading">Eliminator Pick</div>
+      <div class="ps-elim-heading" id="ps-elim-heading">Eliminator Pick</div>
       <p class="ps-elim-hint">Pick one team from this week's games to win. Teams you've already used this season are greyed out — pick your name above first so we can check.</p>
       <select class="ps-input ps-elim-select" id="ps-elim-select" name="eliminator_team">
         <option value="">— no eliminator pick this week —</option>
       </select>
+
+      <div id="ps-elim-block-2" hidden>
+        <div class="ps-elim-heading ps-elim-heading-2">Eliminator Pick — Entry 2</div>
+        <p class="ps-elim-hint">You have two Eliminator entries this season — pick a team for your 2nd entry too. It tracks used teams separately from Entry 1.</p>
+        <select class="ps-input ps-elim-select" id="ps-elim-select-2" name="eliminator_team_2">
+          <option value="">— no eliminator pick this week —</option>
+        </select>
+      </div>
     </div>
 
     <div class="ps-submit-row" data-no-print>
@@ -87,6 +95,7 @@
   <input name="season">
   <input name="player">
   <input name="eliminator_team">
+  <input name="eliminator_team_2">
   <input name="picks_json">
 </form>
 
@@ -229,25 +238,46 @@
      team the selected player has already used in a previous (or this)
      week, matched case-insensitively against EliminatorPicks. */
   const elimSelect = document.getElementById("ps-elim-select");
+  const elimSelect2 = document.getElementById("ps-elim-select-2");
+  const elimBlock2 = document.getElementById("ps-elim-block-2");
+  const elimHeading = document.getElementById("ps-elim-heading");
   const weekTeamCodes = [...new Set(games.flatMap(g => [g.away, g.home]))]
     .sort((a, b) => teamName(a).localeCompare(teamName(b)));
-  weekTeamCodes.forEach(code => {
-    const opt = document.createElement("option");
-    opt.value = code;
-    opt.textContent = teamName(code);
-    elimSelect.appendChild(opt);
+  [elimSelect, elimSelect2].forEach(select => {
+    weekTeamCodes.forEach(code => {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = teamName(code);
+      select.appendChild(opt);
+    });
   });
 
-  function refreshEliminatorOptions() {
-    const selectedName = nameSelect.value.trim().toLowerCase();
-    const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === selectedName);
+  /* Fills the "already used" state for one Eliminator select, checking
+     against whichever logical player name it tracks (the player's own
+     name for Entry 1, or "${player} (Entry 2)" for Entry 2). */
+  function refreshOneEliminatorSelect(select, logicalPlayer) {
+    const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === logicalPlayer.toLowerCase());
     const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer) : new Set();
-    Array.from(elimSelect.options).forEach(opt => {
+    Array.from(select.options).forEach(opt => {
       if (!opt.value) return;
-      const alreadyUsed = used.has(opt.value) && opt.value !== elimSelect.value;
+      const alreadyUsed = used.has(opt.value) && opt.value !== select.value;
       opt.disabled = alreadyUsed;
       opt.textContent = alreadyUsed ? `${teamName(opt.value)} (already used)` : teamName(opt.value);
     });
+  }
+
+  function refreshEliminatorOptions() {
+    const selectedName = nameSelect.value.trim();
+    const isDouble = selectedName && isDoubleEntryPlayer(selectedName);
+
+    refreshOneEliminatorSelect(elimSelect, selectedName);
+    elimBlock2.hidden = !isDouble;
+    elimHeading.textContent = isDouble ? "Eliminator Pick — Entry 1" : "Eliminator Pick";
+    if (isDouble) {
+      refreshOneEliminatorSelect(elimSelect2, secondEntryName(selectedName));
+    } else {
+      elimSelect2.value = "";
+    }
   }
   nameSelect.addEventListener("change", refreshEliminatorOptions);
   refreshEliminatorOptions();
@@ -306,7 +336,7 @@
     if (!sheetForm.reportValidity()) return;
 
     const picks = collectPicks();
-    const hasElimPick = !!elimSelect.value;
+    const hasElimPick = !!elimSelect.value || !!elimSelect2.value;
     if (!picks.length && !hasElimPick) {
       statusEl.textContent = "Pick at least one team (Pick'em or Eliminator) before submitting.";
       statusEl.className = "ps-submit-status ps-submit-error";

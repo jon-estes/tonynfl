@@ -72,13 +72,15 @@
   if (!seasonBoard.length) {
     snapshotTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
   } else {
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>High Week</th><th>Total Points</th></tr></thead><tbody>";
+    const leaderTotal = seasonBoard[0].total;
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Score</th><th>Total Games</th><th>Total Correct</th><th>High Week</th><th>Back</th></tr></thead><tbody>";
     seasonBoard.forEach((s, i) => {
       const high = highByPlayer[s.player];
       const highText = high && high.bestWeek ? `${high.bestTotal} pts <span style="color:var(--text-dim); font-weight:400;">(Wk ${high.bestWeek})</span>` : "—";
+      const backText = i === 0 ? "—" : `-${leaderTotal - s.total}`;
       html += `<tr class="rank-${i + 1}">
-        <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
-        <td>${highText}</td><td><strong>${s.total}</strong></td></tr>`;
+        <td>${i + 1}</td><td>${s.player}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
+        <td>${s.correct}</td><td>${highText}</td><td>${backText}</td></tr>`;
     });
     html += "</tbody>";
     snapshotTable.innerHTML = html;
