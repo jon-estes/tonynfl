@@ -295,7 +295,8 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   box-shadow: 0 14px 34px rgba(18,21,26,0.12);
 }
 
-.hero-photo img {
+.hero-photo img,
+.hero-photo video {
   width: 100%;
   height: auto;
   display: block;

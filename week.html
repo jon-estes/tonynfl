@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Week Print Sheet — Vince and Dave's Pool</title>
+<title id="page-title">Week Submission — Vince and Dave's Pool</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -130,6 +130,7 @@
   for (let v = SEASON_MAX_POINTS; v >= minPoint; v--) pointOptions.push(v);
 
   if (!week || !games.length) {
+    document.getElementById("page-title").textContent = "Week not found — Vince and Dave's Pool";
     document.getElementById("ps-title").textContent = "Week not found";
     document.getElementById("ps-instructions").textContent = "";
     document.getElementById("ps-groups").innerHTML =
@@ -138,6 +139,7 @@
     return;
   }
 
+  document.getElementById("page-title").textContent = `Week ${week} Submission — Vince and Dave's Pool`;
   document.getElementById("ps-title").textContent = `WEEK ${week} PICK SHEET ${POOL_CONFIG.season}`;
   document.querySelector(".ps-brand").textContent = `Vince and Dave's Pool — ${POOL_CONFIG.season} Season, Week ${week}`;
   document.getElementById("ps-field-week").value = week;
