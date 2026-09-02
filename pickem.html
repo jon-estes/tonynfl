@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="pk-page">
+<body class="pk-page theme-light">
 <header class="site-header" id="site-header"></header>
 
 <div class="pk-photo-hero"><span class="pk-photo-hero-tag">🏈 2026 Playoffs</span></div>
@@ -20,14 +20,6 @@
   <div class="card pk-rules-card">
     <h2>Pool Rules</h2>
     <div data-content="pickem_rules"></div>
-  </div>
-
-  <div class="card pk-full-leaderboard">
-    <h2>Full Season Leaderboard</h2>
-    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
-      Every player, ranked by total confidence points earned so far this season.
-    </p>
-    <table id="full-standings-table"></table>
   </div>
 
   <div class="pk-card">
@@ -96,6 +88,23 @@
         <div class="pk-progress-wrap" id="pk-progress"></div>
       </div>
       <div class="pk-season-tag">Picks lock Thursday · 12:00 AM PT</div>
+    </div>
+  </div>
+
+  <div class="card pk-grid-card">
+    <div class="pk-grid-head">
+      <h2>Everyone's Picks</h2>
+      <div class="pk-grid-week-field">
+        <label for="grid-week-select">Week</label>
+        <select id="grid-week-select" class="pk-select"></select>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
+      Every player's pick and confidence points for every game that week, side by side. Scroll
+      right on smaller screens.
+    </p>
+    <div class="pick-grid-wrap">
+      <table class="pick-grid-table" id="pick-grid-table"></table>
     </div>
   </div>
 </div>
@@ -213,7 +222,7 @@
     return `<span class="team-badge" style="background:${t.color};color:${t.text};">${abbr}</span>`;
   }
 
-  /* ---- Standings pane (inside pool card) + full leaderboard (always visible) ---- */
+  /* ---- Standings pane (inside pool card) ---- */
   function renderStandingsRows(board) {
     if (!board.length) return `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
     let rows = "";
@@ -228,15 +237,6 @@
   function renderStandings() {
     const board = computePickemSeasonLeaderboard(state.schedule, state.pickemPicks);
     document.getElementById("standings-table").innerHTML = `<tbody>${renderStandingsRows(board)}</tbody>`;
-
-    const fullTable = document.getElementById("full-standings-table");
-    if (!board.length) {
-      fullTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
-      return;
-    }
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Pending</th><th>Total Points</th></tr></thead>";
-    html += `<tbody>${renderStandingsRows(board)}</tbody>`;
-    fullTable.innerHTML = html;
   }
 
   /* ---- History pane: every player, every week ---- */
@@ -272,6 +272,70 @@
     renderPicks(players[0], defaultWeek);
   } else {
     document.getElementById("picks-rows").innerHTML = `<div class="empty-state">No players yet.</div>`;
+  }
+
+  /* ---- Everyone's Picks grid: one row per player, one column per game,
+     for whichever week is selected. Sorted the same way as gameId (1-1,
+     1-2, ...) so column order matches the schedule. */
+  const gameIdNum = id => {
+    const parts = String(id).split("-");
+    return parseInt(parts[parts.length - 1], 10) || 0;
+  };
+
+  const gridWeekSelect = document.getElementById("grid-week-select");
+  weeks.forEach(w => {
+    const opt = document.createElement("option");
+    opt.value = w; opt.textContent = "Week " + w;
+    gridWeekSelect.appendChild(opt);
+  });
+
+  function renderPickGrid(week) {
+    const mount = document.getElementById("pick-grid-table");
+    const games = state.schedule
+      .filter(g => g.week === week)
+      .slice()
+      .sort((a, b) => gameIdNum(a.gameId) - gameIdNum(b.gameId));
+
+    if (!players.length || !games.length) {
+      mount.innerHTML = `<tr><td class="empty-state">No picks to show for Week ${week}.</td></tr>`;
+      return;
+    }
+
+    const picksByPlayerGame = {};
+    state.pickemPicks
+      .filter(p => p.week === week)
+      .forEach(p => { picksByPlayerGame[p.player + "|" + p.gameId] = p; });
+
+    let html = "<thead><tr><th class=\"pgt-player-col\">Player</th>";
+    games.forEach(g => {
+      html += `<th>${g.away}<span class="pgt-at">@</span>${g.home}</th>`;
+    });
+    html += "</tr></thead><tbody>";
+
+    players.forEach(player => {
+      html += `<tr><td class="pgt-player-col">${player}</td>`;
+      games.forEach(g => {
+        const p = picksByPlayerGame[player + "|" + g.gameId];
+        if (!p || !p.pick) {
+          html += `<td class="pick-cell pending">—</td>`;
+          return;
+        }
+        const { result, earned } = pointsEarnedForPick(g, p);
+        const ptsText = result === "correct" ? `+${earned}` : p.points;
+        html += `<td class="pick-cell ${result}">${p.pick}<span class="pgt-pts">${ptsText}</span></td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</tbody>";
+    mount.innerHTML = html;
+  }
+
+  gridWeekSelect.addEventListener("change", () => renderPickGrid(parseInt(gridWeekSelect.value, 10)));
+  if (weeks.length) {
+    gridWeekSelect.value = defaultWeek;
+    renderPickGrid(defaultWeek);
+  } else {
+    document.getElementById("pick-grid-table").innerHTML = `<tr><td class="empty-state">No weeks yet.</td></tr>`;
   }
 })();
 </script>

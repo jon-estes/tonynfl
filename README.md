@@ -15,7 +15,7 @@ A clean, simple site with two NFL pools:
   dropdown shows any player's team grid — every NFL team in color, greyed
   out once that player has used it.
 
-There's also a **Weekly Print Sheets** page: pick a week, get a clean
+There's also a **Weekly Submissions** page: pick a week, get a clean
 printable (or fill-in-on-screen) sheet of that week's Pick'em matchups,
 grouped by day, with checkboxes for your picks and a spot for your
 confidence points. Submissions go straight to **Netlify Forms** —
@@ -23,8 +23,17 @@ right there on the page, no separate Google Form to visit — and (once
 you wire up the optional automation below) they land in the
 PickemPicks tab automatically.
 
-The home page is "Welcome to Vince and Dave's Pool" with three cards
-linking to Pick'em, Eliminator, and the Weekly Print Sheets.
+A **Standings** page gives a season-at-a-glance snapshot: the Pick'em
+leaderboard (with each player's single best-scoring week called out),
+and the Eliminator alive/on-notice/eliminated groupings — with a link
+through to Eliminator's page for the full team-by-team pick history.
+
+A **How To** page walks new players through submitting picks and
+reading the site, with room for an embedded video tutorial (set
+`howToVideoUrl` in `config.js` once you have one).
+
+The home page is "Welcome to Vince and Dave's Pool" with four cards
+linking to Pick'em, Eliminator, Weekly Submissions, and How To.
 
 It's a static site (HTML/CSS/JS) that deploys on Netlify with no backend.
 All live data — schedules, results, and everyone's picks — comes from a
@@ -196,6 +205,18 @@ everything in it, and follow these one-time steps:
 
 **C. Turn on automatic Pick'em submission syncing**
 
+Two ways to do this — **use the polling method (C2)**. The webhook
+method (C1) is documented for completeness, but Netlify's outgoing
+webhook has to wait on Apps Script's Web App URL, which always answers
+via a redirect that Netlify won't follow; Google's own front-end adds
+enough latency variance to that round trip that Netlify intermittently
+times out and retries — sometimes several times for one real
+submission — which is what repeatedly disabled the notification during
+testing. Polling avoids that entirely by having Apps Script call OUT to
+Netlify on its own schedule instead of Netlify calling IN.
+
+**C1. Webhook method (not recommended — kept for reference)**
+
 1. In the Apps Script editor: **Deploy → New deployment**.
 2. Click the gear icon next to "Select type" → choose **Web app**.
 3. Set **Execute as: Me**, **Who has access: Anyone**, then **Deploy**.
@@ -204,6 +225,30 @@ everything in it, and follow these one-time steps:
    Add notification → Outgoing webhook**.
 6. Set **Event to listen for: Form submission**, **Form: picks**, and
    paste the Web app URL from step 4 as the **URL to notify**. Save.
+
+**C2. Polling method (recommended)**
+
+1. Netlify → click your account avatar (top right) → **Applications →
+   Personal access tokens → New access token**. Name it anything (e.g.
+   "Apps Script Sync"), generate it, and copy the token — Netlify only
+   shows it once.
+2. Netlify → your site → **Site settings → General → Site details** →
+   copy the **Site ID**.
+3. In the Apps Script editor, click the gear icon in the left sidebar
+   (**Project Settings**) → scroll to **Script Properties** → **Add
+   script property**, and add two:
+   - `NETLIFY_TOKEN` = the token from step 1
+   - `NETLIFY_SITE_ID` = the Site ID from step 2
+
+   (These go in Script Properties, not in `apps-script.gs` itself, so the
+   token isn't sitting in plain text in code you might paste or share
+   elsewhere.)
+4. Back in the function dropdown, pick `setUpNetlifyPollingTrigger` and
+   click **Run**. Authorize it if asked (first time only).
+5. That's it — it now checks Netlify for new submissions every minute and
+   syncs them in, no webhook involved. If you'd previously set up C1, you
+   can leave that notification disabled in Netlify (or delete it) — it's
+   no longer needed either way.
 
 From then on, submitting the print sheet on `week.html` adds a row to
 PickemPicks within a few seconds — resubmitting (if someone changes
@@ -289,12 +334,13 @@ year, since the season crosses New Year's).
   `assets/eliminator-icon.png`) are transparent PNGs, so they drop cleanly
   onto the white background — swap those files (same filenames) any time.
 - **Favicon**: a football icon (`favicon.svg` + PNG/ICO fallbacks) is
-  wired into all three pages' browser tabs.
-- **Theme**: the home page always runs on a clean white background. Pick'em
-  and Eliminator default to an immersive look with the stadium photo behind
-  glass cards (green accents on Pick'em, fire/orange on Eliminator) — there's
-  a button next to the nav links ("Vince's View" / "Dave's View") that
-  switches them to the same plain white theme as the home page and back.
+  wired into every page's browser tab.
+- **Theme**: every page runs on the same clean white background (green
+  accents on Pick'em, fire/orange on Eliminator, blue on Standings/Weekly
+  Submissions, purple on How To). Pick'em and Eliminator's HTML/CSS still
+  has an unused "immersive stadium photo" dark theme underneath (from an
+  earlier design with a Vince's-View/Dave's-View toggle) — it's just not
+  wired to anything anymore, so it's safe to ignore or rip out later.
   The choice is remembered per-browser (saved to `localStorage`).
 - **Rules text and homepage blurbs are now editable** — see the `Content`
   tab above. Until you wire one up, everything shows the same text as

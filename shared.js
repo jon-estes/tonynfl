@@ -198,6 +198,27 @@ function computePickemWeekLeaderboard(schedule, picks, week) {
   return board;
 }
 
+/* Each player's single best-scoring week (highest confidence points
+   earned in any ONE week, and which week that was) — used on the
+   Standings page's "High Week" column. A player with no picks made in
+   any week yet gets bestWeek: null, bestTotal: 0. */
+function computeHighWeeks(schedule, picks) {
+  const players = getPlayers(picks);
+  const weeks = getWeeks(schedule);
+
+  return players.map(player => {
+    let best = { week: null, total: 0 };
+    weeks.forEach(week => {
+      const weekBoard = computePickemWeekLeaderboard(schedule, picks, week);
+      const me = weekBoard.find(s => s.player === player);
+      if (me && me.picksMade && me.total > best.total) {
+        best = { week, total: me.total };
+      }
+    });
+    return { player, bestWeek: best.week, bestTotal: best.total };
+  });
+}
+
 /* ---------- Eliminator ---------- */
 
 function findGameForTeamWeek(schedule, week, team) {
@@ -350,7 +371,6 @@ function teamName(abbr) {
 function renderHeader(activePage) {
   const mount = document.getElementById("site-header");
   if (!mount) return;
-  const showToggle = document.body.classList.contains("pk-page") || document.body.classList.contains("el-page");
   mount.innerHTML = `
     <div class="header-inner">
       <a href="index.html" class="brand" style="text-decoration:none;">
@@ -364,37 +384,12 @@ function renderHeader(activePage) {
         <a href="index.html" class="${activePage === "home" ? "active" : ""}">Home</a>
         <a href="pickem.html" class="${activePage === "pickem" ? "active" : ""}">Pick'em</a>
         <a href="eliminator.html" class="${activePage === "eliminator" ? "active" : ""}">Eliminator</a>
-        <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Print Sheets</a>
-        ${showToggle ? `<button type="button" class="theme-toggle" id="theme-toggle"></button>` : ""}
+        <a href="standings.html" class="${activePage === "standings" ? "active" : ""}">Standings</a>
+        <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Weekly Submissions</a>
+        <a href="howto.html" class="${activePage === "howto" ? "active" : ""}">How To</a>
       </nav>
     </div>
   `;
-  if (showToggle) initThemeToggle();
-}
-
-/* ---------- Light/photo theme toggle (Pick'em + Eliminator only) ---------- */
-
-const THEME_KEY = "vdpool-theme"; // "photo" (default) or "white"
-
-function applyTheme(theme) {
-  document.body.classList.toggle("theme-light", theme === "white");
-  const btn = document.getElementById("theme-toggle");
-  if (btn) {
-    btn.textContent = theme === "white" ? "Dave's View" : "Vince's View";
-  }
-}
-
-function initThemeToggle() {
-  let theme = "photo";
-  try { theme = localStorage.getItem(THEME_KEY) || "photo"; } catch (e) {}
-  applyTheme(theme);
-  const btn = document.getElementById("theme-toggle");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    const next = document.body.classList.contains("theme-light") ? "photo" : "white";
-    applyTheme(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
-  });
 }
 
 function renderSampleBanner(state) {

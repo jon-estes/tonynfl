@@ -32,7 +32,14 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Jon", "Tony", "Vince"]
+  players: ["Jon", "Tony", "Sam"],
+
+  /* ---- How To page video ----
+     Leave null until you have a video. Once you do, paste its YOUTUBE
+     EMBED URL here (Share -> Embed on the video, or just
+     "https://www.youtube.com/embed/VIDEO_ID") and it'll appear on
+     howto.html automatically — no code changes needed. */
+  howToVideoUrl: null
 };
 
 /* ============================================================
@@ -475,7 +482,15 @@ const SAMPLE_CONTENT = {
     "- Winner(s) decided by:\n" +
     "  - First – No Loss\n" +
     "  - Second – Last survivors go out the same week\n" +
-    "- The person or people left in the pool will win or split the jackpot."
+    "- The person or people left in the pool will win or split the jackpot.",
+
+  howto_text:
+    "Full step-by-step tutorial coming soon — for now, here's the short version:\n\n" +
+    "- Go to Weekly Submissions, pick your week, and fill out your Pick'em picks and Eliminator pick right on the page\n" +
+    "- Pick your name from the dropdown at the top before you start\n" +
+    "- Assign each Pick'em pick a confidence point 1-16 — your most confident pick gets the highest number, and each number can only be used once\n" +
+    "- Hit Submit My Picks when you're done — no separate form to fill out\n" +
+    "- Check Pick'em and Eliminator any time to see how you're doing, and Standings for the full leaderboard"
 };
 
 const SAMPLE_ELIMINATOR_PICKS = [

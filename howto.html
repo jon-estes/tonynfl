@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How To — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-light">
+<header class="site-header" id="site-header"></header>
+
+<section class="howto-hero">
+  <h1>How To</h1>
+  <p>A quick tutorial on submitting picks and reading the site — video walkthrough coming soon.</p>
+</section>
+
+<div class="howto-body">
+  <div id="sample-banner"></div>
+
+  <div class="card">
+    <h2>Getting Started</h2>
+    <div data-content="howto_text"></div>
+  </div>
+
+  <div class="card">
+    <h2>Watch the Video</h2>
+    <div class="howto-video-frame" id="howto-video-frame">
+      <div class="howto-video-placeholder" id="howto-video-placeholder">
+        <span class="big">🎬</span>
+        <span>Video walkthrough coming soon.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("howto");
+  const state = await loadPoolData();
+  renderSampleBanner(state);
+  renderContent(state.content);
+
+  /* Drops in a real embedded video the moment POOL_CONFIG.howToVideoUrl is
+     set in config.js — until then, shows the placeholder above. */
+  if (POOL_CONFIG.howToVideoUrl) {
+    document.getElementById("howto-video-frame").innerHTML =
+      `<iframe src="${POOL_CONFIG.howToVideoUrl}" title="How To — Vince and Dave's Pool" allowfullscreen></iframe>`;
+  }
+})();
+</script>
+</body>
+</html>
