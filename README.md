@@ -346,6 +346,14 @@ year, since the season crosses New Year's).
   the name `"PlayerName (Entry 2)"` and shows up everywhere on the site
   (Eliminator page, Standings) as its own separate entrant — no other
   setup needed.
+- **Pick'em-only players**: if a player only plays Pick'em and skips
+  Eliminator entirely, add their exact name (matching `players` in
+  `config.js`) to `pickemOnlyPlayers` in `config.js`. Their Weekly
+  Submissions sheet then shows only the Pick'em matchups — no Eliminator
+  Pick section at all — and since they'll never have any Eliminator picks
+  on file, they automatically don't show up anywhere on the Eliminator or
+  Standings pages either. Leave the array empty if everyone plays both
+  pools.
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.

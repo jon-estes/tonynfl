@@ -32,7 +32,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon"],
+  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE
@@ -50,7 +50,18 @@ const POOL_CONFIG = {
      its own player: "Name (Entry 2)". Just list the exact names from
      `players` above that have a 2nd entry — leave the array empty if
      nobody does. */
-  eliminatorDoubleEntryPlayers: ["Pat", "Jason"]
+  eliminatorDoubleEntryPlayers: ["Pat", "Jason"],
+
+  /* ---- Players who only play Pick'em (no Eliminator entry) ----
+     Everyone in `players` above is assumed to play BOTH Pick'em and
+     Eliminator (one entry each) unless listed here. Anyone listed in
+     pickemOnlyPlayers gets no Eliminator Pick section at all on the
+     print sheet (week.html) when they select their name — just the
+     Pick'em matchups. They also won't show up anywhere on the
+     Eliminator or Standings pages, same as anyone with zero Eliminator
+     picks on file. Just list the exact names from `players` above —
+     leave the array empty if everyone plays both. */
+  pickemOnlyPlayers: ["Kurt"]
 };
 
 /* ============================================================

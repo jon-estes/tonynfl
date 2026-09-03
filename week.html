@@ -309,8 +309,23 @@
     });
   }
 
+  const elimBlock = document.getElementById("ps-elim-block");
+
   function refreshEliminatorOptions() {
     const selectedName = nameSelect.value.trim();
+
+    // Pickem-only players (POOL_CONFIG.pickemOnlyPlayers) don't play
+    // Eliminator at all — hide the whole section and make sure no stray
+    // selection lingers if someone had picked a team, then switched to
+    // a name that shouldn't have one.
+    if (selectedName && isPickemOnlyPlayer(selectedName)) {
+      elimBlock.hidden = true;
+      elimSelect.value = "";
+      elimSelect2.value = "";
+      return;
+    }
+    elimBlock.hidden = false;
+
     const isDouble = selectedName && isDoubleEntryPlayer(selectedName);
 
     refreshOneEliminatorSelect(elimSelect, selectedName);

@@ -312,6 +312,14 @@ function secondEntryName(player) {
   return `${player} (Entry 2)`;
 }
 
+/* Some players only play Pick'em and skip Eliminator entirely
+   (POOL_CONFIG.pickemOnlyPlayers lists their exact names). week.html
+   hides the whole Eliminator Pick section for them. */
+function isPickemOnlyPlayer(player) {
+  const list = (POOL_CONFIG && POOL_CONFIG.pickemOnlyPlayers) || [];
+  return list.includes(player);
+}
+
 /* ---------- Rich text (Content tab rendering) ----------
    Turns a plain-text block into HTML paragraphs/bullets:
      - a blank line starts a new paragraph
