@@ -252,9 +252,18 @@ Netlify on its own schedule instead of Netlify calling IN.
    no longer needed either way.
 
 From then on, submitting the print sheet on `week.html` adds a row to
-PickemPicks within a few seconds — resubmitting (if someone changes
-their mind before the deadline) replaces their previous picks for that
-week instead of duplicating them.
+PickemPicks (and EliminatorPicks, if they made a pick) within about a
+minute.
+
+**One submission per player per week — no resubmitting.** Once someone
+submits, their name shows as `(Already Submitted)` and can't be selected
+again on `week.html` for that week — this is enforced both in the page
+itself and, for real, on the server (`apps-script.gs` rejects a second
+submission for a player/week even if someone bypasses the page). If a
+player needs to change something after submitting, delete their rows for
+that week from `PickemPicks` and/or `EliminatorPicks` in the Sheet — the
+next time they load `week.html`, their name unlocks automatically and
+they can submit fresh.
 
 **Notes / limits:**
 

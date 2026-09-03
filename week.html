@@ -42,8 +42,13 @@
         <select id="ps-name" name="player" class="ps-input" required>
           <option value="">— select your name —</option>
         </select>
+        <p class="ps-submitted-hint" id="ps-submitted-hint" hidden>
+          Names marked <strong>(Already Submitted)</strong> have already turned in picks for this
+          week and can't resubmit here — contact the commissioner if something needs to change.
+        </p>
       </div>
     </div>
+    <div class="ps-already-banner" id="ps-already-banner" hidden data-no-print></div>
 
     <div id="ps-groups"></div>
 
@@ -229,12 +234,48 @@
      always match a real roster name — that's what lets the Eliminator
      pick reliably check "which teams has this player already used". */
   const nameSelect = document.getElementById("ps-name");
+
+  /* One-submission-per-week lock: once a player has ANY Pick'em or
+     Eliminator row on record for this week (in either the live sheet or
+     the sample data), their name is disabled in this dropdown so they
+     can't resubmit and silently overwrite what's already turned in. The
+     real enforcement lives server-side in apps-script.gs — this is just
+     the friendly, matching front-end version of the same rule. To let
+     someone resubmit, the commissioner deletes their PickemPicks /
+     EliminatorPicks rows for that week in the Google Sheet; next time
+     this page loads, their name unlocks automatically. */
+  const submittedPlayers = new Set();
+  (POOL_CONFIG.players || []).forEach(name => {
+    const hasPickem = state.pickemPicks.some(p => p.player === name && p.week === week);
+    const hasElim = state.eliminatorPicks.some(p => p.player === name && p.week === week);
+    const hasElim2 = isDoubleEntryPlayer(name) &&
+      state.eliminatorPicks.some(p => p.player === secondEntryName(name) && p.week === week);
+    if (hasPickem || hasElim || hasElim2) submittedPlayers.add(name);
+  });
+
   (POOL_CONFIG.players || []).forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
-    opt.textContent = name;
+    const already = submittedPlayers.has(name);
+    opt.textContent = already ? `${name} (Already Submitted)` : name;
+    opt.disabled = already;
     nameSelect.appendChild(opt);
   });
+  if (submittedPlayers.size) {
+    document.getElementById("ps-submitted-hint").hidden = false;
+  }
+
+  const alreadyBanner = document.getElementById("ps-already-banner");
+  function refreshAlreadySubmittedBanner() {
+    const selectedName = nameSelect.value.trim();
+    const already = selectedName && submittedPlayers.has(selectedName);
+    alreadyBanner.hidden = !already;
+    if (already) {
+      alreadyBanner.textContent = `🔒 ${selectedName} already submitted picks for Week ${week}. Contact the commissioner if something needs to change.`;
+    }
+    return already;
+  }
+  nameSelect.addEventListener("change", refreshAlreadySubmittedBanner);
 
   /* Eliminator pick: one dropdown of this week's teams. Greys out any
      team the selected player has already used in a previous (or this)
@@ -337,6 +378,12 @@
     }
     if (!sheetForm.reportValidity()) return;
 
+    if (submittedPlayers.has(nameSelect.value.trim())) {
+      statusEl.textContent = "🔒 That name already submitted picks for this week — contact the commissioner if something needs to change.";
+      statusEl.className = "ps-submit-status ps-submit-error";
+      return;
+    }
+
     const picks = collectPicks();
     const hasElimPick = !!elimSelect.value || !!elimSelect2.value;
     if (!picks.length && !hasElimPick) {
@@ -357,8 +404,25 @@
     })
       .then((res) => {
         if (!res.ok) throw new Error("Bad response");
-        statusEl.textContent = "✅ Picks submitted! You can still edit and resubmit any time before the deadline.";
+        statusEl.textContent = "✅ Picks submitted! Your name is now locked for this week — contact the commissioner if you need to change anything.";
         statusEl.className = "ps-submit-status ps-submit-success";
+
+        // Lock the name immediately in this browser tab too, so the UI
+        // matches reality right away rather than waiting on the next
+        // page load (the actual sheet sync can take up to a minute).
+        const submittedName = nameSelect.value.trim();
+        submittedPlayers.add(submittedName);
+        Array.from(nameSelect.options).forEach(opt => {
+          if (opt.value === submittedName) {
+            opt.disabled = true;
+            opt.textContent = `${submittedName} (Already Submitted)`;
+          }
+        });
+        document.getElementById("ps-submitted-hint").hidden = false;
+        refreshAlreadySubmittedBanner();
+        document.querySelectorAll(
+          "#ps-sheet input, #ps-sheet select, #ps-sheet button[type=submit], #submit-btn-top"
+        ).forEach(el => { el.disabled = true; });
       })
       .catch(() => {
         statusEl.textContent = "⚠️ Couldn't submit — this only works once the site is live on Netlify. Try again, or check with the commissioner.";

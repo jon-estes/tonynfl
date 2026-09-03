@@ -13,7 +13,9 @@
 <header class="site-header" id="site-header"></header>
 
 <section class="stand-hero">
+  <div class="stand-hero-grid" aria-hidden="true"></div>
   <div class="stand-hero-content">
+    <div class="stand-live-badge"><span class="stand-live-dot"></span>Live</div>
     <div class="stand-kicker">Season Snapshot</div>
     <h1>Standings</h1>
     <p class="stand-tagline">Who's leading the Pick'em race, who's still alive in Eliminator, and who had the week to remember.</p>
@@ -73,13 +75,15 @@
     snapshotTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
   } else {
     const leaderTotal = seasonBoard[0].total;
+    const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
     let html = "<thead><tr><th>#</th><th>Player</th><th>Score</th><th>Total Games</th><th>Total Correct</th><th>High Week</th><th>Back</th></tr></thead><tbody>";
     seasonBoard.forEach((s, i) => {
       const high = highByPlayer[s.player];
       const highText = high && high.bestWeek ? `${high.bestTotal} pts <span style="color:var(--text-dim); font-weight:400;">(Wk ${high.bestWeek})</span>` : "—";
       const backText = i === 0 ? "—" : `-${leaderTotal - s.total}`;
+      const rankText = medals[i + 1] ? `<span class="stand-medal">${medals[i + 1]}</span>` : i + 1;
       html += `<tr class="rank-${i + 1}">
-        <td>${i + 1}</td><td>${s.player}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
+        <td>${rankText}</td><td>${s.player}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
         <td>${s.correct}</td><td>${highText}</td><td>${backText}</td></tr>`;
     });
     html += "</tbody>";
