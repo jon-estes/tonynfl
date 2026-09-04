@@ -2026,6 +2026,16 @@ body.schedule-page { background: #0e1522; }
 .ps-day-row:last-child { border-bottom: none; }
 .ps-day-row:nth-child(odd) { background: rgba(0,0,0,0.015); }
 
+/* Applied on a failed submit to any game row missing a team pick, and to
+   an Eliminator select left empty — cleared as soon as the person fixes it. */
+.ps-day-row.ps-row-invalid {
+  background: rgba(192,57,43,0.08);
+  box-shadow: inset 3px 0 0 #c0392b;
+}
+.ps-elim-select.ps-invalid {
+  border-bottom-color: #c0392b !important;
+}
+
 .ps-team {
   display: flex;
   align-items: center;
@@ -2081,6 +2091,7 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
   background: rgba(0,0,0,0.015);
 }
 .ps-elim-heading { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.ps-required-mark { color: #c0392b; }
 .ps-elim-hint { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
 .ps-elim-select { width: 100%; max-width: 320px; }
 #ps-elim-block-2 { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }

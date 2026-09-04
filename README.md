@@ -337,6 +337,14 @@ year, since the season crosses New Year's).
   Submissions** page (`week.html`) via an embedded Netlify Form — check
   your teams, fill in points, pick your Eliminator team, pick your name,
   hit "Submit My Picks."
+- **All fields are required**: the sheet won't submit unless every game
+  has a team checked and a point value assigned, and (for anyone who
+  isn't pickem-only) the Eliminator pick is filled in too — no partial
+  sheets. If something's missing, the page highlights exactly which games
+  and/or the Eliminator pick still need attention and scrolls to the
+  first one, right in the browser before it ever hits the Sheet. This is
+  a front-end safeguard (nothing server-side blocks an incomplete
+  submission), so it only applies to people using the page normally.
 - **Eliminator double entries**: if a player is running two Eliminator
   entries at once, add their exact name (matching `players` in
   `config.js`) to `eliminatorDoubleEntryPlayers` in `config.js`. That

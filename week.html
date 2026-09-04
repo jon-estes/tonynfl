@@ -33,7 +33,7 @@
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
-    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. Hit Submit My Picks when you're done — no separate form to visit.</p>
+    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. <strong>Every game needs a team and a point value, and your Eliminator pick is required too</strong> — the sheet won't submit until everything's filled in. Hit Submit My Picks when you're done — no separate form to visit.</p>
     <div class="ps-lock-banner" id="ps-lock-banner" hidden data-no-print></div>
 
     <div class="ps-footer ps-footer-top">
@@ -53,17 +53,17 @@
     <div id="ps-groups"></div>
 
     <div class="ps-elim-block" id="ps-elim-block">
-      <div class="ps-elim-heading" id="ps-elim-heading">Eliminator Pick</div>
+      <div class="ps-elim-heading" id="ps-elim-heading">Eliminator Pick <span class="ps-required-mark">*</span></div>
       <p class="ps-elim-hint">Pick one team from this week's games to win. Teams you've already used this season are greyed out — pick your name above first so we can check.</p>
       <select class="ps-input ps-elim-select" id="ps-elim-select" name="eliminator_team">
-        <option value="">— no eliminator pick this week —</option>
+        <option value="">— select a team —</option>
       </select>
 
       <div id="ps-elim-block-2" hidden>
-        <div class="ps-elim-heading ps-elim-heading-2">Eliminator Pick — Entry 2</div>
+        <div class="ps-elim-heading ps-elim-heading-2">Eliminator Pick — Entry 2 <span class="ps-required-mark">*</span></div>
         <p class="ps-elim-hint">You have two Eliminator entries this season — pick a team for your 2nd entry too. It tracks used teams separately from Entry 1.</p>
         <select class="ps-input ps-elim-select" id="ps-elim-select-2" name="eliminator_team_2">
-          <option value="">— no eliminator pick this week —</option>
+          <option value="">— select a team —</option>
         </select>
       </div>
     </div>
@@ -202,7 +202,9 @@
 
   document.getElementById("ps-groups").innerHTML = groupsHtml;
 
-  /* Make the away/home checkboxes for each row mutually exclusive. */
+  /* Make the away/home checkboxes for each row mutually exclusive, and
+     clear that row's "missing pick" highlight (from a previous failed
+     submit attempt) as soon as a team is checked. */
   document.querySelectorAll(".ps-check").forEach(box => {
     box.addEventListener("change", () => {
       if (!box.checked) return;
@@ -210,6 +212,7 @@
       document.querySelectorAll(`.ps-check[data-row="${row}"]`).forEach(other => {
         if (other !== box) other.checked = false;
       });
+      box.closest(".ps-day-row").classList.remove("ps-row-invalid");
     });
   });
 
@@ -227,7 +230,10 @@
       });
     });
   }
-  ptsSelects.forEach(select => select.addEventListener("change", refreshPointsOptions));
+  ptsSelects.forEach(select => select.addEventListener("change", () => {
+    refreshPointsOptions();
+    if (select.value) select.closest(".ps-day-row").classList.remove("ps-row-invalid");
+  }));
   refreshPointsOptions();
 
   /* Name dropdown, populated from POOL_CONFIG.players so submissions
@@ -339,6 +345,11 @@
   }
   nameSelect.addEventListener("change", refreshEliminatorOptions);
   refreshEliminatorOptions();
+  [elimSelect, elimSelect2].forEach(select => {
+    select.addEventListener("change", () => {
+      if (select.value) select.classList.remove("ps-invalid");
+    });
+  });
 
   /* If the deadline has passed, disable every interactive control so the
      sheet is view/print-only. Submit buttons get a clear label change
@@ -384,6 +395,54 @@
     }).filter(p => p.pick || p.points);
   }
 
+  /* Every game must have a team AND a point value, and (unless the player
+     is pickem-only) the Eliminator pick is required too — no partial
+     sheets. Highlights whatever's missing right on the page and returns a
+     short summary message, or null if everything's filled in. Clears any
+     stale highlighting first so fixing one thing doesn't leave others
+     marked red from a previous attempt. */
+  function validateRequiredFields() {
+    document.querySelectorAll(".ps-day-row.ps-row-invalid").forEach(row => row.classList.remove("ps-row-invalid"));
+    document.querySelectorAll(".ps-elim-select.ps-invalid").forEach(sel => sel.classList.remove("ps-invalid"));
+
+    const rows = Array.from(document.querySelectorAll(".ps-day-row"));
+    let missingGames = 0;
+    let firstInvalidEl = null;
+    rows.forEach(row => {
+      const checked = row.querySelector(".ps-check:checked");
+      const pointsSelect = row.querySelector(".ps-pts-select");
+      const missing = !checked || !pointsSelect || !pointsSelect.value;
+      if (missing) {
+        missingGames++;
+        row.classList.add("ps-row-invalid");
+        if (!firstInvalidEl) firstInvalidEl = row;
+      }
+    });
+
+    const missingElimParts = [];
+    if (!elimBlock.hidden) {
+      if (!elimSelect.value) {
+        missingElimParts.push(elimBlock2.hidden ? "Eliminator pick" : "Eliminator Entry 1");
+        elimSelect.classList.add("ps-invalid");
+        if (!firstInvalidEl) firstInvalidEl = elimSelect;
+      }
+      if (!elimBlock2.hidden && !elimSelect2.value) {
+        missingElimParts.push("Eliminator Entry 2");
+        elimSelect2.classList.add("ps-invalid");
+        if (!firstInvalidEl) firstInvalidEl = elimSelect2;
+      }
+    }
+
+    if (!missingGames && !missingElimParts.length) return null;
+
+    const parts = [];
+    if (missingGames) parts.push(`${missingGames} game${missingGames === 1 ? "" : "s"} still ${missingGames === 1 ? "needs" : "need"} a team + points`);
+    if (missingElimParts.length) parts.push(missingElimParts.join(" and ") + " still needed");
+
+    if (firstInvalidEl) firstInvalidEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    return `Almost there — ${parts.join("; ")}.`;
+  }
+
   sheetForm.addEventListener("submit", function (e) {
     e.preventDefault();
     if (isLocked) {
@@ -399,14 +458,14 @@
       return;
     }
 
-    const picks = collectPicks();
-    const hasElimPick = !!elimSelect.value || !!elimSelect2.value;
-    if (!picks.length && !hasElimPick) {
-      statusEl.textContent = "Pick at least one team (Pick'em or Eliminator) before submitting.";
+    const validationMessage = validateRequiredFields();
+    if (validationMessage) {
+      statusEl.textContent = validationMessage;
       statusEl.className = "ps-submit-status ps-submit-error";
       return;
     }
 
+    const picks = collectPicks();
     document.getElementById("ps-field-picks-json").value = JSON.stringify(picks);
 
     statusEl.textContent = "Submitting…";
