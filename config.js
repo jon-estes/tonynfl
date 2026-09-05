@@ -13,6 +13,19 @@ const POOL_CONFIG = {
      File > Share > Publish to web > choose the specific SHEET
      (tab) > format CSV > paste the link below.
      Leave null to preview with sample data. */
+  /* ---- Passcode check (live, via your Apps Script Web App) ----
+     Weekly Submissions now requires a 4-digit passcode per player so
+     nobody can submit picks under someone else's name. The codes
+     themselves live ONLY in a "PlayerCodes" tab in your Google Sheet —
+     never here — and this URL is how week.html asks Apps Script "is
+     this the right code for this player?" in real time, before it'll
+     let anyone submit. It's the SAME Web App URL you already deployed
+     for form syncing (Apps Script routes GET requests to a different
+     function than POST, at that one URL) — see apps-script.gs for the
+     one-time setup. Leave null to preview the form without passcode
+     checking (useful before you've deployed). */
+  passcodeCheckUrl: null,
+
   scheduleCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1198981568&single=true&output=csv",        // "Schedule" tab: the season's games + winners
   pickemPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1100375573&single=true&output=csv",     // "PickemPicks" tab: weekly straight-up picks
   eliminatorPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1333697856&single=true&output=csv", // "EliminatorPicks" tab: one team picked per week per player
@@ -32,7 +45,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W"],
+  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W", "Brian #1", "Brian #2", "Larry"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE

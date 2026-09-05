@@ -2119,6 +2119,14 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .ps-footer-top .ps-footer-field { max-width: 280px; }
 .ps-footer-top select.ps-input { appearance: auto; cursor: pointer; }
 
+#ps-passcode {
+  max-width: 140px;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+.ps-passcode-hint { font-size: 11px; color: var(--text-dim); margin: 2px 0 0; }
+#ps-passcode.ps-invalid { border-bottom-color: #c0392b !important; }
+
 .ps-brand {
   text-align: center;
   font-size: 11px;

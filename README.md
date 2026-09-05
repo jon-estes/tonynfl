@@ -295,6 +295,42 @@ year, since the season crosses New Year's).
   the same way Pick'em picks land in `PickemPicks` — same submission,
   same sync.
 
+**E. Passcodes — stop people submitting under someone else's name**
+
+Everyone now needs their own 4-digit passcode to submit on `week.html`,
+checked live (before it'll let anyone hit Submit) against a code that
+lives ONLY in your Google Sheet — never in `config.js` or any other file
+a browser can see, so nobody can view-source their way to someone else's
+code. One-time setup:
+
+1. Add a new tab to your Sheet named exactly `PlayerCodes`, two columns:
+   `Player` (must match a name in `players` in `config.js` exactly) and
+   `Code`. I generated a starting set of random codes for the current
+   roster — see the `PlayerCodes.csv` file sent alongside this — just
+   paste those two columns straight into the new tab. **Send each person
+   their own code separately (text, not the group chat) so it stays
+   private.**
+2. If you haven't already deployed `apps-script.gs` as a Web App (the
+   polling method above, C2, doesn't require this — only the webhook
+   method, C1, does), do it now: **Deploy → New deployment** → gear icon
+   → **Web app** → **Execute as: Me**, **Who has access: Anyone** →
+   **Deploy**. Authorize it if asked, then copy the **Web app URL**. If
+   you'd already deployed one (for C1), instead create a new **version**
+   of that same deployment (**Deploy → Manage deployments → pick it →
+   Edit (pencil) → Version: New version → Deploy**) so the existing URL
+   stays valid and just picks up this new code.
+3. Paste that URL into `config.js` as `passcodeCheckUrl` (it's `null` by
+   default). Re-upload the site to Netlify.
+
+**Until step 3 is done, `passcodeCheckUrl` is `null` and the passcode
+field only checks that 4 digits were typed — it does NOT verify they're
+correct.** That's intentional, so the page still works while you're
+setting this up, but it means passcodes aren't actually enforced yet.
+
+To change someone's code later (they forgot it, or you suspect it leaked),
+just edit their row in the `PlayerCodes` tab — takes effect on their very
+next attempt, no redeploy needed.
+
 ## Eliminator logic notes
 
 - **Double elimination**: a player is only fully **eliminated** after
@@ -345,6 +381,10 @@ year, since the season crosses New Year's).
   first one, right in the browser before it ever hits the Sheet. This is
   a front-end safeguard (nothing server-side blocks an incomplete
   submission), so it only applies to people using the page normally.
+- **Passcodes**: every player needs their own 4-digit passcode to submit,
+  so nobody can turn in picks under someone else's name — see
+  "Automating submissions & scores" above (section E) for the one-time
+  setup and where the codes actually live.
 - **Eliminator double entries**: if a player is running two Eliminator
   entries at once, add their exact name (matching `players` in
   `config.js`) to `eliminatorDoubleEntryPlayers` in `config.js`. That

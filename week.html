@@ -33,7 +33,7 @@
     <div class="ps-title-wrap">
       <h2 class="ps-poster-title" id="ps-title">WEEK — PICK SHEET</h2>
     </div>
-    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. <strong>Every game needs a team and a point value, and your Eliminator pick is required too</strong> — the sheet won't submit until everything's filled in. Hit Submit My Picks when you're done — no separate form to visit.</p>
+    <p class="ps-instructions">Pick your name below, check the team you're picking to win each game, then assign it a confidence point from the dropdown — 16 is your most confident pick, working down. Weeks with fewer than 16 games start from the top: a 14-game week uses 3-16, not 1-14. Each value can only be used once. <strong>Every game needs a team and a point value, your Eliminator pick is required too, and you'll need your 4-digit passcode to submit</strong> — the sheet won't submit until everything's filled in. Hit Submit My Picks when you're done — no separate form to visit.</p>
     <div class="ps-lock-banner" id="ps-lock-banner" hidden data-no-print></div>
 
     <div class="ps-footer ps-footer-top">
@@ -46,6 +46,11 @@
           Names marked <strong>(Already Submitted)</strong> have already turned in picks for this
           week and can't resubmit here — contact the commissioner if something needs to change.
         </p>
+      </div>
+      <div class="ps-footer-field">
+        <label for="ps-passcode">Passcode <span class="ps-required-mark">*</span></label>
+        <input type="text" id="ps-passcode" name="passcode" class="ps-input" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="4-digit code">
+        <p class="ps-passcode-hint">Don't know yours? Ask the commissioner — don't guess.</p>
       </div>
     </div>
     <div class="ps-already-banner" id="ps-already-banner" hidden data-no-print></div>
@@ -99,6 +104,7 @@
   <input name="week">
   <input name="season">
   <input name="player">
+  <input name="passcode">
   <input name="eliminator_team">
   <input name="eliminator_team_2">
   <input name="picks_json">
@@ -240,6 +246,11 @@
      always match a real roster name — that's what lets the Eliminator
      pick reliably check "which teams has this player already used". */
   const nameSelect = document.getElementById("ps-name");
+
+  /* Passcode: clears its "wrong/missing" red outline as soon as the
+     person edits it, so a failed attempt doesn't stay marked red forever. */
+  const passcodeInput = document.getElementById("ps-passcode");
+  passcodeInput.addEventListener("input", () => passcodeInput.classList.remove("ps-invalid"));
 
   /* One-submission-per-week lock: once a player has ANY Pick'em or
      Eliminator row on record for this week (in either the live sheet or
@@ -404,6 +415,7 @@
   function validateRequiredFields() {
     document.querySelectorAll(".ps-day-row.ps-row-invalid").forEach(row => row.classList.remove("ps-row-invalid"));
     document.querySelectorAll(".ps-elim-select.ps-invalid").forEach(sel => sel.classList.remove("ps-invalid"));
+    passcodeInput.classList.remove("ps-invalid");
 
     const rows = Array.from(document.querySelectorAll(".ps-day-row"));
     let missingGames = 0;
@@ -433,17 +445,47 @@
       }
     }
 
-    if (!missingGames && !missingElimParts.length) return null;
+    const passcodeFormatOk = /^[0-9]{4}$/.test(passcodeInput.value.trim());
+    if (!passcodeFormatOk) {
+      passcodeInput.classList.add("ps-invalid");
+      if (!firstInvalidEl) firstInvalidEl = passcodeInput;
+    }
+
+    if (!missingGames && !missingElimParts.length && passcodeFormatOk) return null;
 
     const parts = [];
     if (missingGames) parts.push(`${missingGames} game${missingGames === 1 ? "" : "s"} still ${missingGames === 1 ? "needs" : "need"} a team + points`);
     if (missingElimParts.length) parts.push(missingElimParts.join(" and ") + " still needed");
+    if (!passcodeFormatOk) parts.push("a 4-digit passcode is needed");
 
     if (firstInvalidEl) firstInvalidEl.scrollIntoView({ behavior: "smooth", block: "center" });
     return `Almost there — ${parts.join("; ")}.`;
   }
 
-  sheetForm.addEventListener("submit", function (e) {
+  /* Live check against the player's real passcode, via the Apps Script
+     Web App (see config.js's passcodeCheckUrl and apps-script.gs's
+     doGet). The codes themselves never ship to the browser — this just
+     asks "is this the right code for this player?" and gets back yes/no.
+     If passcodeCheckUrl isn't configured yet (e.g. local preview before
+     you've deployed), the check is skipped so the rest of the page still
+     works — but that also means codes aren't actually enforced until
+     it's set. */
+  async function verifyPasscode(player, code) {
+    const url = POOL_CONFIG.passcodeCheckUrl;
+    if (!url) return { valid: true, skipped: true };
+    try {
+      const resp = await fetch(`${url}?action=checkCode&player=${encodeURIComponent(player)}&code=${encodeURIComponent(code)}`);
+      if (!resp.ok) throw new Error("Bad response");
+      const data = await resp.json();
+      return { valid: !!data.valid };
+    } catch (err) {
+      // Couldn't reach the check at all — fail CLOSED (block submission)
+      // rather than silently letting an unverified code through.
+      return { valid: false, networkError: true };
+    }
+  }
+
+  sheetForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     if (isLocked) {
       statusEl.textContent = "🔒 Picks for this week are locked — the deadline has passed.";
@@ -462,6 +504,24 @@
     if (validationMessage) {
       statusEl.textContent = validationMessage;
       statusEl.className = "ps-submit-status ps-submit-error";
+      return;
+    }
+
+    const submitBtns = [document.getElementById("submit-btn-top"), document.getElementById("submit-btn-bottom")];
+    submitBtns.forEach(btn => { if (btn) btn.disabled = true; });
+    statusEl.textContent = "Checking passcode…";
+    statusEl.className = "ps-submit-status";
+
+    const playerName = nameSelect.value.trim();
+    const passcodeCheck = await verifyPasscode(playerName, passcodeInput.value.trim());
+    if (!passcodeCheck.valid) {
+      passcodeInput.classList.add("ps-invalid");
+      passcodeInput.focus();
+      statusEl.textContent = passcodeCheck.networkError
+        ? "⚠️ Couldn't verify your passcode right now — check your connection and try again."
+        : `❌ Incorrect passcode for ${playerName || "that name"} — check with the commissioner if you're not sure.`;
+      statusEl.className = "ps-submit-status ps-submit-error";
+      submitBtns.forEach(btn => { if (btn) btn.disabled = false; });
       return;
     }
 
@@ -501,6 +561,7 @@
       .catch(() => {
         statusEl.textContent = "⚠️ Couldn't submit — this only works once the site is live on Netlify. Try again, or check with the commissioner.";
         statusEl.className = "ps-submit-status ps-submit-error";
+        submitBtns.forEach(btn => { if (btn) btn.disabled = false; });
       });
   });
 })();
