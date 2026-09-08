@@ -331,6 +331,37 @@ To change someone's code later (they forgot it, or you suspect it leaked),
 just edit their row in the `PlayerCodes` tab — takes effect on their very
 next attempt, no redeploy needed.
 
+## History page (`history.html`)
+
+The pool's Hall of Fame — champions back to 1989, all-time records, and
+two leaderboards ("Times in the Money" and "Times High Week"). Transcribed
+from the pool's own record books, not pulled from a Google Sheet, since
+it only changes once a year and isn't the kind of thing that needs
+real-time syncing.
+
+**`foundedYear`** in `config.js` (currently `1989`) is what makes the
+header everywhere on the site say "Nth Year" automatically, and what
+titles the History page — bump `season` each year in `config.js` like you
+already do, and the year number takes care of itself. No other edit
+needed for that part.
+
+**To add a completed season to the History page**, open `history-data.js`
+and:
+
+1. Add one row to `HISTORY_CHAMPIONS` for the season that just wrapped
+   (1st/2nd/3rd place + that season's High Week winner).
+2. Update `HISTORY_LATEST_PAYOUT` to that season's actual payout amounts
+   — it drives the podium card near the top of the page.
+3. If any record in `HISTORY_RECORDS` got broken, update it there and
+   move the old value down into `HISTORY_OLD_RECORDS` so it stays on the
+   books as a retired record instead of just disappearing.
+4. Bump anyone's count in `HISTORY_ALL_TIME_MONEY` (top 3 finish) or
+   `HISTORY_ALL_TIME_HIGH_WEEK` (took High Week) for that season.
+
+Every array has comments above it in the file explaining its shape. The
+page itself needs no code changes — it just re-renders from whatever's in
+that file.
+
 ## Eliminator logic notes
 
 - **Double elimination**: a player is only fully **eliminated** after
@@ -351,11 +382,13 @@ next attempt, no redeploy needed.
 
 ## Files
 
-- `index.html` — home page ("Welcome to Vince and Dave's Pool" + three cards)
+- `index.html` — home page ("Welcome to Vince and Dave's Pool" + five cards)
 - `pickem.html` — Pick'em leaderboard + player picks dropdown
 - `eliminator.html` — Eliminator leaderboard + player team-grid dropdown
 - `schedule.html` — list of weeks, links into the print sheets
 - `week.html` — one week's printable/fillable Pick'em matchup sheet + form link
+- `history.html` — Hall of Fame page: champions back to 1989, all-time records, leaderboards
+- `history-data.js` — **the file you edit** to update history.html each year (see below)
 - `config.js` — **the file you edit**: sheet links, form links, season info
 - `teams.js` — NFL team names/colors
 - `shared.js` / `style.css` — site logic and styling, no edits needed
@@ -402,6 +435,14 @@ next attempt, no redeploy needed.
   on file, they automatically don't show up anywhere on the Eliminator or
   Standings pages either. Leave the array empty if everyone plays both
   pools.
+- **Eliminator-only players**: the mirror image — if a player only plays
+  Eliminator and skips Pick'em entirely, add their exact name to
+  `eliminatorOnlyPlayers` in `config.js`. Their Weekly Submissions sheet
+  then shows only the Eliminator Pick section (with a short note where
+  the Pick'em matchups would be) and they automatically don't show up on
+  the Pick'em leaderboard or the Pick'em part of Standings, same
+  reasoning as pickemOnlyPlayers above. Leave the array empty if everyone
+  plays both pools.
 - **Home page hero** is the stadium photo you sent over
   (`assets/hero-stadium.jpg`) — swap that file (same filename) any time
   you want a different banner image; no code changes needed.

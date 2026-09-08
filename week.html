@@ -55,6 +55,10 @@
     </div>
     <div class="ps-already-banner" id="ps-already-banner" hidden data-no-print></div>
 
+    <p class="ps-elim-only-note" id="ps-elim-only-note" hidden>
+      This player only plays Eliminator this season — no Pick'em matchups needed, just the
+      Eliminator Pick below.
+    </p>
     <div id="ps-groups"></div>
 
     <div class="ps-elim-block" id="ps-elim-block">
@@ -356,6 +360,28 @@
   }
   nameSelect.addEventListener("change", refreshEliminatorOptions);
   refreshEliminatorOptions();
+
+  /* Eliminator-only players (POOL_CONFIG.eliminatorOnlyPlayers) don't
+     play Pick'em at all — hide the whole matchups section (and clear any
+     stray picks left over from switching away from a name that plays
+     Pick'em) and show a short note in its place instead of leaving a
+     confusing blank gap on the page. */
+  const groupsEl = document.getElementById("ps-groups");
+  const elimOnlyNote = document.getElementById("ps-elim-only-note");
+  function refreshPickemSection() {
+    const selectedName = nameSelect.value.trim();
+    const eliminatorOnly = selectedName && isEliminatorOnlyPlayer(selectedName);
+    groupsEl.hidden = eliminatorOnly;
+    elimOnlyNote.hidden = !eliminatorOnly;
+    if (eliminatorOnly) {
+      document.querySelectorAll(".ps-check:checked").forEach(box => { box.checked = false; });
+      ptsSelects.forEach(select => { select.value = ""; });
+      refreshPointsOptions();
+    }
+  }
+  nameSelect.addEventListener("change", refreshPickemSection);
+  refreshPickemSection();
+
   [elimSelect, elimSelect2].forEach(select => {
     select.addEventListener("change", () => {
       if (select.value) select.classList.remove("ps-invalid");
@@ -417,7 +443,9 @@
     document.querySelectorAll(".ps-elim-select.ps-invalid").forEach(sel => sel.classList.remove("ps-invalid"));
     passcodeInput.classList.remove("ps-invalid");
 
-    const rows = Array.from(document.querySelectorAll(".ps-day-row"));
+    // Eliminator-only players never see the Pick'em matchups at all
+    // (ps-groups is hidden for them) — nothing to require there.
+    const rows = groupsEl.hidden ? [] : Array.from(document.querySelectorAll(".ps-day-row"));
     let missingGames = 0;
     let firstInvalidEl = null;
     rows.forEach(row => {

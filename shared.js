@@ -320,6 +320,14 @@ function isPickemOnlyPlayer(player) {
   return list.includes(player);
 }
 
+/* The mirror image: some players only play Eliminator and skip Pick'em
+   entirely (POOL_CONFIG.eliminatorOnlyPlayers lists their exact names).
+   week.html hides the whole Pick'em matchups section for them. */
+function isEliminatorOnlyPlayer(player) {
+  const list = (POOL_CONFIG && POOL_CONFIG.eliminatorOnlyPlayers) || [];
+  return list.includes(player);
+}
+
 /* ---------- Rich text (Content tab rendering) ----------
    Turns a plain-text block into HTML paragraphs/bullets:
      - a blank line starts a new paragraph
@@ -394,16 +402,44 @@ function teamName(abbr) {
   return (NFL_TEAMS[abbr] && NFL_TEAMS[abbr].name) || abbr;
 }
 
+/* "1st", "2nd", "3rd", "4th"... "11th", "21st"... — used for "Nth Year"
+   in the header and anywhere else an ordinal is handy, so it keeps
+   reading correctly forever without anyone having to remember the
+   English exception for 11/12/13. */
+function ordinalSuffix(n) {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
+/* How many years the pool has been running, counting this season as one
+   of them (2026 - 1989 + 1 = 38th year). Falls back gracefully if
+   foundedYear isn't set. */
+function poolYearNumber() {
+  const founded = POOL_CONFIG && POOL_CONFIG.foundedYear;
+  if (!founded) return null;
+  return POOL_CONFIG.season - founded + 1;
+}
+
 function renderHeader(activePage) {
   const mount = document.getElementById("site-header");
   if (!mount) return;
+  const yearNum = poolYearNumber();
+  const subText = yearNum
+    ? `${POOL_CONFIG.season} Season &middot; ${ordinalSuffix(yearNum)} Year`
+    : `${POOL_CONFIG.season} Season`;
   mount.innerHTML = `
     <div class="header-inner">
       <a href="index.html" class="brand" style="text-decoration:none;">
         <div class="logo">🏈</div>
         <div>
           <h1>${POOL_CONFIG.siteName}</h1>
-          <p class="sub">${POOL_CONFIG.season} Season</p>
+          <p class="sub">${subText}</p>
         </div>
       </a>
       <nav class="tabs">
@@ -412,6 +448,7 @@ function renderHeader(activePage) {
         <a href="eliminator.html" class="${activePage === "eliminator" ? "active" : ""}">Eliminator</a>
         <a href="standings.html" class="${activePage === "standings" ? "active" : ""}">Standings</a>
         <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Weekly Submissions</a>
+        <a href="history.html" class="${activePage === "history" ? "active" : ""}">History</a>
         <a href="howto.html" class="${activePage === "howto" ? "active" : ""}">How To</a>
       </nav>
     </div>

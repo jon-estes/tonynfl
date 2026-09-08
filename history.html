@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="hist-page">
+<header class="site-header" id="site-header"></header>
+
+<section class="hist-hero">
+  <div class="hist-hero-watermark hist-serif" id="hist-hero-watermark" aria-hidden="true"></div>
+  <div class="hist-hero-content">
+    <div class="hist-hero-kicker">Hall of Fame</div>
+    <h1 class="hist-hero-title hist-serif" id="hist-hero-title">Years of Vince and Dave's Pool</h1>
+    <p class="hist-hero-tagline">Every champion, every record, every name that's cashed a check since <span id="hist-hero-founded"></span>.</p>
+    <div class="hist-hero-stats">
+      <div class="hist-stat">
+        <span class="hist-stat-value" id="hist-stat-years">0</span>
+        <span class="hist-stat-label">Years Running</span>
+      </div>
+      <div class="hist-stat">
+        <span class="hist-stat-value" id="hist-stat-champs">0</span>
+        <span class="hist-stat-label">Champions Crowned</span>
+      </div>
+      <div class="hist-stat">
+        <span class="hist-stat-value" id="hist-stat-names">0</span>
+        <span class="hist-stat-label">Names in the Book</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hist-body">
+
+  <section class="hist-section" id="hist-podium-section">
+    <h2 class="hist-section-title hist-serif">🏆 <span id="hist-podium-heading"></span></h2>
+    <p class="hist-section-sub">The most recently completed season's final payout.</p>
+    <div class="hist-podium" id="hist-podium"></div>
+    <div class="hist-highweek-chip" id="hist-highweek-chip"></div>
+  </section>
+
+  <hr class="hist-divider">
+
+  <section class="hist-section">
+    <h2 class="hist-section-title hist-serif">📜 Pool Records</h2>
+    <p class="hist-section-sub">The NFL expanded to a 17-week schedule in 2021 — some records note the game count so a 14-game week and a 16-game week stay comparable.</p>
+    <div class="hist-records-grid" id="hist-records-grid"></div>
+  </section>
+
+  <hr class="hist-divider">
+
+  <section class="hist-section">
+    <h2 class="hist-section-title hist-serif">🗓️ Champions Through the Years</h2>
+    <p class="hist-section-sub">Gold names have won it more than once. Scroll right on smaller screens.</p>
+    <div class="hist-table-wrap">
+      <table class="hist-champs-table" id="hist-champs-table"></table>
+    </div>
+  </section>
+
+  <hr class="hist-divider">
+
+  <section class="hist-section">
+    <h2 class="hist-section-title hist-serif">📊 All-Time Leaderboards</h2>
+    <p class="hist-section-sub">Every player who's ever cashed a check, ranked by how often.</p>
+    <div class="hist-leaderboards">
+      <div class="hist-leaderboard-card">
+        <h3>Times in the Money</h3>
+        <div id="hist-lb-money"></div>
+      </div>
+      <div class="hist-leaderboard-card">
+        <h3>Times High Week</h3>
+        <div id="hist-lb-highweek"></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hist-divider">
+
+  <section class="hist-section hist-archive">
+    <button type="button" class="hist-archive-toggle" id="hist-old-toggle" aria-expanded="false" aria-controls="hist-old-body">
+      <span>🗄️ Retired Records</span><span class="hist-archive-arrow">▾</span>
+    </button>
+    <div class="hist-archive-body" id="hist-old-body" hidden>
+      <p class="hist-section-sub">Records that once stood before being broken — kept on the books rather than erased.</p>
+      <div class="hist-records-grid hist-records-grid-muted" id="hist-old-grid"></div>
+    </div>
+  </section>
+
+  <section class="hist-section hist-archive" style="margin-top:16px;">
+    <button type="button" class="hist-archive-toggle" id="hist-pre2002-toggle" aria-expanded="false" aria-controls="hist-pre2002-body">
+      <span>🕰️ Pool Records Before 2002</span><span class="hist-archive-arrow">▾</span>
+    </button>
+    <div class="hist-archive-body" id="hist-pre2002-body" hidden>
+      <p class="hist-section-sub">The earliest era on record, from back before the pool's modern format.</p>
+      <div class="hist-records-grid hist-records-grid-muted" id="hist-pre2002-grid"></div>
+    </div>
+  </section>
+
+  <p class="hist-footnote" id="hist-footnote"></p>
+</div>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="history-data.js"></script>
+<script>
+(function () {
+  renderHeader("history");
+
+  const yearNum = poolYearNumber();
+  const foundedYear = POOL_CONFIG.foundedYear;
+
+  /* ---- Hero ---- */
+  document.getElementById("hist-hero-founded").textContent = foundedYear;
+  if (yearNum) {
+    document.getElementById("hist-hero-watermark").textContent = String(yearNum);
+    document.getElementById("hist-hero-title").textContent = `${ordinalSuffix(yearNum)} Year of Vince and Dave's Pool`;
+    document.title = `History — ${ordinalSuffix(yearNum)} Year — Vince and Dave's Pool`;
+  }
+
+  /* Rough "different names in the book" count — splits multi-name cells
+     like "Dave B. / Jeff" or "Dick, Ryan Jr, Ricky, Ryan" so the stat
+     reflects individual people, not entries. It's a fun headline number,
+     not a forensic audit — good enough for "how many different people
+     have been part of this thing." */
+  function splitNames(str) {
+    if (!str) return [];
+    return str.split(/,|\/|&/).map(s => s.trim()).filter(Boolean);
+  }
+  const allNames = new Set();
+  HISTORY_CHAMPIONS.forEach(row => {
+    [row.first, row.second, row.third, row.highWeek].forEach(cell => {
+      splitNames(cell).forEach(n => allNames.add(n.toLowerCase()));
+    });
+  });
+
+  /* Small count-up animation for the hero stats — runs once on load. */
+  function animateCount(el, target, duration) {
+    if (!target) { el.textContent = "0"; return; }
+    const start = performance.now();
+    function tick(now) {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target).toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  animateCount(document.getElementById("hist-stat-years"), yearNum || HISTORY_CHAMPIONS.length, 1100);
+  animateCount(document.getElementById("hist-stat-champs"), HISTORY_CHAMPIONS.length, 1100);
+  animateCount(document.getElementById("hist-stat-names"), allNames.size, 1100);
+
+  /* ---- Latest season podium ---- */
+  const payout = HISTORY_LATEST_PAYOUT;
+  document.getElementById("hist-podium-heading").textContent = `${payout.label} — ${payout.year}`;
+  const podiumOrder = [
+    { rank: 2, medal: "🥈", data: payout.second, label: "2nd Place" },
+    { rank: 1, medal: "🥇", data: payout.first, label: "1st Place" },
+    { rank: 3, medal: "🥉", data: payout.third, label: "3rd Place" }
+  ];
+  document.getElementById("hist-podium").innerHTML = podiumOrder.map(p => `
+    <div class="hist-podium-step rank-${p.rank}">
+      <span class="hist-podium-medal">${p.medal}</span>
+      <div class="hist-podium-name">${p.data.name}</div>
+      <div class="hist-podium-amount">$${p.data.amount.toLocaleString()}</div>
+      <div class="hist-podium-place">${p.label}</div>
+    </div>
+  `).join("");
+  document.getElementById("hist-highweek-chip").innerHTML =
+    `🔥 <strong>High Week:</strong>&nbsp;${payout.highWeek.name} — $${payout.highWeek.amount.toLocaleString()}`;
+
+  /* ---- Pool Records grid ---- */
+  function renderRecordCards(mountId, records) {
+    document.getElementById(mountId).innerHTML = records.map(r => `
+      <div class="hist-record-card">
+        <div class="hist-record-title">${r.title}</div>
+        <div class="hist-record-value">${r.value}</div>
+        ${r.note ? `<div class="hist-record-note">${r.note}</div>` : ""}
+        <div class="hist-record-holders">
+          ${r.holders.map(h => `<div>${h}</div>`).join("")}
+        </div>
+      </div>
+    `).join("");
+  }
+  renderRecordCards("hist-records-grid", HISTORY_RECORDS);
+  renderRecordCards("hist-old-grid", HISTORY_OLD_RECORDS);
+  renderRecordCards("hist-pre2002-grid", HISTORY_PRE_2002_RECORDS);
+
+  /* ---- Champions table ---- */
+  const firstPlaceCounts = {};
+  HISTORY_CHAMPIONS.forEach(row => {
+    const key = row.first.trim().toLowerCase();
+    firstPlaceCounts[key] = (firstPlaceCounts[key] || 0) + 1;
+  });
+  function champCell(name, isFirstCol) {
+    if (!name) return `<td>—</td>`;
+    const repeat = isFirstCol && firstPlaceCounts[name.trim().toLowerCase()] > 1;
+    return `<td class="${repeat ? "hist-repeat-champ" : ""}">${name}</td>`;
+  }
+
+  let champsHtml = `<thead><tr>
+    <th>Year</th><th>🥇 First</th><th>🥈 Second</th><th>🥉 Third</th><th>🔥 High Week</th>
+  </tr></thead><tbody>`;
+  HISTORY_CHAMPIONS.forEach(row => {
+    champsHtml += `<tr>
+      <td class="hist-year-cell">${row.year}</td>
+      ${champCell(row.first, true)}
+      ${champCell(row.second, false)}
+      ${champCell(row.third, false)}
+      ${champCell(row.highWeek, false)}
+    </tr>`;
+  });
+  // A forward-looking final row for the season currently in progress,
+  // if config.js's season is newer than the last completed year on
+  // record — never fabricates a result, just points to where the live
+  // one is tracked.
+  const lastRecordedYear = HISTORY_CHAMPIONS[HISTORY_CHAMPIONS.length - 1].year;
+  if (POOL_CONFIG.season > lastRecordedYear) {
+    champsHtml += `<tr class="hist-current-row">
+      <td class="hist-year-cell">${POOL_CONFIG.season}</td>
+      <td colspan="4">In progress — follow it live on <a href="standings.html">Standings →</a></td>
+    </tr>`;
+  }
+  champsHtml += "</tbody>";
+  document.getElementById("hist-champs-table").innerHTML = champsHtml;
+
+  /* ---- All-time leaderboards ---- */
+  function renderLeaderboard(mountId, rows) {
+    const max = Math.max(...rows.map(r => r.count));
+    document.getElementById(mountId).innerHTML = rows.map((r, i) => `
+      <div class="hist-lb-row ${i < 3 ? "hist-lb-top" : ""}">
+        <div class="hist-lb-rank">${i + 1}.</div>
+        <div class="hist-lb-name" title="${r.name}">${r.name}</div>
+        <div class="hist-lb-bar-track"><div class="hist-lb-bar-fill" style="width:${(r.count / max * 100).toFixed(0)}%"></div></div>
+        <div class="hist-lb-count">${r.count}</div>
+      </div>
+    `).join("");
+  }
+  renderLeaderboard("hist-lb-money", HISTORY_ALL_TIME_MONEY);
+  renderLeaderboard("hist-lb-highweek", HISTORY_ALL_TIME_HIGH_WEEK);
+
+  /* ---- Archive toggles ---- */
+  function wireToggle(btnId, bodyId) {
+    const btn = document.getElementById(btnId);
+    const body = document.getElementById(bodyId);
+    btn.addEventListener("click", () => {
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
+  }
+  wireToggle("hist-old-toggle", "hist-old-body");
+  wireToggle("hist-pre2002-toggle", "hist-pre2002-body");
+
+  document.getElementById("hist-footnote").textContent =
+    `Transcribed from the pool's own record books — spot something off? Tell the commissioner and it'll get fixed here.`;
+})();
+</script>
+</body>
+</html>

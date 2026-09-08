@@ -16,6 +16,9 @@
       <source src="assets/hero-video.mp4" type="video/mp4">
     </video>
     <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
+    <div class="hero-anniversary-badge" id="hero-anniversary-badge" hidden>
+      <span class="haa-icon">🏆</span><span id="hero-anniversary-text"></span>
+    </div>
   </div>
 </section>
 
@@ -47,6 +50,13 @@
       <p>New to the pool? A quick walkthrough of how picks, points, and standings work.</p>
       <div class="go">Learn More <span class="arrow">→</span></div>
     </a>
+    <a class="pool-card card-history" href="history.html">
+      <div class="pool-card-glow"></div>
+      <div class="pool-card-icon">🏆</div>
+      <h2 class="pool-card-title">History</h2>
+      <p>Champions going back to 1989, all-time records, and the names that show up again and again.</p>
+      <div class="go">See the Records <span class="arrow">→</span></div>
+    </a>
   </div>
 </main>
 
@@ -59,6 +69,12 @@
 (async function () {
   const state = await loadPoolData();
   renderContent(state.content);
+
+  const yearNum = poolYearNumber();
+  if (yearNum) {
+    document.getElementById("hero-anniversary-text").textContent = `${ordinalSuffix(yearNum)} Year · Est. ${POOL_CONFIG.foundedYear}`;
+    document.getElementById("hero-anniversary-badge").hidden = false;
+  }
 })();
 
 /* Hero video starts muted so autoplay is allowed everywhere — this button

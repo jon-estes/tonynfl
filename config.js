@@ -9,6 +9,13 @@ const POOL_CONFIG = {
   season: 2026,
   currentWeek: 1,
 
+  /* ---- Founding year ----
+     The pool's very first season — used to compute "Nth Year" for the
+     header (e.g. 2026 is the pool's 38th year: 2026 - 1989 + 1). Update
+     `season` above every year and this number takes care of itself, no
+     other edits needed. */
+  foundedYear: 1989,
+
   /* ---- Google Sheet CSV links ----
      File > Share > Publish to web > choose the specific SHEET
      (tab) > format CSV > paste the link below.
@@ -24,7 +31,7 @@ const POOL_CONFIG = {
      function than POST, at that one URL) — see apps-script.gs for the
      one-time setup. Leave null to preview the form without passcode
      checking (useful before you've deployed). */
-  passcodeCheckUrl: null,
+  passcodeCheckUrl: "https://script.google.com/macros/s/AKfycbxYP_PEI8DAoRdlTEyWDjcGtLQDyxAizwZrOH8IMzTcAd6e93SOiaOake6PaRnMSbw4Ag/exec",
 
   scheduleCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1198981568&single=true&output=csv",        // "Schedule" tab: the season's games + winners
   pickemPicksCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5tglhlMNbPJolj66aMhHXASBpoDg8XxmGjVsiyuLqFWj5fEpI1alAIL1lidbchx9Dbv_lzb9jlfhC/pub?gid=1100375573&single=true&output=csv",     // "PickemPicks" tab: weekly straight-up picks
@@ -45,7 +52,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W", "Brian #1", "Brian #2", "Larry"],
+  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W", "Brian #1", "Brian #2", "Larry", "Terry", "Richard Hassgolf"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE
@@ -63,7 +70,7 @@ const POOL_CONFIG = {
      its own player: "Name (Entry 2)". Just list the exact names from
      `players` above that have a 2nd entry — leave the array empty if
      nobody does. */
-  eliminatorDoubleEntryPlayers: ["Pat", "Jason"],
+  eliminatorDoubleEntryPlayers: ["Pat", "Jason", "Richard Hassgolf"],
 
   /* ---- Players who only play Pick'em (no Eliminator entry) ----
      Everyone in `players` above is assumed to play BOTH Pick'em and
@@ -74,7 +81,17 @@ const POOL_CONFIG = {
      Eliminator or Standings pages, same as anyone with zero Eliminator
      picks on file. Just list the exact names from `players` above —
      leave the array empty if everyone plays both. */
-  pickemOnlyPlayers: ["Kurt"]
+  pickemOnlyPlayers: ["Kurt"],
+
+  /* ---- Players who only play Eliminator (no Pick'em) ----
+     The mirror image of pickemOnlyPlayers above. Anyone listed here gets
+     no Pick'em matchups at all on the print sheet (week.html) when they
+     select their name — just the Eliminator Pick section. They also
+     won't show up anywhere on the Pick'em or Standings Pick'em
+     leaderboard, same as anyone with zero Pick'em picks on file. Just
+     list the exact names from `players` above — leave the array empty
+     if everyone plays Pick'em. */
+  eliminatorOnlyPlayers: ["Terry"]
 };
 
 /* ============================================================
