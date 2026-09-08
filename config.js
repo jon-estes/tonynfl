@@ -70,7 +70,7 @@ const POOL_CONFIG = {
      its own player: "Name (Entry 2)". Just list the exact names from
      `players` above that have a 2nd entry — leave the array empty if
      nobody does. */
-  eliminatorDoubleEntryPlayers: ["Pat", "Jason", "Richard Hassgolf"],
+  eliminatorDoubleEntryPlayers: ["Pat", "Jason", "Hassgolf"],
 
   /* ---- Players who only play Pick'em (no Eliminator entry) ----
      Everyone in `players` above is assumed to play BOTH Pick'em and
