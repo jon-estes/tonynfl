@@ -7,20 +7,39 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<section class="hero-photo">
-  <div class="hero-photo-frame">
-    <video id="hero-video" autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
-      <source src="assets/hero-video.mp4" type="video/mp4">
-    </video>
-    <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
-    <div class="hero-anniversary-badge" id="hero-anniversary-badge" hidden>
-      <span class="haa-icon">🏆</span><span id="hero-anniversary-text"></span>
+<div class="home-hero-row">
+  <div class="home-rail home-rail-left" id="home-rail-week">
+    <div class="home-rail-stripe home-rail-stripe-top"></div>
+    <div class="home-rail-banner-label home-rail-stacked">
+      <span>Y</span><span>E</span><span>A</span><span>R</span>
     </div>
+    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
   </div>
-</section>
+
+  <section class="hero-photo">
+    <div class="hero-photo-frame">
+      <video id="hero-video" autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+      </video>
+      <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
+      <div class="hero-anniversary-badge" id="hero-anniversary-badge" hidden>
+        <span class="haa-icon">🏆</span><span id="hero-anniversary-text"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="home-rail home-rail-right" id="home-rail-standings">
+    <div class="home-rail-stripe home-rail-stripe-top"></div>
+    <div class="home-rail-banner-label" id="home-rail-year-num">38</div>
+    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
+  </div>
+</div>
 
 <main>
   <div class="pool-cards">
@@ -74,6 +93,11 @@
   if (yearNum) {
     document.getElementById("hero-anniversary-text").textContent = `${ordinalSuffix(yearNum)} Year · Est. ${POOL_CONFIG.foundedYear}`;
     document.getElementById("hero-anniversary-badge").hidden = false;
+  }
+
+  /* ---- Flanking "Year 38" banners ---- */
+  if (yearNum) {
+    document.getElementById("home-rail-year-num").textContent = String(yearNum);
   }
 })();
 

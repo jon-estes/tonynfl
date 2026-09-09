@@ -358,6 +358,90 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   .hero-photo { max-width: 100%; margin-top: 16px; }
 }
 
+/* ---------- Home page hero row (deadline + snapshot rails) ---------- */
+
+.home-hero-row {
+  display: grid;
+  grid-template-columns: minmax(0, 250px) minmax(0, 780px) minmax(0, 250px);
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  max-width: 1360px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+
+.home-hero-row .hero-photo {
+  margin: 0;
+  padding: 0;
+}
+
+.home-rail {
+  align-self: stretch;
+  min-height: 420px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 34px rgba(18,21,26,0.08);
+}
+
+.home-rail-stripe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #013369 0 14px,
+    #d50a0a 14px 28px
+  );
+}
+.home-rail-stripe-top { top: 0; }
+.home-rail-stripe-bottom { bottom: 0; }
+
+.home-rail-banner-label {
+  position: relative;
+  z-index: 1;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  color: #013369;
+  -webkit-text-stroke: 1px rgba(1,51,105,0.15);
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 1;
+}
+
+.home-rail-left .home-rail-stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-rail-left .home-rail-banner-label span {
+  font-size: 44px;
+  display: block;
+}
+
+.home-rail-right .home-rail-banner-label {
+  font-size: 110px;
+  letter-spacing: -2px;
+}
+
+@media (max-width: 1150px) {
+  .home-hero-row {
+    display: block;
+  }
+  .home-rail { display: none; }
+}
+
 /* ---------- Home page hero (legacy animated version, unused but kept for reference) ---------- */
 
 .hero {
