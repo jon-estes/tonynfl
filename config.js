@@ -52,7 +52,7 @@ const POOL_CONFIG = {
      can reliably check "which teams has this player already used" for
      the Eliminator pick. Replace with the final roster whenever you're
      ready — just names, in whatever order you want them to appear. */
-  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W", "Brian #1", "Brian #2", "Larry", "Terry", "Hassgolf", "Ricky"],
+  players: ["Vince", "Dave", "Wig", "Vanessa", "Roy", "Pat", "Jason", "Tony", "Jon", "Jeremiah", "Ryan", "Kurt", "Tim W", "Brian #1", "Brian #2", "Larry", "Terry", "Hassgolf", "Ricky", "Julian"],
 
   /* ---- How To page video ----
      Leave null until you have a video. Once you do, paste its YOUTUBE
