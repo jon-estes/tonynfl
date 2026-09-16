@@ -131,6 +131,24 @@ function getWeeks(schedule) {
   return [...new Set(schedule.map(g => g.week))].sort((a, b) => a - b);
 }
 
+/* Figures out "the current week" straight from the schedule instead of
+   relying on someone remembering to bump POOL_CONFIG.currentWeek every
+   Tuesday: it's the earliest week that still has a game without a winner
+   filled in. Once every game in a week has a winner, that week is done
+   and we move on to the next one. If the whole season is complete, this
+   settles on the final week (so pages still have something sensible to
+   show); if the schedule's empty it returns null and callers should fall
+   back to POOL_CONFIG.currentWeek. */
+function computeCurrentWeek(schedule) {
+  if (!schedule || !schedule.length) return null;
+  const weeks = getWeeks(schedule);
+  for (const w of weeks) {
+    const games = schedule.filter(g => g.week === w);
+    if (games.some(g => !g.winner)) return w;
+  }
+  return weeks[weeks.length - 1];
+}
+
 function getPlayers(picks) {
   return [...new Set(picks.map(p => p.player))].sort((a, b) => a.localeCompare(b));
 }

@@ -125,7 +125,10 @@
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const weeks = getWeeks(state.schedule);
   const players = getPlayers(state.pickemPicks);
-  const defaultWeek = weeks.includes(POOL_CONFIG.currentWeek) ? POOL_CONFIG.currentWeek : weeks[0];
+  const autoWeek = computeCurrentWeek(state.schedule);
+  const defaultWeek = weeks.includes(autoWeek) ? autoWeek
+    : weeks.includes(POOL_CONFIG.currentWeek) ? POOL_CONFIG.currentWeek
+    : weeks[0];
 
   const playerSelect = document.getElementById("player-select");
   players.forEach(p => {
