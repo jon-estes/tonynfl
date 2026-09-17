@@ -87,7 +87,7 @@
         <div class="pk-complete-text" id="pk-complete-text">Submission status: <strong>0/0 completed</strong></div>
         <div class="pk-progress-wrap" id="pk-progress"></div>
       </div>
-      <div class="pk-season-tag">Picks lock Thursday · 12:00 AM PT</div>
+      <div class="pk-season-tag" id="pk-season-tag">Picks lock 1 hour before kickoff</div>
     </div>
   </div>
 
@@ -163,6 +163,11 @@
 
     const mount = document.getElementById("picks-rows");
     const locked = isWeekLocked(state.schedule, week);
+    const deadline = getWeekDeadline(state.schedule, week);
+    const deadlineText = formatDeadline(deadline) || "the weekly deadline";
+    document.getElementById("pk-season-tag").textContent = deadline
+      ? (locked ? `Week ${week} picks locked ${deadlineText}` : `Week ${week} picks lock ${deadlineText}`)
+      : "Picks lock 1 hour before kickoff";
 
     /* Nobody has an actual login on this site — the "Viewing Player"
        dropdown just lets you look up anyone's card by name — so there's
@@ -171,10 +176,6 @@
        EVERY player stay hidden here, no exceptions, so nobody can copy
        anyone's strategy before kickoff. */
     if (!locked) {
-      const deadline = getWeekDeadline(state.schedule, week);
-      const deadlineText = deadline
-        ? deadline.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) + " at 12:00 AM PT"
-        : "the weekly deadline";
       mount.innerHTML = `<div class="empty-state">🔒 Picks for Week ${week} are hidden until they lock (${deadlineText}) — so nobody can see anyone else's picks early.</div>`;
     } else if (!picks.length) {
       mount.innerHTML = `<div class="empty-state">No picks found for ${player} in Week ${week}.</div>`;
@@ -319,10 +320,7 @@
     }
 
     if (!isWeekLocked(state.schedule, week)) {
-      const deadline = getWeekDeadline(state.schedule, week);
-      const deadlineText = deadline
-        ? deadline.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) + " at 12:00 AM PT"
-        : "the weekly deadline";
+      const deadlineText = formatDeadline(getWeekDeadline(state.schedule, week)) || "the weekly deadline";
       mount.innerHTML = `<tr><td class="empty-state">🔒 Everyone's Week ${week} picks stay hidden until they lock (${deadlineText}).</td></tr>`;
       return;
     }

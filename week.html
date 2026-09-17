@@ -160,8 +160,8 @@
   document.getElementById("ps-field-week").value = week;
   document.getElementById("ps-field-season").value = POOL_CONFIG.season;
 
-  /* Picks lock at 12:00 AM Pacific on this week's Thursday (see
-     getWeekDeadline() in shared.js). Past the deadline, the form is
+  /* Picks lock 1 hour before this week's first kickoff, Pacific Time
+     (see getWeekDeadline() in shared.js). Past the deadline, the form is
      disabled here in the browser — the Apps Script backend enforces the
      same cutoff independently, so a late submission is rejected even if
      someone bypasses this page. */
@@ -170,7 +170,8 @@
   const lockBanner = document.getElementById("ps-lock-banner");
   if (isLocked) {
     lockBanner.hidden = false;
-    lockBanner.textContent = `🔒 Picks for Week ${week} are locked — the deadline (Thursday 12:00 AM PT) has passed. You can still print this sheet, but new submissions for this week won't be accepted.`;
+    const deadlineText = formatDeadline(deadline) || "the deadline";
+    lockBanner.textContent = `🔒 Picks for Week ${week} are locked — the deadline (${deadlineText}, 1 hour before kickoff) has passed. You can still print this sheet, but new submissions for this week won't be accepted.`;
   }
 
   /* Group games by day, in original schedule order */

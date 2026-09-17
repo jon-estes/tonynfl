@@ -44,12 +44,13 @@
     return;
   }
 
-  /* A week is "locked" once its pick deadline (12:00 AM Pacific that
-     week's Thursday — same rule week.html enforces) has passed. The
-     "current" week is simply the first one that ISN'T locked yet — no
-     manual bookkeeping required, it just moves forward on its own as
-     Thursdays pass. If every week is locked (season's over), nothing
-     gets the "current" treatment. */
+  /* A week is "locked" once its pick deadline (1 hour before that
+     week's first kickoff, Pacific Time — same rule week.html enforces,
+     see getWeekDeadline() in shared.js) has passed. The "current" week
+     is simply the first one that ISN'T locked yet — no manual
+     bookkeeping required, it just moves forward on its own as kickoffs
+     pass. If every week is locked (season's over), nothing gets the
+     "current" treatment. */
   const now = new Date();
   const weekStatus = {};
   let currentAssigned = false;

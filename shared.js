@@ -491,12 +491,11 @@ function renderSampleBanner(state) {
 }
 
 /* ---------- Pick lock deadline ----------
-   Picks for a week lock at 12:00 AM Pacific Time on that week's Thursday
-   (the same fixed day/time every week — not tied to the exact minute of
-   the first kickoff). Used by week.html to disable submissions once the
-   deadline passes. The Apps Script enforces the same rule server-side —
-   see computeWeekDeadlineUtcMs() in apps-script.gs, which must be kept
-   in sync with the logic here if this ever changes. */
+   Picks for a week lock 1 hour before that week's FIRST kickoff (Pacific
+   Time) — not a fixed day/time. Used by week.html to disable submissions
+   once the deadline passes. The Apps Script enforces the same rule
+   server-side — see computeWeekDeadlineUtcMs() in apps-script.gs, which
+   must be kept in sync with the logic here if this ever changes. */
 
 /* Parses a schedule "date" string like "Thu Dec 10" into a real Date,
    inferring the year from POOL_CONFIG.season (Aug-Dec = season year,
@@ -527,23 +526,59 @@ function pacificOffsetMinutes(date) {
   return (asUtc - date.getTime()) / 60000;
 }
 
-/* Builds a real Date instant for a given Y/M/D at 12:00 AM Pacific Time. */
-function pacificMidnight(year, monthIndex, day) {
+/* Builds a real Date instant for a given Y/M/D at a given hour/minute,
+   Pacific Time (24-hour hour, e.g. 17 for 5pm). */
+function pacificDateTime(year, monthIndex, day, hour, minute) {
   // First guess using a fixed offset, then refine once against the real
   // PST/PDT offset for that date (two passes is enough since the offset
   // only ever takes one of two values).
-  let guess = new Date(Date.UTC(year, monthIndex, day, 8, 0, 0)); // UTC-8 guess
+  let guess = new Date(Date.UTC(year, monthIndex, day, hour + 8, minute, 0)); // UTC-8 guess
   const offset = pacificOffsetMinutes(guess);
-  return new Date(Date.UTC(year, monthIndex, day, 0, 0, 0) - offset * 60000);
+  return new Date(Date.UTC(year, monthIndex, day, hour, minute, 0) - offset * 60000);
+}
+
+/* Builds a real Date instant for a given Y/M/D at 12:00 AM Pacific Time. */
+function pacificMidnight(year, monthIndex, day) {
+  return pacificDateTime(year, monthIndex, day, 0, 0);
+}
+
+/* Parses a schedule "kickoff" string like "5:20pm", "5:20 PM", or
+   "10:00am" into { hour (24h), minute }. Returns null for anything that
+   doesn't match — notably "TBD", which some late-season weeks use before
+   the NFL sets exact times. */
+function parseKickoffTime(kickoffStr) {
+  const m = String(kickoffStr).trim().match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (!m) return null;
+  let hour = parseInt(m[1], 10);
+  const minute = parseInt(m[2], 10);
+  const ampm = m[3].toLowerCase();
+  if (ampm === "pm" && hour !== 12) hour += 12;
+  if (ampm === "am" && hour === 12) hour = 0;
+  return { hour, minute };
 }
 
 /* Returns the Date instant (UTC-correct) at which picks for `week` lock:
-   12:00 AM Pacific on that week's Thursday. Falls back to null if the
-   week's games can't be found/parsed (deadline enforcement is skipped
-   in that case rather than incorrectly locking everything). */
+   1 hour before that week's FIRST kickoff, Pacific Time. Falls back to
+   the old fixed rule (12:00 AM Pacific that week's Thursday) if no
+   game's kickoff time can be parsed (e.g. every game that week is still
+   listed "TBD") — better than leaving the week with no deadline at all.
+   Returns null if the week's games can't be found/parsed at all. */
 function getWeekDeadline(schedule, week) {
   const games = schedule.filter(g => g.week === week && g.date);
   if (!games.length) return null;
+
+  const kickoffInstants = games.map(g => {
+    const d = parseScheduleDate(g.date);
+    const t = parseKickoffTime(g.kickoff);
+    if (!d || !t) return null;
+    return pacificDateTime(d.getFullYear(), d.getMonth(), d.getDate(), t.hour, t.minute);
+  }).filter(Boolean);
+
+  if (kickoffInstants.length) {
+    const firstKickoff = kickoffInstants.reduce((a, b) => (a < b ? a : b));
+    return new Date(firstKickoff.getTime() - 60 * 60000); // 1 hour before
+  }
+
   const dates = games.map(g => parseScheduleDate(g.date)).filter(Boolean);
   if (!dates.length) return null;
 
@@ -572,6 +607,22 @@ function getWeekDeadline(schedule, week) {
 function isWeekLocked(schedule, week) {
   const deadline = getWeekDeadline(schedule, week);
   return !!deadline && new Date() >= deadline;
+}
+
+/* Formats a deadline Date for display, e.g. "Wednesday, Sep 9 at 4:20 PM
+   PDT" — always in Pacific Time regardless of the visitor's own clock,
+   and with the correct PST/PDT label since the deadline is no longer a
+   fixed midnight (it moves week to week with the season's actual kickoff
+   times, so it can land on either side of the November DST change). */
+function formatDeadline(deadline) {
+  if (!deadline) return null;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    weekday: "long", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+    timeZoneName: "short"
+  }).formatToParts(deadline).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+  return `${parts.weekday}, ${parts.month} ${parts.day} at ${parts.hour}:${parts.minute} ${parts.dayPeriod} ${parts.timeZoneName}`;
 }
 
 function fmtRecord(s) {

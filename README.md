@@ -275,10 +275,10 @@ they can submit fresh.
 
 **D. Picks lock automatically — no manual step needed**
 
-Picks for a week close at **12:00 AM Pacific Time on that week's
-Thursday**, computed automatically from that week's earliest game in the
-Schedule tab — no deadline column to maintain by hand. This is enforced
-in two places:
+Picks for a week close **1 hour before that week's first kickoff**
+(Pacific Time), computed automatically from that week's earliest game in
+the Schedule tab — no deadline column to maintain by hand. This is
+enforced in two places:
 
 - **On the website** (`week.html`): once the deadline passes, the print
   sheet disables its Submit buttons and shows a "🔒 Picks Locked" message.
