@@ -162,7 +162,21 @@
       .sort((a, b) => b.points - a.points);
 
     const mount = document.getElementById("picks-rows");
-    if (!picks.length) {
+    const locked = isWeekLocked(state.schedule, week);
+
+    /* Nobody has an actual login on this site — the "Viewing Player"
+       dropdown just lets you look up anyone's card by name — so there's
+       no way to show "your own" picks without also showing everyone
+       else's. Until the week locks, picks and confidence points for
+       EVERY player stay hidden here, no exceptions, so nobody can copy
+       anyone's strategy before kickoff. */
+    if (!locked) {
+      const deadline = getWeekDeadline(state.schedule, week);
+      const deadlineText = deadline
+        ? deadline.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) + " at 12:00 AM PT"
+        : "the weekly deadline";
+      mount.innerHTML = `<div class="empty-state">🔒 Picks for Week ${week} are hidden until they lock (${deadlineText}) — so nobody can see anyone else's picks early.</div>`;
+    } else if (!picks.length) {
       mount.innerHTML = `<div class="empty-state">No picks found for ${player} in Week ${week}.</div>`;
     } else {
       let html = "";
@@ -301,6 +315,15 @@
 
     if (!players.length || !games.length) {
       mount.innerHTML = `<tr><td class="empty-state">No picks to show for Week ${week}.</td></tr>`;
+      return;
+    }
+
+    if (!isWeekLocked(state.schedule, week)) {
+      const deadline = getWeekDeadline(state.schedule, week);
+      const deadlineText = deadline
+        ? deadline.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) + " at 12:00 AM PT"
+        : "the weekly deadline";
+      mount.innerHTML = `<tr><td class="empty-state">🔒 Everyone's Week ${week} picks stay hidden until they lock (${deadlineText}).</td></tr>`;
       return;
     }
 

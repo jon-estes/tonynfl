@@ -16,14 +16,14 @@
   <div id="sample-banner" data-no-print></div>
 
   <div class="card print-sheet-head" id="week-head">
-    <a href="schedule.html" class="back-link" data-no-print>← All Weeks</a>
+    <a class='back-link' data-no-print href='/schedule'>← All Weeks</a>
     <div class="print-actions" data-no-print>
       <button type="button" class="btn btn-secondary" id="print-btn">⬇️ Download / Print Sheet</button>
       <button type="submit" class="btn" id="submit-btn-top" form="ps-sheet">📝 Submit My Picks</button>
     </div>
   </div>
 
-  <form class="card ps-sheet" id="ps-sheet" name="picks" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+  <form class='card ps-sheet' id='ps-sheet' method='POST' name='picks'>
     <input type="hidden" name="form-name" value="picks">
     <p class="ps-honeypot"><label>Don't fill this out: <input name="bot-field"></label></p>
     <input type="hidden" name="week" id="ps-field-week">
@@ -103,7 +103,7 @@
   so packing them into a single field keeps the field count small and fixed
   no matter how many games are in a week.
 -->
-<form name="picks" data-netlify="true" netlify-honeypot="bot-field" hidden>
+<form hidden method='post' name='picks'><input type='hidden' name='form-name' value='picks' />
   <input name="bot-field">
   <input name="week">
   <input name="season">
@@ -321,7 +321,13 @@
      name for Entry 1, or "${player} (Entry 2)" for Entry 2). */
   function refreshOneEliminatorSelect(select, logicalPlayer) {
     const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === logicalPlayer.toLowerCase());
-    const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer) : new Set();
+    // Pass the schedule so a team picked for a week that hasn't locked
+    // yet doesn't show as "already used" here — someone could otherwise
+    // select ANY player's name from this same dropdown just to see which
+    // team disabled itself, and reverse-engineer that player's pick for
+    // the week that's still open. Their own genuinely-used teams from
+    // already-locked weeks still grey out normally.
+    const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer, state.schedule) : new Set();
     Array.from(select.options).forEach(opt => {
       if (!opt.value) return;
       const alreadyUsed = used.has(opt.value) && opt.value !== select.value;

@@ -306,9 +306,12 @@ function computeEliminatorBoard(schedule, picks) {
   return board;
 }
 
-function usedTeamsForPlayer(picks, player) {
+function usedTeamsForPlayer(picks, player, schedule) {
   return new Set(
-    picks.filter(p => p.player === player).map(p => p.team)
+    picks
+      .filter(p => p.player === player)
+      .filter(p => !schedule || isWeekLocked(schedule, p.week))
+      .map(p => p.team)
   );
 }
 
@@ -559,6 +562,16 @@ function getWeekDeadline(schedule, week) {
   });
   const thursday = thursdayCandidates.reduce((a, b) => (a > b ? a : b));
   return pacificMidnight(thursday.getFullYear(), thursday.getMonth(), thursday.getDate());
+}
+
+/* Whether a week's picks are past their lock deadline yet — the single
+   source of truth for "is it safe to show this week's picks publicly."
+   A week with no computable deadline (schedule not loaded, bad dates)
+   is treated as NOT locked, so picks stay hidden rather than risk
+   showing them too early. */
+function isWeekLocked(schedule, week) {
+  const deadline = getWeekDeadline(schedule, week);
+  return !!deadline && new Date() >= deadline;
 }
 
 function fmtRecord(s) {

@@ -163,7 +163,10 @@
   const allTeamCodes = Object.keys(NFL_TEAMS).sort();
 
   function renderTeamGrid(player) {
-    const used = usedTeamsForPlayer(state.eliminatorPicks, player);
+    // Pass the schedule so a pick for a week that hasn't locked yet
+    // doesn't cross that team out here — that would hand away this
+    // week's pick just by looking at which team stopped being pickable.
+    const used = usedTeamsForPlayer(state.eliminatorPicks, player, state.schedule);
     const grid = document.getElementById("team-grid");
     grid.innerHTML = "";
     allTeamCodes.forEach(code => {
@@ -198,6 +201,14 @@
 
     let html = "<thead><tr><th>Week</th><th>Team Picked</th><th>Result</th></tr></thead><tbody>";
     picks.forEach(p => {
+      if (!isWeekLocked(state.schedule, p.week)) {
+        html += `<tr>
+          <td>${p.week}</td>
+          <td class="pick-cell pending">🔒 Hidden until locked</td>
+          <td><span class="pill pill-pending">Pending</span></td>
+        </tr>`;
+        return;
+      }
       const game = findGameForTeamWeek(gamesForLookup, p.week, p.team);
       let result = "pending", pillClass = "pill-pending", pillText = "Pending";
       if (game && game.winner) {
@@ -262,6 +273,12 @@
       html += `<tr><td class="egt-player-col">${player}${rowTag}</td>`;
       weeksForGrid.forEach(w => {
         const p = picksByPlayerWeek[player + "|" + w];
+        if (!isWeekLocked(state.schedule, w)) {
+          html += p && p.team
+            ? `<td class="egt-cell pending" title="Hidden until this week locks">🔒</td>`
+            : `<td class="egt-cell pending">—</td>`;
+          return;
+        }
         if (!p || !p.team) {
           html += `<td class="egt-cell pending">—</td>`;
           return;
