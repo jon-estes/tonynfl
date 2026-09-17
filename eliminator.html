@@ -88,7 +88,7 @@
   const state = await loadPoolData();
   renderSampleBanner(state);
   renderContent(state.content);
-  document.getElementById("el-week").textContent = POOL_CONFIG.currentWeek;
+  document.getElementById("el-week").textContent = computeCurrentWeek(state.schedule) ?? POOL_CONFIG.currentWeek;
 
   const emberMount = document.getElementById("el-embers");
   for (let i = 0; i < 16; i++) {
