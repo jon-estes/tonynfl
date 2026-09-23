@@ -2510,6 +2510,22 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .egt-cell.wrong { background: rgba(220,38,38,0.07); }
 .egt-cell.wrong .team-badge { opacity: 0.55; filter: grayscale(0.4); }
 
+/* Weeks after a player's elimination — a plain, muted "X" instead of a
+   team badge or a "—", so it reads as "done, not applicable" rather
+   than "hasn't picked yet". */
+.egt-cell-out {
+  color: var(--text-dim);
+  opacity: 0.5;
+  font-size: 13px;
+  background: var(--panel-2);
+}
+
+/* On-notice players' names in the "Everyone's Picks" grid — same amber
+   used by the "On Notice" chips above, so their last-life status is
+   visible right in the player column without scrolling up. */
+.egt-name-onnotice { color: #f5b942; font-weight: 800; }
+.theme-light .egt-name-onnotice { color: #92650a; }
+
 /* ============================================================
    HOW TO page
    ============================================================ */

@@ -269,9 +269,26 @@
 
     players.forEach(player => {
       const status = statusByPlayer[player];
-      const rowTag = status && status.status === "eliminated" ? ` <span class="egt-out-tag">OUT</span>` : "";
-      html += `<tr><td class="egt-player-col">${player}${rowTag}</td>`;
+      const isEliminated = status && status.status === "eliminated";
+      const isOnNotice = status && status.status === "onNotice";
+      const rowTag = isEliminated ? ` <span class="egt-out-tag">OUT</span>` : "";
+      // On-notice players (one loss — their last life) get their name
+      // picked out in amber, same color the "On Notice" chips above use,
+      // so a glance down the player column shows who's in danger without
+      // reading every row's picks.
+      const nameHtml = isOnNotice ? `<span class="egt-name-onnotice">${player}</span>` : player;
+      html += `<tr><td class="egt-player-col">${nameHtml}${rowTag}</td>`;
       weeksForGrid.forEach(w => {
+        // Once eliminated, every week AFTER the one that knocked them out
+        // is moot — they're not picking anymore, win or lose. Mark those
+        // with a plain "X" instead of the usual "—" (which reads as
+        // "hasn't picked yet") so it's obvious at a glance why the row
+        // goes empty instead of leaving it ambiguous. The elimination
+        // week itself still shows their actual (losing) pick below.
+        if (isEliminated && status.eliminatedWeek != null && w > status.eliminatedWeek) {
+          html += `<td class="egt-cell egt-cell-out" title="${player} was eliminated after Week ${status.eliminatedWeek}">✕</td>`;
+          return;
+        }
         const p = picksByPlayerWeek[player + "|" + w];
         if (!isWeekLocked(state.schedule, w)) {
           html += p && p.team
