@@ -67,6 +67,7 @@
       <select class="ps-input ps-elim-select" id="ps-elim-select" name="eliminator_team">
         <option value="">— select a team —</option>
       </select>
+      <p class="ps-elim-out-note" id="ps-elim-out-note" hidden>❌ You're out of Eliminator (2 losses) — no more picks needed this season.</p>
 
       <div id="ps-elim-block-2" hidden>
         <div class="ps-elim-heading ps-elim-heading-2">Eliminator Pick — Entry 2 <span class="ps-required-mark">*</span></div>
@@ -74,6 +75,7 @@
         <select class="ps-input ps-elim-select" id="ps-elim-select-2" name="eliminator_team_2">
           <option value="">— select a team —</option>
         </select>
+        <p class="ps-elim-out-note" id="ps-elim-out-note-2" hidden>❌ This entry is out of Eliminator (2 losses) — no more picks needed this season.</p>
       </div>
     </div>
 
@@ -342,6 +344,20 @@
   }
 
   const elimBlock = document.getElementById("ps-elim-block");
+  const elimOutNote = document.getElementById("ps-elim-out-note");
+  const elimOutNote2 = document.getElementById("ps-elim-out-note-2");
+
+  // Double-elimination: once a player (or one logical entry, for the
+  // handful of players running two entries at once) has 2 losses,
+  // computeEliminatorBoard marks them "eliminated" — no more picks can
+  // change that, so there's no reason to let them keep submitting new
+  // ones. Someone who hasn't picked yet at all isn't on the board and
+  // defaults to "alive".
+  function eliminatorStatusFor(logicalPlayer) {
+    const board = computeEliminatorBoard(state.schedule, state.eliminatorPicks);
+    const entry = board.find(p => p.player.toLowerCase() === logicalPlayer.toLowerCase());
+    return entry ? entry.status : "alive";
+  }
 
   function refreshEliminatorOptions() {
     const selectedName = nameSelect.value.trim();
@@ -360,13 +376,31 @@
 
     const isDouble = selectedName && isDoubleEntryPlayer(selectedName);
 
-    refreshOneEliminatorSelect(elimSelect, selectedName);
+    const out1 = !!selectedName && eliminatorStatusFor(selectedName) === "eliminated";
+    elimSelect.hidden = out1;
+    elimSelect.disabled = out1;
+    elimOutNote.hidden = !out1;
+    if (out1) {
+      elimSelect.value = "";
+    } else {
+      refreshOneEliminatorSelect(elimSelect, selectedName);
+    }
+
     elimBlock2.hidden = !isDouble;
     elimHeading.textContent = isDouble ? "Eliminator Pick — Entry 1" : "Eliminator Pick";
     if (isDouble) {
-      refreshOneEliminatorSelect(elimSelect2, secondEntryName(selectedName));
+      const out2 = eliminatorStatusFor(secondEntryName(selectedName)) === "eliminated";
+      elimSelect2.hidden = out2;
+      elimSelect2.disabled = out2;
+      elimOutNote2.hidden = !out2;
+      if (out2) {
+        elimSelect2.value = "";
+      } else {
+        refreshOneEliminatorSelect(elimSelect2, secondEntryName(selectedName));
+      }
     } else {
       elimSelect2.value = "";
+      elimOutNote2.hidden = true;
     }
   }
   nameSelect.addEventListener("change", refreshEliminatorOptions);
@@ -472,12 +506,14 @@
 
     const missingElimParts = [];
     if (!elimBlock.hidden) {
-      if (!elimSelect.value) {
+      // A hidden/disabled select means that entry is already eliminated
+      // (2 losses) — nothing to require there.
+      if (!elimSelect.hidden && !elimSelect.value) {
         missingElimParts.push(elimBlock2.hidden ? "Eliminator pick" : "Eliminator Entry 1");
         elimSelect.classList.add("ps-invalid");
         if (!firstInvalidEl) firstInvalidEl = elimSelect;
       }
-      if (!elimBlock2.hidden && !elimSelect2.value) {
+      if (!elimBlock2.hidden && !elimSelect2.hidden && !elimSelect2.value) {
         missingElimParts.push("Eliminator Entry 2");
         elimSelect2.classList.add("ps-invalid");
         if (!firstInvalidEl) firstInvalidEl = elimSelect2;
