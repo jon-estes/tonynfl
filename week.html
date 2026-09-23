@@ -160,8 +160,8 @@
   document.getElementById("ps-field-week").value = week;
   document.getElementById("ps-field-season").value = POOL_CONFIG.season;
 
-  /* Picks lock 1 hour before this week's first kickoff, Pacific Time
-     (see getWeekDeadline() in shared.js). Past the deadline, the form is
+  /* Picks lock at 12:00 AM Pacific Time on this week's Thursday (see
+     getWeekDeadline() in shared.js). Past the deadline, the form is
      disabled here in the browser — the Apps Script backend enforces the
      same cutoff independently, so a late submission is rejected even if
      someone bypasses this page. */
@@ -171,7 +171,7 @@
   if (isLocked) {
     lockBanner.hidden = false;
     const deadlineText = formatDeadline(deadline) || "the deadline";
-    lockBanner.textContent = `🔒 Picks for Week ${week} are locked — the deadline (${deadlineText}, 1 hour before kickoff) has passed. You can still print this sheet, but new submissions for this week won't be accepted.`;
+    lockBanner.textContent = `🔒 Picks for Week ${week} are locked — the deadline (${deadlineText}) has passed. You can still print this sheet, but new submissions for this week won't be accepted.`;
   }
 
   /* Group games by day, in original schedule order */
@@ -322,13 +322,17 @@
      name for Entry 1, or "${player} (Entry 2)" for Entry 2). */
   function refreshOneEliminatorSelect(select, logicalPlayer) {
     const matchedPlayer = getPlayers(state.eliminatorPicks).find(p => p.toLowerCase() === logicalPlayer.toLowerCase());
-    // Pass the schedule so a team picked for a week that hasn't locked
-    // yet doesn't show as "already used" here — someone could otherwise
-    // select ANY player's name from this same dropdown just to see which
-    // team disabled itself, and reverse-engineer that player's pick for
-    // the week that's still open. Their own genuinely-used teams from
-    // already-locked weeks still grey out normally.
-    const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer, state.schedule) : new Set();
+    // Pass the schedule AND this page's own `week` so only THIS week's
+    // pick (if it exists and hasn't locked) is hidden from the "already
+    // used" set — someone could otherwise select ANY player's name from
+    // this same dropdown just to see which team disabled itself, and
+    // reverse-engineer that player's pick for the week this page is
+    // showing. Every OTHER week's pick (past or future, locked or not)
+    // still counts as used, so a team already committed to a different
+    // week can't be double-booked here just because that other week
+    // hasn't locked yet either (see the comment on usedTeamsForPlayer in
+    // shared.js for the bug this closes).
+    const used = matchedPlayer ? usedTeamsForPlayer(state.eliminatorPicks, matchedPlayer, state.schedule, week) : new Set();
     Array.from(select.options).forEach(opt => {
       if (!opt.value) return;
       const alreadyUsed = used.has(opt.value) && opt.value !== select.value;

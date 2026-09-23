@@ -306,11 +306,36 @@ function computeEliminatorBoard(schedule, picks) {
   return board;
 }
 
-function usedTeamsForPlayer(picks, player, schedule) {
+/* A team only truly counts as "already used" once picking it again would
+   be pointless anyway. Every row in `picks` is a real, already-submitted
+   pick (this data comes straight from the Google Sheet, never a live
+   in-progress selection) — so there's no privacy reason to hide any
+   week's team from THIS SAME PLAYER's own "already used" check, EXCEPT
+   the one week whose form is actually being shown right now
+   (`viewingWeek`): that week's own pick, if it exists and hasn't locked
+   yet, stays hidden from the used-set, so an onlooker can't select this
+   player's name on that page and read their still-secret pick for it
+   off of which team is greyed out. `viewingWeek` defaults to the
+   season's current week (computeCurrentWeek) for callers — like
+   eliminator.html's season-wide overview — that aren't tied to one
+   specific week's form.
+
+   This used to exclude EVERY not-yet-locked week, not just the one
+   being viewed — which quietly allowed a real bug: week.html lets you
+   browse ahead and submit picks for a future week before it's
+   "officially" open, and since both that future week's own form AND the
+   still-open current week were excluded from this set on every page,
+   the same team could be picked for both and neither dropdown would
+   grey it out. Scoping the exclusion to only the ONE week each page is
+   actually showing closes that hole: a pick already submitted for any
+   OTHER week — past OR future, current or not — always counts as used,
+   no matter its lock status. */
+function usedTeamsForPlayer(picks, player, schedule, viewingWeek) {
+  const excludeWeek = viewingWeek != null ? viewingWeek : (schedule ? computeCurrentWeek(schedule) : null);
   return new Set(
     picks
       .filter(p => p.player === player)
-      .filter(p => !schedule || isWeekLocked(schedule, p.week))
+      .filter(p => !schedule || p.week !== excludeWeek || isWeekLocked(schedule, p.week))
       .map(p => p.team)
   );
 }
@@ -491,11 +516,13 @@ function renderSampleBanner(state) {
 }
 
 /* ---------- Pick lock deadline ----------
-   Picks for a week lock 1 hour before that week's FIRST kickoff (Pacific
-   Time) — not a fixed day/time. Used by week.html to disable submissions
-   once the deadline passes. The Apps Script enforces the same rule
-   server-side — see computeWeekDeadlineUtcMs() in apps-script.gs, which
-   must be kept in sync with the logic here if this ever changes. */
+   Picks for a week lock at 12:00 AM Pacific Time on that week's Thursday
+   — a fixed rule set by Commissioner Vince. Used by week.html to disable
+   submissions once the deadline passes, and by isWeekLocked() below to
+   decide when to reveal everyone's picks/Eliminator status. The Apps
+   Script enforces the same rule server-side — see getWeekDeadline(week)
+   in apps-script.gs, which must be kept in sync with the logic here if
+   this ever changes. */
 
 /* Parses a schedule "date" string like "Thu Dec 10" into a real Date,
    inferring the year from POOL_CONFIG.season (Aug-Dec = season year,
@@ -542,42 +569,17 @@ function pacificMidnight(year, monthIndex, day) {
   return pacificDateTime(year, monthIndex, day, 0, 0);
 }
 
-/* Parses a schedule "kickoff" string like "5:20pm", "5:20 PM", or
-   "10:00am" into { hour (24h), minute }. Returns null for anything that
-   doesn't match — notably "TBD", which some late-season weeks use before
-   the NFL sets exact times. */
-function parseKickoffTime(kickoffStr) {
-  const m = String(kickoffStr).trim().match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
-  if (!m) return null;
-  let hour = parseInt(m[1], 10);
-  const minute = parseInt(m[2], 10);
-  const ampm = m[3].toLowerCase();
-  if (ampm === "pm" && hour !== 12) hour += 12;
-  if (ampm === "am" && hour === 12) hour = 0;
-  return { hour, minute };
-}
-
 /* Returns the Date instant (UTC-correct) at which picks for `week` lock:
-   1 hour before that week's FIRST kickoff, Pacific Time. Falls back to
-   the old fixed rule (12:00 AM Pacific that week's Thursday) if no
-   game's kickoff time can be parsed (e.g. every game that week is still
-   listed "TBD") — better than leaving the week with no deadline at all.
+   12:00 AM Pacific Time on that week's Thursday, fixed — set by
+   Commissioner Vince. (An earlier version of this tried to lock 1 hour
+   before each week's first kickoff instead, but that depended on
+   parsing the schedule's kickoff-time column correctly, which turned
+   out to be fragile — see the postmortem in README.md — so this went
+   back to the simple, predictable fixed-Thursday rule.)
    Returns null if the week's games can't be found/parsed at all. */
 function getWeekDeadline(schedule, week) {
   const games = schedule.filter(g => g.week === week && g.date);
   if (!games.length) return null;
-
-  const kickoffInstants = games.map(g => {
-    const d = parseScheduleDate(g.date);
-    const t = parseKickoffTime(g.kickoff);
-    if (!d || !t) return null;
-    return pacificDateTime(d.getFullYear(), d.getMonth(), d.getDate(), t.hour, t.minute);
-  }).filter(Boolean);
-
-  if (kickoffInstants.length) {
-    const firstKickoff = kickoffInstants.reduce((a, b) => (a < b ? a : b));
-    return new Date(firstKickoff.getTime() - 60 * 60000); // 1 hour before
-  }
 
   const dates = games.map(g => parseScheduleDate(g.date)).filter(Boolean);
   if (!dates.length) return null;
@@ -609,11 +611,10 @@ function isWeekLocked(schedule, week) {
   return !!deadline && new Date() >= deadline;
 }
 
-/* Formats a deadline Date for display, e.g. "Wednesday, Sep 9 at 4:20 PM
+/* Formats a deadline Date for display, e.g. "Thursday, Sep 17 at 12:00 AM
    PDT" — always in Pacific Time regardless of the visitor's own clock,
-   and with the correct PST/PDT label since the deadline is no longer a
-   fixed midnight (it moves week to week with the season's actual kickoff
-   times, so it can land on either side of the November DST change). */
+   with the correct PST/PDT label since the deadline can land on either
+   side of the November DST change over the course of a season. */
 function formatDeadline(deadline) {
   if (!deadline) return null;
   const parts = new Intl.DateTimeFormat("en-US", {

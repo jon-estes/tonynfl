@@ -87,7 +87,7 @@
         <div class="pk-complete-text" id="pk-complete-text">Submission status: <strong>0/0 completed</strong></div>
         <div class="pk-progress-wrap" id="pk-progress"></div>
       </div>
-      <div class="pk-season-tag" id="pk-season-tag">Picks lock 1 hour before kickoff</div>
+      <div class="pk-season-tag" id="pk-season-tag">Picks lock Thursday · 12:00 AM PT</div>
     </div>
   </div>
 
@@ -167,7 +167,7 @@
     const deadlineText = formatDeadline(deadline) || "the weekly deadline";
     document.getElementById("pk-season-tag").textContent = deadline
       ? (locked ? `Week ${week} picks locked ${deadlineText}` : `Week ${week} picks lock ${deadlineText}`)
-      : "Picks lock 1 hour before kickoff";
+      : "Picks lock Thursday · 12:00 AM PT";
 
     /* Nobody has an actual login on this site — the "Viewing Player"
        dropdown just lets you look up anyone's card by name — so there's

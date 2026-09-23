@@ -275,10 +275,17 @@ they can submit fresh.
 
 **D. Picks lock automatically — no manual step needed**
 
-Picks for a week close **1 hour before that week's first kickoff**
-(Pacific Time), computed automatically from that week's earliest game in
-the Schedule tab — no deadline column to maintain by hand. This is
-enforced in two places:
+Picks for a week close at **12:00 AM Pacific Time on that week's
+Thursday** — a fixed rule (per Commissioner Vince), computed
+automatically from that week's games in the Schedule tab, no deadline
+column to maintain by hand. (An earlier version tried locking 1 hour
+before each week's first kickoff instead; that depended on correctly
+parsing the Schedule tab's "kickoff" column, which turned out to be
+fragile — Google Sheets silently returns either a plain string or a
+real Date object there depending on cell formatting, and that mismatch
+caused a real production incident where several players' picks were
+wrongly rejected. Went back to the simpler fixed-Thursday rule to avoid
+that whole class of bug.) This is enforced in two places:
 
 - **On the website** (`week.html`): once the deadline passes, the print
   sheet disables its Submit buttons and shows a "🔒 Picks Locked" message.
