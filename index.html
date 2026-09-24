@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<header class="site-header" id="site-header"></header>
 <div class="home-hero-row">
   <div class="home-rail home-rail-left" id="home-rail-week">
     <div class="home-rail-stripe home-rail-stripe-top"></div>
@@ -43,33 +44,33 @@
 
 <main>
   <div class="pool-cards">
-    <a class="pool-card card-pickem" href="pickem.html">
+    <a class='pool-card card-pickem' href='/pickem'>
       <div class="pool-card-glow"></div>
       <img class="pool-card-art" src="assets/pickem-icon.png" alt="Pick'em Football Pool">
       <h2 class="pool-card-title">Pick 'Em</h2>
       <div class="go">Enter the Pool <span class="arrow">→</span></div>
     </a>
-    <a class="pool-card card-eliminator" href="eliminator.html">
+    <a class='pool-card card-eliminator' href='/eliminator'>
       <div class="pool-card-glow"></div>
       <img class="pool-card-art" src="assets/eliminator-icon.png" alt="Eliminator Football Pool">
       <h2 class="pool-card-title">Eliminator</h2>
       <div class="go">Enter the Pool <span class="arrow">→</span></div>
     </a>
-    <a class="pool-card card-schedule" href="schedule.html">
+    <a class='pool-card card-schedule' href='/schedule'>
       <div class="pool-card-glow"></div>
       <div class="pool-card-icon">🗓️</div>
       <h2 class="pool-card-title">Weekly Submissions</h2>
       <p>Pick a week, fill in your Pick'em numbers and Eliminator pick right on the page, and submit — no separate form to visit.</p>
       <div class="go">View Weeks <span class="arrow">→</span></div>
     </a>
-    <a class="pool-card card-howto" href="howto.html">
+    <a class='pool-card card-howto' href='/howto'>
       <div class="pool-card-glow"></div>
       <div class="pool-card-icon">🎓</div>
       <h2 class="pool-card-title">How To</h2>
       <p>New to the pool? A quick walkthrough of how picks, points, and standings work.</p>
       <div class="go">Learn More <span class="arrow">→</span></div>
     </a>
-    <a class="pool-card card-history" href="history.html">
+    <a class='pool-card card-history' href='/history'>
       <div class="pool-card-glow"></div>
       <div class="pool-card-icon">🏆</div>
       <h2 class="pool-card-title">History</h2>
@@ -86,6 +87,7 @@
 <script src="shared.js"></script>
 <script>
 (async function () {
+  renderHeader("home");
   const state = await loadPoolData();
   renderContent(state.content);
 

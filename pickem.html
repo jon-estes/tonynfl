@@ -22,6 +22,12 @@
     <div data-content="pickem_rules"></div>
   </div>
 
+  <div class="card pk-payouts-card" id="pk-payouts-card" hidden>
+    <h2>💰 Payouts</h2>
+    <div class="pk-payouts-grid" id="pk-payouts-grid"></div>
+    <p class="pk-payouts-total" id="pk-payouts-total"></p>
+  </div>
+
   <div class="pk-card">
     <span class="corner tl"></span>
     <span class="corner br"></span>
@@ -91,7 +97,7 @@
     </div>
   </div>
 
-  <div class="card pk-grid-card">
+  <div class="card pk-grid-card" id="everyone-picks">
     <div class="pk-grid-head">
       <h2>Everyone's Picks</h2>
       <div class="pk-grid-week-field">
@@ -106,12 +112,18 @@
     <div class="pick-grid-wrap">
       <table class="pick-grid-table" id="pick-grid-table"></table>
     </div>
+    <div class="pk-grid-actions" id="pk-grid-actions" data-no-print>
+      <button type="button" class="btn btn-secondary" id="pk-grid-print-btn" disabled>🖨️ Print</button>
+      <button type="button" class="btn btn-secondary" id="pk-grid-excel-btn" disabled>⬇️ Download Excel</button>
+      <span class="pk-grid-actions-hint" id="pk-grid-actions-hint"></span>
+    </div>
   </div>
 </div>
 
 <footer>Powered by a Google Sheet, not a database</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
@@ -121,6 +133,20 @@
   const state = await loadPoolData();
   renderSampleBanner(state);
   renderContent(state.content);
+
+  /* ---- Payouts breakdown ---- */
+  if (POOL_CONFIG.payouts && POOL_CONFIG.payouts.pickem) {
+    const p = POOL_CONFIG.payouts.pickem;
+    document.getElementById("pk-payouts-card").hidden = false;
+    document.getElementById("pk-payouts-grid").innerHTML = `
+      <div class="pk-payout-tile pk-payout-1"><div class="pk-payout-amt">${formatUSD(p.first)}</div><div class="pk-payout-label">🥇 1st Place</div></div>
+      <div class="pk-payout-tile pk-payout-2"><div class="pk-payout-amt">${formatUSD(p.second)}</div><div class="pk-payout-label">🥈 2nd Place</div></div>
+      <div class="pk-payout-tile pk-payout-3"><div class="pk-payout-amt">${formatUSD(p.third)}</div><div class="pk-payout-label">🥉 3rd Place</div></div>
+      <div class="pk-payout-tile pk-payout-hw"><div class="pk-payout-amt">${formatUSD(p.highWeek)}</div><div class="pk-payout-label">🔥 High Week</div></div>
+    `;
+    document.getElementById("pk-payouts-total").innerHTML =
+      `Total pool: <strong>${formatUSD(p.total)}</strong> — see <a href="standings.html">Standings</a> for who's currently in each spot.`;
+  }
 
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const weeks = getWeeks(state.schedule);
@@ -307,7 +333,23 @@
     gridWeekSelect.appendChild(opt);
   });
 
+  /* Print and Excel export only make sense once there's real data on
+     screen — not the "no picks yet" or "hidden until locked" placeholder
+     rows. Both buttons stay disabled (with a short reason in the hint
+     text next to them) until renderPickGrid() actually draws a real
+     table for the selected week. */
+  const gridPrintBtn = document.getElementById("pk-grid-print-btn");
+  const gridExcelBtn = document.getElementById("pk-grid-excel-btn");
+  const gridActionsHint = document.getElementById("pk-grid-actions-hint");
+  let currentGridWeek = null;
+  function setGridActionsEnabled(enabled, hint) {
+    gridPrintBtn.disabled = !enabled;
+    gridExcelBtn.disabled = !enabled;
+    gridActionsHint.textContent = enabled ? "" : (hint || "");
+  }
+
   function renderPickGrid(week) {
+    currentGridWeek = week;
     const mount = document.getElementById("pick-grid-table");
     const games = state.schedule
       .filter(g => g.week === week)
@@ -316,14 +358,17 @@
 
     if (!players.length || !games.length) {
       mount.innerHTML = `<tr><td class="empty-state">No picks to show for Week ${week}.</td></tr>`;
+      setGridActionsEnabled(false, "Nothing to print or download yet.");
       return;
     }
 
     if (!isWeekLocked(state.schedule, week)) {
       const deadlineText = formatDeadline(getWeekDeadline(state.schedule, week)) || "the weekly deadline";
       mount.innerHTML = `<tr><td class="empty-state">🔒 Everyone's Week ${week} picks stay hidden until they lock (${deadlineText}).</td></tr>`;
+      setGridActionsEnabled(false, "Available once this week's picks lock.");
       return;
     }
+    setGridActionsEnabled(true);
 
     const picksByPlayerGame = {};
     state.pickemPicks
@@ -361,6 +406,30 @@
   } else {
     document.getElementById("pick-grid-table").innerHTML = `<tr><td class="empty-state">No weeks yet.</td></tr>`;
   }
+
+  /* Print: a body class flips on right before window.print() so print
+     CSS (see style.css) can hide everything on the page except this
+     one table — the browser's own print dialog handles paper size,
+     margins, etc. from there. The class comes back off on "afterprint"
+     so the on-screen page looks normal again once the dialog closes
+     (or is cancelled). */
+  gridPrintBtn.addEventListener("click", () => {
+    document.body.classList.add("pk-grid-print-mode");
+    window.print();
+  });
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("pk-grid-print-mode");
+  });
+
+  /* Excel export: SheetJS reads the CURRENTLY RENDERED table straight
+     out of the DOM (whatever week is selected) and turns it into a
+     real .xlsx workbook, client-side — no server round trip. */
+  gridExcelBtn.addEventListener("click", () => {
+    if (typeof XLSX === "undefined" || currentGridWeek == null) return;
+    const table = document.getElementById("pick-grid-table");
+    const wb = XLSX.utils.table_to_book(table, { sheet: `Week ${currentGridWeek}` });
+    XLSX.writeFile(wb, `vd-pool-week-${currentGridWeek}-picks.xlsx`);
+  });
 })();
 </script>
 </body>

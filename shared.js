@@ -448,6 +448,32 @@ function teamName(abbr) {
   return (NFL_TEAMS[abbr] && NFL_TEAMS[abbr].name) || abbr;
 }
 
+/* "$750", "$1,425" — whole-dollar payouts, no cents. Used anywhere
+   POOL_CONFIG.payouts numbers get shown on screen. */
+function formatUSD(amount) {
+  return "$" + Number(amount).toLocaleString("en-US");
+}
+
+/* ---------- High Week bonus winner ----------
+   Everyone's own single best week already shows in the Pick'em
+   leaderboard's "High Week" column (see computeHighWeeks). The $75
+   High Week BONUS, though, goes to whoever had the single best week in
+   the whole pool, not each player's own best — this finds that. Ties
+   (same top score, possibly in different weeks) all get listed, since
+   real money is on the line and there's no fair way to pick just one.
+   Returns { total, winners: [{player, week}, ...] }, or null if nobody's
+   picked anything yet. */
+function computeHighWeekBonusWinner(highWeeks) {
+  const withScores = highWeeks.filter(h => h.bestWeek != null);
+  if (!withScores.length) return null;
+  const total = Math.max(...withScores.map(h => h.bestTotal));
+  if (total <= 0) return null;
+  const winners = withScores
+    .filter(h => h.bestTotal === total)
+    .map(h => ({ player: h.player, week: h.bestWeek }));
+  return { total, winners };
+}
+
 /* "1st", "2nd", "3rd", "4th"... "11th", "21st"... — used for "Nth Year"
    in the header and anywhere else an ordinal is handy, so it keeps
    reading correctly forever without anyone having to remember the
@@ -496,6 +522,7 @@ function renderHeader(activePage) {
         <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Weekly Submissions</a>
         <a href="history.html" class="${activePage === "history" ? "active" : ""}">History</a>
         <a href="howto.html" class="${activePage === "howto" ? "active" : ""}">How To</a>
+        <a href="pickem.html#everyone-picks">Print</a>
       </nav>
     </div>
   `;
@@ -516,13 +543,26 @@ function renderSampleBanner(state) {
 }
 
 /* ---------- Pick lock deadline ----------
-   Picks for a week lock at 12:00 AM Pacific Time on that week's Thursday
-   — a fixed rule set by Commissioner Vince. Used by week.html to disable
+   Picks for a week lock on Pacific Time on that week's Thursday — a
+   fixed rule set by Commissioner Vince. Used by week.html to disable
    submissions once the deadline passes, and by isWeekLocked() below to
    decide when to reveal everyone's picks/Eliminator status. The Apps
    Script enforces the same rule server-side — see getWeekDeadline(week)
    in apps-script.gs, which must be kept in sync with the logic here if
-   this ever changes. */
+   this ever changes.
+
+   THE LOCK TIME ITSELF changes starting Week 4: 12:00 AM Thursday for
+   Weeks 1-3, 1:00 PM Thursday from Week 4 on. This is keyed by week
+   number (not by today's date) because Weeks 1-3 already locked under
+   the old rule before this change was made — that's what actually
+   happened, and switching by date instead could retroactively change
+   an already-passed week's deadline. If the cutoff time changes again,
+   update thursdayLockHour() below (and its twin, thursdayLockHourGs(),
+   in apps-script.gs). */
+const THURSDAY_LOCK_HOUR_CHANGE_WEEK = 4;
+function thursdayLockHour(week) {
+  return week >= THURSDAY_LOCK_HOUR_CHANGE_WEEK ? 13 : 0; // 1:00 PM vs 12:00 AM
+}
 
 /* Parses a schedule "date" string like "Thu Dec 10" into a real Date,
    inferring the year from POOL_CONFIG.season (Aug-Dec = season year,
@@ -570,12 +610,13 @@ function pacificMidnight(year, monthIndex, day) {
 }
 
 /* Returns the Date instant (UTC-correct) at which picks for `week` lock:
-   12:00 AM Pacific Time on that week's Thursday, fixed — set by
-   Commissioner Vince. (An earlier version of this tried to lock 1 hour
-   before each week's first kickoff instead, but that depended on
-   parsing the schedule's kickoff-time column correctly, which turned
-   out to be fragile — see the postmortem in README.md — so this went
-   back to the simple, predictable fixed-Thursday rule.)
+   that week's Thursday, Pacific Time, at whatever hour thursdayLockHour()
+   says for this week (see the comment on it above) — set by Commissioner
+   Vince. (An earlier version of this tried to lock 1 hour before each
+   week's first kickoff instead, but that depended on parsing the
+   schedule's kickoff-time column correctly, which turned out to be
+   fragile — see the postmortem in README.md — so this went back to the
+   simple, predictable fixed-Thursday rule.)
    Returns null if the week's games can't be found/parsed at all. */
 function getWeekDeadline(schedule, week) {
   const games = schedule.filter(g => g.week === week && g.date);
@@ -598,7 +639,7 @@ function getWeekDeadline(schedule, week) {
     return t;
   });
   const thursday = thursdayCandidates.reduce((a, b) => (a > b ? a : b));
-  return pacificMidnight(thursday.getFullYear(), thursday.getMonth(), thursday.getDate());
+  return pacificDateTime(thursday.getFullYear(), thursday.getMonth(), thursday.getDate(), thursdayLockHour(week), 0);
 }
 
 /* Whether a week's picks are past their lock deadline yet — the single

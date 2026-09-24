@@ -10,6 +10,14 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="ps-success-overlay" id="ps-success-overlay" hidden data-no-print>
+  <div class="ps-success-card">
+    <div class="ps-success-check">✅</div>
+    <h2>Thanks — your picks are in!</h2>
+    <p>Please allow up to <strong>5 minutes</strong> for the sheet to sync before going back in to double-check. If you don't see them right away, there's no need to submit again — just give it a few minutes and refresh.</p>
+    <button type="button" class="btn" id="ps-success-dismiss">Got it</button>
+  </div>
+</div>
 <header class="site-header" id="site-header" data-no-print></header>
 
 <main>
@@ -632,6 +640,13 @@
         document.querySelectorAll(
           "#ps-sheet input, #ps-sheet select, #ps-sheet button[type=submit], #submit-btn-top"
         ).forEach(el => { el.disabled = true; });
+
+        // A big, hard-to-miss confirmation — several players were seeing
+        // the small inline "✅ Picks submitted!" text, not believing it
+        // (or not noticing it), and submitting again while the sheet was
+        // still mid-sync. A full-screen "you're done, give it a few
+        // minutes" card is much harder to miss or doubt.
+        document.getElementById("ps-success-overlay").hidden = false;
       })
       .catch(() => {
         statusEl.textContent = "⚠️ Couldn't submit — this only works once the site is live on Netlify. Try again, or check with the commissioner.";
@@ -639,6 +654,12 @@
         submitBtns.forEach(btn => { if (btn) btn.disabled = false; });
       });
   });
+
+  const successOverlay = document.getElementById("ps-success-overlay");
+  const successDismiss = document.getElementById("ps-success-dismiss");
+  if (successDismiss) {
+    successDismiss.addEventListener("click", () => { successOverlay.hidden = true; });
+  }
 })();
 </script>
 </body>

@@ -275,17 +275,25 @@ they can submit fresh.
 
 **D. Picks lock automatically — no manual step needed**
 
-Picks for a week close at **12:00 AM Pacific Time on that week's
-Thursday** — a fixed rule (per Commissioner Vince), computed
-automatically from that week's games in the Schedule tab, no deadline
-column to maintain by hand. (An earlier version tried locking 1 hour
-before each week's first kickoff instead; that depended on correctly
-parsing the Schedule tab's "kickoff" column, which turned out to be
-fragile — Google Sheets silently returns either a plain string or a
-real Date object there depending on cell formatting, and that mismatch
-caused a real production incident where several players' picks were
-wrongly rejected. Went back to the simpler fixed-Thursday rule to avoid
-that whole class of bug.) This is enforced in two places:
+Picks for a week close at a fixed time **that week's Thursday, Pacific
+Time** — no deadline column to maintain by hand, computed automatically
+from that week's games in the Schedule tab. The hour itself changed
+starting **Week 4**: Weeks 1-3 locked at **12:00 AM**, and Week 4
+onward locks at **1:00 PM** (per Commissioner Vince). This is keyed by
+week number — `thursdayLockHour()` in `shared.js` / `thursdayLockHourGs()`
+in `apps-script.gs` — rather than by today's date, since Weeks 1-3
+already locked under the old rule before the change was made; if the
+cutoff time ever changes again, bump the week number and hour in both
+of those functions (keep them in sync with each other).
+
+(An earlier version tried locking 1 hour before each week's first
+kickoff instead; that depended on correctly parsing the Schedule tab's
+"kickoff" column, which turned out to be fragile — Google Sheets
+silently returns either a plain string or a real Date object there
+depending on cell formatting, and that mismatch caused a real
+production incident where several players' picks were wrongly
+rejected. Went back to the simpler fixed-Thursday rule to avoid that
+whole class of bug.) This is enforced in two places:
 
 - **On the website** (`week.html`): once the deadline passes, the print
   sheet disables its Submit buttons and shows a "🔒 Picks Locked" message.

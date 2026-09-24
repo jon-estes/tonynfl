@@ -46,6 +46,8 @@
       <h3 class="el-eliminated-heading">Eliminated</h3>
       <div class="el-eliminated-list" id="eliminated-list"></div>
     </div>
+
+    <p class="el-payout-note" id="el-payout-note"></p>
   </div>
 
   <div class="card">
@@ -149,6 +151,22 @@
     `).join("");
   } else {
     eliminatedWrap.style.display = "none";
+  }
+
+  // Eliminator payout — names the winner once there's exactly one
+  // survivor left, otherwise just states the prize since it's still
+  // anyone's game (matches the "win or split the jackpot" rule above).
+  const payoutNote = document.getElementById("el-payout-note");
+  const elimPayouts = POOL_CONFIG.payouts && POOL_CONFIG.payouts.eliminator;
+  if (elimPayouts && elimPayouts.winner) {
+    const amount = formatUSD(elimPayouts.winner);
+    if (board.length && alivePlayers.length === 1) {
+      payoutNote.innerHTML = `🏆 <strong>Winner (${amount})</strong> — ${alivePlayers[0].player} is the last one standing!`;
+    } else if (board.length && alivePlayers.length === 0) {
+      payoutNote.innerHTML = `🏆 <strong>Prize: ${amount}</strong> — split among whoever's left once someone's still alive when the others go out.`;
+    } else {
+      payoutNote.innerHTML = `🏆 <strong>Prize: ${amount}</strong> to the winner — split if more than one player survives to the end.`;
+    }
   }
 
   const players = getPlayers(state.eliminatorPicks);

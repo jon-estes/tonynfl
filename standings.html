@@ -28,9 +28,12 @@
   <div class="card">
     <h2>🏆 Pick'em Leaderboard</h2>
     <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
-      Total confidence points earned this season, plus each player's single best week.
+      Total confidence points earned this season, plus each player's single best week. 1st,
+      2nd and 3rd place payouts shown below are based on the standings <strong>right now</strong>
+      — they'll move with the leaderboard as the season goes.
     </p>
     <table id="snapshot-table"></table>
+    <p class="stand-payout-note" id="stand-highweek-note"></p>
   </div>
 
   <div class="card">
@@ -47,8 +50,10 @@
       <div class="el-eliminated-list" id="stand-eliminated-list"></div>
     </div>
 
+    <p class="stand-payout-note" id="stand-eliminator-payout-note"></p>
+
     <p class="stand-eliminator-note">
-      <a href="eliminator.html">See full Eliminator details — team-by-team pick history →</a>
+      <a href='/eliminator'>See full Eliminator details — team-by-team pick history →</a>
     </p>
   </div>
 </div>
@@ -70,6 +75,9 @@
   const highWeeks = computeHighWeeks(state.schedule, state.pickemPicks);
   const highByPlayer = Object.fromEntries(highWeeks.map(h => [h.player, h]));
 
+  const payouts = (POOL_CONFIG && POOL_CONFIG.payouts) || null;
+  const pickemPayoutByRank = payouts ? { 1: payouts.pickem.first, 2: payouts.pickem.second, 3: payouts.pickem.third } : {};
+
   const snapshotTable = document.getElementById("snapshot-table");
   if (!seasonBoard.length) {
     snapshotTable.innerHTML = `<tr><td class="empty-state">No picks submitted yet.</td></tr>`;
@@ -82,12 +90,32 @@
       const highText = high && high.bestWeek ? `${high.bestTotal} pts <span style="color:var(--text-dim); font-weight:400;">(Wk ${high.bestWeek})</span>` : "—";
       const backText = i === 0 ? "—" : `-${leaderTotal - s.total}`;
       const rankText = medals[i + 1] ? `<span class="stand-medal">${medals[i + 1]}</span>` : i + 1;
+      // 1st/2nd/3rd payout, shown right next to the player's name — this
+      // is live off the CURRENT standings, so it moves with the
+      // leaderboard week to week (the note above the table says so).
+      const payoutAmount = pickemPayoutByRank[i + 1];
+      const payoutTag = payoutAmount ? ` <span class="payout-tag">${formatUSD(payoutAmount)}</span>` : "";
       html += `<tr class="rank-${i + 1}">
-        <td>${rankText}</td><td>${s.player}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
+        <td>${rankText}</td><td>${s.player}${payoutTag}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
         <td>${s.correct}</td><td>${highText}</td><td>${backText}</td></tr>`;
     });
     html += "</tbody>";
     snapshotTable.innerHTML = html;
+  }
+
+  // High Week bonus — whoever's had the single best week in the whole
+  // pool so far, not each player's own best (that's the table column
+  // above). Separate from 1st/2nd/3rd, so it gets its own line.
+  const highWeekNote = document.getElementById("stand-highweek-note");
+  if (payouts && payouts.pickem.highWeek) {
+    const bonus = computeHighWeekBonusWinner(highWeeks);
+    if (bonus) {
+      const names = bonus.winners.map(w => `${w.player} (Wk ${w.week})`).join(bonus.winners.length > 1 ? " & " : "");
+      const splitNote = bonus.winners.length > 1 ? " — split for a tie" : "";
+      highWeekNote.innerHTML = `🔥 <strong>High Week bonus (${formatUSD(payouts.pickem.highWeek)})</strong> currently goes to ${names}, with ${bonus.total} points${splitNote}.`;
+    } else {
+      highWeekNote.textContent = "";
+    }
   }
 
   /* ---- Eliminator snapshot: same status grouping as eliminator.html ---- */
@@ -140,6 +168,22 @@
     `).join("");
   } else {
     eliminatedWrap.style.display = "none";
+  }
+
+  // Eliminator payout: names it if there's exactly one survivor left
+  // (a real winner), otherwise just states the prize since it's still
+  // anyone's game — matches the Pool Rules' own "win or split the
+  // jackpot" language for a multi-way finish.
+  const eliminatorPayoutNote = document.getElementById("stand-eliminator-payout-note");
+  if (payouts && payouts.eliminator.winner) {
+    const amount = formatUSD(payouts.eliminator.winner);
+    if (board.length && alivePlayers.length === 1) {
+      eliminatorPayoutNote.innerHTML = `🏆 <strong>Eliminator winner (${amount})</strong> — ${alivePlayers[0].player} is the last one standing!`;
+    } else if (board.length && alivePlayers.length === 0) {
+      eliminatorPayoutNote.innerHTML = `🏆 <strong>Eliminator prize: ${amount}</strong> — split among whoever's left once someone's still alive when the others go out.`;
+    } else {
+      eliminatorPayoutNote.innerHTML = `🏆 <strong>Eliminator prize: ${amount}</strong> to the winner — split if more than one player survives to the end.`;
+    }
   }
 })();
 </script>
