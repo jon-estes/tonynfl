@@ -11,16 +11,24 @@
 <style>
   /* This page is deliberately its own minimal shell — no full site nav,
      hero photo, or other cards — so what prints (and what shows on
-     screen) is just this one player's one week of picks, nothing else
-     to scroll past or accidentally include in a printout. */
+     screen) is just one player's one week of picks, nothing else to
+     scroll past or accidentally include in a printout. */
   .pw-wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 60px; }
   .pw-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
   .pw-back { color: var(--pk-text-dim, #6b7280); text-decoration: none; font-size: 14px; font-weight: 600; }
   .pw-back:hover { text-decoration: underline; }
   .pw-actions { display: flex; gap: 10px; }
-  .pw-head { text-align: center; margin-bottom: 22px; }
+  .pw-head { text-align: center; margin-bottom: 18px; }
   .pw-head h1 { margin: 0 0 4px; font-size: 22px; }
   .pw-head p { margin: 0; color: var(--pk-text-dim, #6b7280); font-size: 14px; }
+  .pw-selector {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+    padding: 16px; border: 1px solid var(--pk-border, #e5e7eb); border-radius: 10px;
+    background: var(--pk-panel-2, #f9fafb); margin-bottom: 22px;
+  }
+  .pw-selector-field { display: flex; flex-direction: column; gap: 4px; }
+  .pw-selector-field label { font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--pk-text-dim, #6b7280); }
+  .pw-everyone-link { font-size: 12px; margin-left: auto; align-self: center; color: var(--pk-text-dim, #6b7280); }
   .pw-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
   .pw-table th, .pw-table td { padding: 9px 10px; border: 1px solid var(--pk-border, #e5e7eb); font-size: 14px; text-align: left; }
   .pw-table th { background: var(--pk-panel-2, #f3f4f6); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--pk-text-dim, #6b7280); }
@@ -29,7 +37,7 @@
   .pw-empty { text-align: center; padding: 40px 20px; color: var(--pk-text-dim, #6b7280); }
   .pw-brand { text-align: center; margin-top: 30px; font-size: 12px; color: var(--pk-text-dim, #6b7280); }
   @media print {
-    .pw-actions, .pw-back, header.site-header, #sample-banner { display: none !important; }
+    .pw-actions, .pw-back, .pw-selector, header.site-header, #sample-banner { display: none !important; }
     .pw-wrap { padding: 0; max-width: none; }
   }
 </style>
@@ -44,8 +52,20 @@
   </div>
 
   <div class="pw-head">
-    <h1 id="pw-title">My Picks</h1>
+    <h1 id="pw-title">Print My Picks</h1>
     <p id="pw-subtitle"></p>
+  </div>
+
+  <div class="pw-selector" data-no-print>
+    <div class="pw-selector-field">
+      <label for="pw-player-select">Player</label>
+      <select id="pw-player-select" class="pk-select"></select>
+    </div>
+    <div class="pw-selector-field">
+      <label for="pw-week-select">Week</label>
+      <select id="pw-week-select" class="pk-select"></select>
+    </div>
+    <a class="pw-everyone-link" href="pickem.html#everyone-picks">Looking for everyone's picks for the week instead? →</a>
   </div>
 
   <div id="pw-content">
@@ -64,18 +84,35 @@
   const params = new URLSearchParams(location.search);
   const qsPlayer = (params.get("player") || "").trim();
   const qsWeek = parseInt(params.get("week"), 10);
-  const autoPrint = params.get("auto") === "1";
+  let autoPrint = params.get("auto") === "1";
 
   const titleEl = document.getElementById("pw-title");
   const subtitleEl = document.getElementById("pw-subtitle");
   const contentEl = document.getElementById("pw-content");
+  const playerSelect = document.getElementById("pw-player-select");
+  const weekSelect = document.getElementById("pw-week-select");
 
   /* Storage key must match what week.html writes right after a
      successful submission (see the comment there) — this is what lets
      someone print their picks the moment they submit, well before the
-     sheet itself has synced (that can take up to a few minutes). */
+     sheet itself has synced (that can take up to a few minutes).
+     localStorage, not sessionStorage — this page is often opened in a
+     new tab via a rel="noopener" link, and noopener deliberately breaks
+     the window.opener relationship sessionStorage would otherwise need
+     to reach a new tab. localStorage doesn't care about that; it's
+     shared across every tab of the same origin. */
   function storageKeyFor(player, week) {
     return `vdpoolPrint:${player}:${week}`;
+  }
+  function tryLocalPayload(player, week) {
+    if (!player || !week) return null;
+    try {
+      const raw = localStorage.getItem(storageKeyFor(player, week));
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (err) {
+      return null;
+    }
   }
 
   function renderRows(rowsHtml) {
@@ -92,111 +129,124 @@
     </tr>`;
   }
 
-  /* ---- Path 1: a locally-saved copy of this exact submission ----
-     Written by week.html the instant a submission succeeds, so it's
-     available immediately — no need to wait for the sheet to sync or
-     for the week to lock. Only ever holds picks THIS BROWSER itself
-     just submitted, so there's no privacy concern showing it right away.
+  const state = await loadPoolData();
+  const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
+  const scheduleWeeks = getWeeks(state.schedule);
+  const activeWeek = computeCurrentWeek(state.schedule) || POOL_CONFIG.currentWeek || scheduleWeeks[scheduleWeeks.length - 1];
 
-     Uses localStorage, not sessionStorage — this page is opened in a new
-     tab via a rel="noopener" link, and noopener deliberately breaks the
-     window.opener relationship sessionStorage would otherwise need to
-     reach a new tab. localStorage doesn't care about that; it's shared
-     across every tab of the same origin. */
-  function tryLocalPayload() {
-    let key = null;
-    if (qsPlayer && qsWeek) {
-      key = storageKeyFor(qsPlayer, qsWeek);
-    } else {
-      // No player/week in the URL — fall back to whatever this browser
-      // most recently submitted, if anything.
-      key = localStorage.getItem("vdpoolPrintLastKey");
-    }
-    if (!key) return null;
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (err) {
-      return null;
-    }
+  /* Player list: the full season roster from config.js, not just names
+     that already have picks on file — someone who hasn't submitted THIS
+     week yet should still be able to pick their own name here (they'll
+     just see "no picks found" until they do, or "hidden until locked"
+     if picks exist but the week hasn't locked). */
+  const rosterPlayers = (POOL_CONFIG.players || []).slice().sort((a, b) => a.localeCompare(b));
+  rosterPlayers.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p; opt.textContent = p;
+    playerSelect.appendChild(opt);
+  });
+  scheduleWeeks.forEach(w => {
+    const opt = document.createElement("option");
+    opt.value = w; opt.textContent = "Week " + w;
+    weekSelect.appendChild(opt);
+  });
+
+  const initialPlayer = qsPlayer && rosterPlayers.includes(qsPlayer) ? qsPlayer : "";
+  const initialWeek = scheduleWeeks.includes(qsWeek) ? qsWeek : activeWeek;
+  playerSelect.value = initialPlayer;
+  weekSelect.value = initialWeek;
+
+  function updateUrl(player, week) {
+    const url = new URL(location.href);
+    if (player) url.searchParams.set("player", player); else url.searchParams.delete("player");
+    if (week) url.searchParams.set("week", week); else url.searchParams.delete("week");
+    url.searchParams.delete("auto");
+    history.replaceState(null, "", url);
   }
 
-  const localPayload = tryLocalPayload();
-  if (localPayload) {
-    titleEl.textContent = `${localPayload.player} — Week ${localPayload.week} Picks`;
-    subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season · submitted just now`.trim();
+  function render(player, week, allowAutoPrint) {
+    if (!player) {
+      titleEl.textContent = "Print My Picks";
+      subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season · Week ${week}`.trim();
+      contentEl.innerHTML = `<div class="pw-empty">Select your name above to view and print your picks for Week ${week}.</div>`;
+      return;
+    }
+
+    titleEl.textContent = `${player} — Week ${week} Picks`;
+
+    // Path 1: a locally-saved copy of exactly this submission — shows
+    // instantly, no need to wait on the sheet or the week locking (this
+    // is the player's OWN just-submitted picks, so no privacy concern
+    // showing it back to them right away).
+    const localPayload = tryLocalPayload(player, week);
+    if (localPayload) {
+      subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season · submitted just now`.trim();
+      let rowsHtml = "";
+      (localPayload.picks || []).forEach(p => {
+        rowsHtml += pickRow(p.matchup, p.pickName || p.pick, p.points, "--");
+      });
+      (localPayload.eliminator || []).forEach(e => {
+        rowsHtml += pickRow(e.matchup || e.label, `${e.teamName || e.team} (${e.label})`, "—", "--", "pw-elim-row");
+      });
+      if (!rowsHtml) {
+        contentEl.innerHTML = `<div class="pw-empty">No picks found in this submission.</div>`;
+      } else {
+        renderRows(rowsHtml);
+      }
+      if (allowAutoPrint) setTimeout(() => window.print(), 350);
+      return;
+    }
+
+    // Path 2: pull from the sheet itself. Same "hidden until locked"
+    // privacy rule as every other page on the site: a week's picks
+    // (anyone's, including your own) only show here once that week has
+    // actually locked.
+    subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season`.trim();
+    if (!isWeekLocked(state.schedule, week)) {
+      const deadlineText = formatDeadline(getWeekDeadline(state.schedule, week)) || "the weekly deadline";
+      contentEl.innerHTML = `<div class="pw-empty">🔒 Week ${week} picks stay hidden until they lock (${deadlineText}) — so nobody can see anyone's picks early, including your own on this page. Try printing again right after you submit instead.</div>`;
+      return;
+    }
+
+    const weekPicks = state.pickemPicks
+      .filter(p => p.player === player && p.week === week)
+      .sort((a, b) => b.points - a.points);
+    const elimPicks = state.eliminatorPicks.filter(p => p.player === player && p.week === week);
 
     let rowsHtml = "";
-    (localPayload.picks || []).forEach(p => {
-      rowsHtml += pickRow(p.matchup, p.pickName || p.pick, p.points, "--");
+    weekPicks.forEach(p => {
+      const game = gamesById[p.gameId];
+      const { result, earned } = pointsEarnedForPick(game, p);
+      const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
+      const winnerText = game && game.winner ? game.winner : "--";
+      const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : String(p.points));
+      rowsHtml += pickRow(matchup, teamName(p.pick), ptsText, winnerText);
     });
-    (localPayload.eliminator || []).forEach(e => {
-      rowsHtml += pickRow(e.matchup || e.label, `${e.teamName || e.team} (${e.label})`, "—", "--", "pw-elim-row");
+    elimPicks.forEach(ep => {
+      const game = state.schedule.find(g => g.week === week && (g.away === ep.team || g.home === ep.team));
+      const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : "";
+      const winnerText = game && game.winner ? game.winner : "--";
+      rowsHtml += pickRow(matchup || "Eliminator Pick", `${teamName(ep.team)} (Eliminator)`, "—", winnerText, "pw-elim-row");
     });
 
     if (!rowsHtml) {
-      contentEl.innerHTML = `<div class="pw-empty">No picks found in this submission.</div>`;
-    } else {
-      renderRows(rowsHtml);
+      contentEl.innerHTML = `<div class="pw-empty">No picks found for ${player} in Week ${week}.</div>`;
+      return;
     }
-
-    if (autoPrint) setTimeout(() => window.print(), 350);
-    return;
+    renderRows(rowsHtml);
+    if (allowAutoPrint) setTimeout(() => window.print(), 350);
   }
 
-  /* ---- Path 2: pull from the sheet itself ----
-     Used when there's no local copy to fall back on — e.g. opening this
-     page directly, later, or on a different device. Same "hidden until
-     locked" privacy rule as every other page on the site: a week's
-     picks (anyone's, including your own) only show here once that
-     week has actually locked. */
-  if (!qsPlayer || !qsWeek) {
-    titleEl.textContent = "Print My Picks";
-    subtitleEl.textContent = "";
-    contentEl.innerHTML = `<div class="pw-empty">Pick a player and week from the <a href="pickem.html">Pick'em page</a>'s "My Picks" tab, then use its Print button to come back here.</div>`;
-    return;
+  function onSelectorChange() {
+    const player = playerSelect.value;
+    const week = parseInt(weekSelect.value, 10);
+    updateUrl(player, week);
+    render(player, week, false);
   }
+  playerSelect.addEventListener("change", onSelectorChange);
+  weekSelect.addEventListener("change", onSelectorChange);
 
-  const state = await loadPoolData();
-  const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
-
-  titleEl.textContent = `${qsPlayer} — Week ${qsWeek} Picks`;
-  subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season`.trim();
-
-  if (!isWeekLocked(state.schedule, qsWeek)) {
-    const deadlineText = formatDeadline(getWeekDeadline(state.schedule, qsWeek)) || "the weekly deadline";
-    contentEl.innerHTML = `<div class="pw-empty">🔒 Week ${qsWeek} picks stay hidden until they lock (${deadlineText}) — so nobody can see anyone's picks early, including your own on this page. Try printing again right after you submit instead.</div>`;
-    return;
-  }
-
-  const weekPicks = state.pickemPicks
-    .filter(p => p.player === qsPlayer && p.week === qsWeek)
-    .sort((a, b) => b.points - a.points);
-  const elimPicks = state.eliminatorPicks.filter(p => p.player === qsPlayer && p.week === qsWeek);
-
-  let rowsHtml = "";
-  weekPicks.forEach(p => {
-    const game = gamesById[p.gameId];
-    const { result, earned } = pointsEarnedForPick(game, p);
-    const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
-    const winnerText = game && game.winner ? game.winner : "--";
-    const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : String(p.points));
-    rowsHtml += pickRow(matchup, teamName(p.pick), ptsText, winnerText);
-  });
-  elimPicks.forEach(ep => {
-    const game = state.schedule.find(g => g.week === qsWeek && (g.away === ep.team || g.home === ep.team));
-    const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : "";
-    const winnerText = game && game.winner ? game.winner : "--";
-    rowsHtml += pickRow(matchup || "Eliminator Pick", `${teamName(ep.team)} (Eliminator)`, "—", winnerText, "pw-elim-row");
-  });
-
-  if (!rowsHtml) {
-    contentEl.innerHTML = `<div class="pw-empty">No picks found for ${qsPlayer} in Week ${qsWeek}.</div>`;
-    return;
-  }
-  renderRows(rowsHtml);
-  if (autoPrint) setTimeout(() => window.print(), 350);
+  render(initialPlayer, initialWeek, autoPrint);
 })();
 
 document.getElementById("pw-print-btn").addEventListener("click", () => window.print());

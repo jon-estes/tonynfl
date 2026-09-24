@@ -521,7 +521,7 @@ function renderHeader(activePage) {
         <a href="standings.html" class="${activePage === "standings" ? "active" : ""}">Standings</a>
         <a href="schedule.html" class="${activePage === "schedule" ? "active" : ""}">Weekly Submissions</a>
         <a href="history.html" class="${activePage === "history" ? "active" : ""}">History</a>
-        <a href="pickem.html#everyone-picks">Print</a>
+        <a href="print-week.html">Print</a>
       </nav>
     </div>
   `;
