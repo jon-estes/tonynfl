@@ -15,7 +15,10 @@
     <div class="ps-success-check">✅</div>
     <h2>Thanks — your picks are in!</h2>
     <p>Please allow up to <strong>5 minutes</strong> for the sheet to sync before going back in to double-check. If you don't see them right away, there's no need to submit again — just give it a few minutes and refresh.</p>
-    <button type="button" class="btn" id="ps-success-dismiss">Got it</button>
+    <div class="ps-success-actions">
+      <a class="btn btn-secondary" id="ps-success-print-link" href="#" target="_blank" rel="noopener">🖨️ Print My Picks</a>
+      <button type="button" class="btn" id="ps-success-dismiss">Got it</button>
+    </div>
   </div>
 </div>
 <header class="site-header" id="site-header" data-no-print></header>
@@ -640,6 +643,59 @@
         document.querySelectorAll(
           "#ps-sheet input, #ps-sheet select, #ps-sheet button[type=submit], #submit-btn-top"
         ).forEach(el => { el.disabled = true; });
+
+        // Save a local copy of exactly what was just submitted, keyed by
+        // player+week, so print-week.html can show and print it
+        // immediately — no need to wait for the sheet to sync (that can
+        // take a few minutes) or for the week to lock (this is the
+        // player's OWN just-submitted picks, so there's no privacy
+        // concern showing it back to them right away). See the matching
+        // comment in print-week.html.
+        //
+        // Uses localStorage, NOT sessionStorage — the print link opens in
+        // a new tab (target="_blank" rel="noopener"), and rel="noopener"
+        // deliberately severs the window.opener link that sessionStorage
+        // would otherwise piggyback on to reach that new tab. localStorage
+        // is shared across every tab of the same origin regardless of any
+        // opener relationship, so it's the one that actually works here.
+        const eliminatorPayload = [];
+        if (elimSelect.value) {
+          const g1 = games.find(g => g.away === elimSelect.value || g.home === elimSelect.value);
+          eliminatorPayload.push({
+            label: elimBlock2.hidden ? "Eliminator" : "Eliminator Entry 1",
+            team: elimSelect.value,
+            teamName: teamName(elimSelect.value),
+            matchup: g1 ? `${teamName(g1.away)} @ ${teamName(g1.home)}` : ""
+          });
+        }
+        if (!elimBlock2.hidden && elimSelect2.value) {
+          const g2 = games.find(g => g.away === elimSelect2.value || g.home === elimSelect2.value);
+          eliminatorPayload.push({
+            label: "Eliminator Entry 2",
+            team: elimSelect2.value,
+            teamName: teamName(elimSelect2.value),
+            matchup: g2 ? `${teamName(g2.away)} @ ${teamName(g2.home)}` : ""
+          });
+        }
+        const printPayload = {
+          player: submittedName,
+          week: week,
+          picks: picks
+            .filter(p => p.pick)
+            .map(p => ({ matchup: p.matchup, pick: p.pick, pickName: teamName(p.pick), points: p.points })),
+          eliminator: eliminatorPayload
+        };
+        const printKey = `vdpoolPrint:${submittedName}:${week}`;
+        try {
+          localStorage.setItem(printKey, JSON.stringify(printPayload));
+          localStorage.setItem("vdpoolPrintLastKey", printKey);
+        } catch (err) {
+          // localStorage can fail in rare cases (private browsing quirks,
+          // storage full) — the print page just falls back to fetching
+          // from the sheet instead once it locks, so this isn't fatal.
+        }
+        document.getElementById("ps-success-print-link").href =
+          `print-week.html?player=${encodeURIComponent(submittedName)}&week=${week}&auto=1`;
 
         // A big, hard-to-miss confirmation — several players were seeing
         // the small inline "✅ Picks submitted!" text, not believing it

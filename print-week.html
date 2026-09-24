@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print My Picks — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* This page is deliberately its own minimal shell — no full site nav,
+     hero photo, or other cards — so what prints (and what shows on
+     screen) is just this one player's one week of picks, nothing else
+     to scroll past or accidentally include in a printout. */
+  .pw-wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 60px; }
+  .pw-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .pw-back { color: var(--pk-text-dim, #6b7280); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .pw-back:hover { text-decoration: underline; }
+  .pw-actions { display: flex; gap: 10px; }
+  .pw-head { text-align: center; margin-bottom: 22px; }
+  .pw-head h1 { margin: 0 0 4px; font-size: 22px; }
+  .pw-head p { margin: 0; color: var(--pk-text-dim, #6b7280); font-size: 14px; }
+  .pw-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+  .pw-table th, .pw-table td { padding: 9px 10px; border: 1px solid var(--pk-border, #e5e7eb); font-size: 14px; text-align: left; }
+  .pw-table th { background: var(--pk-panel-2, #f3f4f6); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--pk-text-dim, #6b7280); }
+  .pw-table td.pw-pick-col, .pw-table th.pw-pick-col { text-align: center; }
+  .pw-elim-row td { font-weight: 700; background: rgba(59,130,246,0.06); }
+  .pw-empty { text-align: center; padding: 40px 20px; color: var(--pk-text-dim, #6b7280); }
+  .pw-brand { text-align: center; margin-top: 30px; font-size: 12px; color: var(--pk-text-dim, #6b7280); }
+  @media print {
+    .pw-actions, .pw-back, header.site-header, #sample-banner { display: none !important; }
+    .pw-wrap { padding: 0; max-width: none; }
+  }
+</style>
+</head>
+<body class="pk-page theme-light">
+<div class="pw-wrap">
+  <div class="pw-bar" data-no-print>
+    <a class="pw-back" href="pickem.html">← Back to Pick'em</a>
+    <div class="pw-actions">
+      <button type="button" class="btn btn-secondary" id="pw-print-btn">🖨️ Print</button>
+    </div>
+  </div>
+
+  <div class="pw-head">
+    <h1 id="pw-title">My Picks</h1>
+    <p id="pw-subtitle"></p>
+  </div>
+
+  <div id="pw-content">
+    <div class="pw-empty">Loading…</div>
+  </div>
+
+  <p class="pw-brand">Vince and Dave's Pool</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  const params = new URLSearchParams(location.search);
+  const qsPlayer = (params.get("player") || "").trim();
+  const qsWeek = parseInt(params.get("week"), 10);
+  const autoPrint = params.get("auto") === "1";
+
+  const titleEl = document.getElementById("pw-title");
+  const subtitleEl = document.getElementById("pw-subtitle");
+  const contentEl = document.getElementById("pw-content");
+
+  /* Storage key must match what week.html writes right after a
+     successful submission (see the comment there) — this is what lets
+     someone print their picks the moment they submit, well before the
+     sheet itself has synced (that can take up to a few minutes). */
+  function storageKeyFor(player, week) {
+    return `vdpoolPrint:${player}:${week}`;
+  }
+
+  function renderRows(rowsHtml) {
+    contentEl.innerHTML = `
+      <table class="pw-table">
+        <thead><tr><th>Matchup</th><th class="pw-pick-col">Pick</th><th class="pw-pick-col">Points</th><th class="pw-pick-col">Winner</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>`;
+  }
+
+  function pickRow(matchup, pickText, points, winnerText, extraClass) {
+    return `<tr class="${extraClass || ""}">
+      <td>${matchup}</td><td class="pw-pick-col">${pickText}</td><td class="pw-pick-col">${points}</td><td class="pw-pick-col">${winnerText}</td>
+    </tr>`;
+  }
+
+  /* ---- Path 1: a locally-saved copy of this exact submission ----
+     Written by week.html the instant a submission succeeds, so it's
+     available immediately — no need to wait for the sheet to sync or
+     for the week to lock. Only ever holds picks THIS BROWSER itself
+     just submitted, so there's no privacy concern showing it right away.
+
+     Uses localStorage, not sessionStorage — this page is opened in a new
+     tab via a rel="noopener" link, and noopener deliberately breaks the
+     window.opener relationship sessionStorage would otherwise need to
+     reach a new tab. localStorage doesn't care about that; it's shared
+     across every tab of the same origin. */
+  function tryLocalPayload() {
+    let key = null;
+    if (qsPlayer && qsWeek) {
+      key = storageKeyFor(qsPlayer, qsWeek);
+    } else {
+      // No player/week in the URL — fall back to whatever this browser
+      // most recently submitted, if anything.
+      key = localStorage.getItem("vdpoolPrintLastKey");
+    }
+    if (!key) return null;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  const localPayload = tryLocalPayload();
+  if (localPayload) {
+    titleEl.textContent = `${localPayload.player} — Week ${localPayload.week} Picks`;
+    subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season · submitted just now`.trim();
+
+    let rowsHtml = "";
+    (localPayload.picks || []).forEach(p => {
+      rowsHtml += pickRow(p.matchup, p.pickName || p.pick, p.points, "--");
+    });
+    (localPayload.eliminator || []).forEach(e => {
+      rowsHtml += pickRow(e.matchup || e.label, `${e.teamName || e.team} (${e.label})`, "—", "--", "pw-elim-row");
+    });
+
+    if (!rowsHtml) {
+      contentEl.innerHTML = `<div class="pw-empty">No picks found in this submission.</div>`;
+    } else {
+      renderRows(rowsHtml);
+    }
+
+    if (autoPrint) setTimeout(() => window.print(), 350);
+    return;
+  }
+
+  /* ---- Path 2: pull from the sheet itself ----
+     Used when there's no local copy to fall back on — e.g. opening this
+     page directly, later, or on a different device. Same "hidden until
+     locked" privacy rule as every other page on the site: a week's
+     picks (anyone's, including your own) only show here once that
+     week has actually locked. */
+  if (!qsPlayer || !qsWeek) {
+    titleEl.textContent = "Print My Picks";
+    subtitleEl.textContent = "";
+    contentEl.innerHTML = `<div class="pw-empty">Pick a player and week from the <a href="pickem.html">Pick'em page</a>'s "My Picks" tab, then use its Print button to come back here.</div>`;
+    return;
+  }
+
+  const state = await loadPoolData();
+  const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
+
+  titleEl.textContent = `${qsPlayer} — Week ${qsWeek} Picks`;
+  subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season`.trim();
+
+  if (!isWeekLocked(state.schedule, qsWeek)) {
+    const deadlineText = formatDeadline(getWeekDeadline(state.schedule, qsWeek)) || "the weekly deadline";
+    contentEl.innerHTML = `<div class="pw-empty">🔒 Week ${qsWeek} picks stay hidden until they lock (${deadlineText}) — so nobody can see anyone's picks early, including your own on this page. Try printing again right after you submit instead.</div>`;
+    return;
+  }
+
+  const weekPicks = state.pickemPicks
+    .filter(p => p.player === qsPlayer && p.week === qsWeek)
+    .sort((a, b) => b.points - a.points);
+  const elimPicks = state.eliminatorPicks.filter(p => p.player === qsPlayer && p.week === qsWeek);
+
+  let rowsHtml = "";
+  weekPicks.forEach(p => {
+    const game = gamesById[p.gameId];
+    const { result, earned } = pointsEarnedForPick(game, p);
+    const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
+    const winnerText = game && game.winner ? game.winner : "--";
+    const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : String(p.points));
+    rowsHtml += pickRow(matchup, teamName(p.pick), ptsText, winnerText);
+  });
+  elimPicks.forEach(ep => {
+    const game = state.schedule.find(g => g.week === qsWeek && (g.away === ep.team || g.home === ep.team));
+    const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : "";
+    const winnerText = game && game.winner ? game.winner : "--";
+    rowsHtml += pickRow(matchup || "Eliminator Pick", `${teamName(ep.team)} (Eliminator)`, "—", winnerText, "pw-elim-row");
+  });
+
+  if (!rowsHtml) {
+    contentEl.innerHTML = `<div class="pw-empty">No picks found for ${qsPlayer} in Week ${qsWeek}.</div>`;
+    return;
+  }
+  renderRows(rowsHtml);
+  if (autoPrint) setTimeout(() => window.print(), 350);
+})();
+
+document.getElementById("pw-print-btn").addEventListener("click", () => window.print());
+</script>
+</body>
+</html>

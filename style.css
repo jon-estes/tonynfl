@@ -1358,6 +1358,22 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
   text-transform: uppercase;
 }
 
+.pk-my-picks-print-row {
+  padding: 14px 14px 4px;
+  text-align: right;
+}
+.pk-my-picks-print-row .btn {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 8px 14px;
+}
+.btn-disabled-link {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: default;
+}
+
 /* The Standings/History panes pair a CSS-grid header row (.pk-row-header,
    above) with a plain HTML <table> underneath for the actual data. Left to
    its own devices a <table> auto-sizes columns from their content, which
@@ -2447,6 +2463,8 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .ps-success-card h2 { margin: 0 0 12px; font-size: 20px; }
 .ps-success-card p { margin: 0 0 22px; color: var(--text-dim); font-size: 14px; line-height: 1.55; }
 .ps-success-card .btn { width: 100%; }
+.ps-success-actions { display: flex; flex-direction: column; gap: 10px; }
+.ps-success-actions .btn { text-align: center; text-decoration: none; }
 
 @media print {
   [data-no-print] { display: none !important; }
@@ -2552,28 +2570,9 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
   body.pk-grid-print-mode .pk-rules-card,
   body.pk-grid-print-mode .pk-payouts-card,
   body.pk-grid-print-mode .pk-card,
-  body.pk-grid-print-mode #player-print-card,
   body.pk-grid-print-mode footer {
     display: none !important;
   }
-
-  /* Same idea, flipped: printing one player's full-season table hides
-     the Everyone's Picks grid (and everything else) instead. */
-  body.pk-player-print-mode .pk-photo-hero,
-  body.pk-player-print-mode header.site-header,
-  body.pk-player-print-mode #sample-banner,
-  body.pk-player-print-mode .pk-rules-card,
-  body.pk-player-print-mode .pk-payouts-card,
-  body.pk-player-print-mode .pk-card,
-  body.pk-player-print-mode #everyone-picks,
-  body.pk-player-print-mode footer {
-    display: none !important;
-  }
-}
-
-#player-print-table tr.player-print-elim-row td {
-  font-weight: 700;
-  background: rgba(59,130,246,0.06);
 }
 
 /* ---- Eliminator "Everyone's Picks" grid (eliminator.html) ----
