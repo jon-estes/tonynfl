@@ -118,6 +118,28 @@
       <span class="pk-grid-actions-hint" id="pk-grid-actions-hint"></span>
     </div>
   </div>
+
+  <div class="card pk-grid-card" id="player-print-card">
+    <div class="pk-grid-head">
+      <h2>🖨️ Print One Player's Full Season</h2>
+      <div class="pk-grid-week-field">
+        <label for="player-print-select">Player</label>
+        <select id="player-print-select" class="pk-select"></select>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:13px; margin-top:-8px;">
+      Every locked week's Pick'em picks and Eliminator pick for one player, all on one sheet —
+      handy for printing or tracking a season so far.
+    </p>
+    <div class="pick-grid-wrap">
+      <table class="pick-grid-table" id="player-print-table"></table>
+    </div>
+    <div class="pk-grid-actions" id="player-print-actions" data-no-print>
+      <button type="button" class="btn btn-secondary" id="player-print-btn" disabled>🖨️ Print</button>
+      <button type="button" class="btn btn-secondary" id="player-print-excel-btn" disabled>⬇️ Download Excel</button>
+      <span class="pk-grid-actions-hint" id="player-print-hint"></span>
+    </div>
+  </div>
 </div>
 
 <footer>Powered by a Google Sheet, not a database</footer>
@@ -429,6 +451,111 @@
     const table = document.getElementById("pick-grid-table");
     const wb = XLSX.utils.table_to_book(table, { sheet: `Week ${currentGridWeek}` });
     XLSX.writeFile(wb, `vd-pool-week-${currentGridWeek}-picks.xlsx`);
+  });
+
+  /* ---- Print One Player's Full Season ----
+     Same idea as the Everyone's Picks grid above, but flipped: pick ONE
+     player and lay out every locked week's Pick'em picks (plus that
+     week's Eliminator pick, if they made one) in a single scrollable —
+     and printable — table, instead of one week at a time. Only locked
+     weeks are included, same "hidden until it locks" privacy rule as
+     everywhere else on the site. */
+  const playerPrintSelect = document.getElementById("player-print-select");
+  players.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p; opt.textContent = p;
+    playerPrintSelect.appendChild(opt);
+  });
+
+  const playerPrintBtn = document.getElementById("player-print-btn");
+  const playerPrintExcelBtn = document.getElementById("player-print-excel-btn");
+  const playerPrintHint = document.getElementById("player-print-hint");
+  let currentPrintPlayer = null;
+  function setPlayerPrintActionsEnabled(enabled, hint) {
+    playerPrintBtn.disabled = !enabled;
+    playerPrintExcelBtn.disabled = !enabled;
+    playerPrintHint.textContent = enabled ? "" : (hint || "");
+  }
+
+  function renderPlayerPrintTable(player) {
+    currentPrintPlayer = player;
+    const mount = document.getElementById("player-print-table");
+    if (!player) {
+      mount.innerHTML = `<tr><td class="empty-state">Pick a player above.</td></tr>`;
+      setPlayerPrintActionsEnabled(false, "Pick a player above.");
+      return;
+    }
+
+    const lockedWeeks = weeks.filter(w => isWeekLocked(state.schedule, w));
+    if (!lockedWeeks.length) {
+      mount.innerHTML = `<tr><td class="empty-state">No weeks have locked yet.</td></tr>`;
+      setPlayerPrintActionsEnabled(false, "Available once at least one week locks.");
+      return;
+    }
+
+    let rowsHtml = "";
+    let anyRows = false;
+    lockedWeeks.forEach(week => {
+      const weekPicks = state.pickemPicks
+        .filter(p => p.player === player && p.week === week)
+        .sort((a, b) => b.points - a.points);
+      const elimPick = state.eliminatorPicks.find(p => p.player === player && p.week === week);
+
+      if (!weekPicks.length && !elimPick) return;
+      anyRows = true;
+
+      weekPicks.forEach(p => {
+        const game = gamesById[p.gameId];
+        const { result, earned } = pointsEarnedForPick(game, p);
+        const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
+        const winnerText = game && game.winner ? game.winner : "--";
+        const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : String(p.points));
+        rowsHtml += `<tr>
+          <td>Week ${week}</td><td>${matchup}</td><td class="${result}">${p.pick}</td><td class="${result}">${ptsText}</td><td>${winnerText}</td>
+        </tr>`;
+      });
+
+      if (elimPick) {
+        const game = state.schedule.find(g => g.week === week && (g.away === elimPick.team || g.home === elimPick.team));
+        const winnerText = game && game.winner ? game.winner : "--";
+        const result = game && game.winner ? (game.winner === elimPick.team ? "correct" : "wrong") : "pending";
+        rowsHtml += `<tr class="player-print-elim-row">
+          <td>Week ${week}</td><td>Eliminator Pick</td><td class="${result}">${elimPick.team}</td><td>—</td><td>${winnerText}</td>
+        </tr>`;
+      }
+    });
+
+    if (!anyRows) {
+      mount.innerHTML = `<tr><td class="empty-state">No picks found for ${player} in any locked week.</td></tr>`;
+      setPlayerPrintActionsEnabled(false, "Nothing to print or download yet.");
+      return;
+    }
+
+    mount.innerHTML = `<thead><tr><th>Week</th><th>Matchup</th><th>Pick</th><th>Points</th><th>Winner</th></tr></thead><tbody>${rowsHtml}</tbody>`;
+    setPlayerPrintActionsEnabled(true);
+  }
+
+  playerPrintSelect.addEventListener("change", () => renderPlayerPrintTable(playerPrintSelect.value));
+  if (players.length) {
+    playerPrintSelect.value = players[0];
+    renderPlayerPrintTable(players[0]);
+  } else {
+    renderPlayerPrintTable(null);
+  }
+
+  playerPrintBtn.addEventListener("click", () => {
+    document.body.classList.add("pk-player-print-mode");
+    window.print();
+  });
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("pk-player-print-mode");
+  });
+
+  playerPrintExcelBtn.addEventListener("click", () => {
+    if (typeof XLSX === "undefined" || !currentPrintPlayer) return;
+    const table = document.getElementById("player-print-table");
+    const wb = XLSX.utils.table_to_book(table, { sheet: currentPrintPlayer.slice(0, 31) });
+    XLSX.writeFile(wb, `vd-pool-${currentPrintPlayer.replace(/[^a-z0-9]+/gi, "-")}-full-season.xlsx`);
   });
 })();
 </script>

@@ -91,7 +91,22 @@ const POOL_CONFIG = {
      leaderboard, same as anyone with zero Pick'em picks on file. Just
      list the exact names from `players` above — leave the array empty
      if everyone plays Pick'em. */
-  eliminatorOnlyPlayers: ["Terry", "Patty"]
+  eliminatorOnlyPlayers: ["Terry", "Patty"],
+
+  /* ---- Payouts ----
+     Shown on pickem.html (a breakdown card) and standings.html (the
+     actual dollar amount next to whoever is CURRENTLY in 1st/2nd/3rd —
+     computed live off the real leaderboard, so it updates on its own
+     week to week, right along with the standings). Eliminator's payout
+     shows on eliminator.html the same way. Just edit the numbers here
+     whenever the buy-in or player count changes — nothing else needs
+     touching. `pickem.total` is shown as a sanity-check total (should
+     equal first + second + third + highWeek) but isn't used in any
+     math itself. */
+  payouts: {
+    pickem: { total: 1425, first: 750, second: 400, third: 200, highWeek: 75 },
+    eliminator: { winner: 460 }
+  }
 };
 
 /* ============================================================

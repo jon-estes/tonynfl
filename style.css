@@ -2550,10 +2550,30 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
   body.pk-grid-print-mode header.site-header,
   body.pk-grid-print-mode #sample-banner,
   body.pk-grid-print-mode .pk-rules-card,
+  body.pk-grid-print-mode .pk-payouts-card,
   body.pk-grid-print-mode .pk-card,
+  body.pk-grid-print-mode #player-print-card,
   body.pk-grid-print-mode footer {
     display: none !important;
   }
+
+  /* Same idea, flipped: printing one player's full-season table hides
+     the Everyone's Picks grid (and everything else) instead. */
+  body.pk-player-print-mode .pk-photo-hero,
+  body.pk-player-print-mode header.site-header,
+  body.pk-player-print-mode #sample-banner,
+  body.pk-player-print-mode .pk-rules-card,
+  body.pk-player-print-mode .pk-payouts-card,
+  body.pk-player-print-mode .pk-card,
+  body.pk-player-print-mode #everyone-picks,
+  body.pk-player-print-mode footer {
+    display: none !important;
+  }
+}
+
+#player-print-table tr.player-print-elim-row td {
+  font-weight: 700;
+  background: rgba(59,130,246,0.06);
 }
 
 /* ---- Eliminator "Everyone's Picks" grid (eliminator.html) ----
