@@ -440,27 +440,30 @@
     document.getElementById("pick-grid-table").innerHTML = `<tr><td class="empty-state">No weeks yet.</td></tr>`;
   }
 
-  /* Print: a body class flips on right before window.print() so print
-     CSS (see style.css) can hide everything on the page except this
-     one table — the browser's own print dialog handles paper size,
-     margins, etc. from there. The class comes back off on "afterprint"
-     so the on-screen page looks normal again once the dialog closes
-     (or is cancelled). */
+  /* Print: this grid can run to 16 game columns, far too wide for a
+     plain portrait printout — the browser would just clip everything
+     past the page's right edge instead of wrapping it, which looks like
+     the data past the first few columns "got lost". printWideTable()
+     (shared.js) switches the page to landscape for just this one print
+     job and shrinks the grid's font/padding under print media so
+     everything actually fits, then undoes both once the dialog closes. */
   gridPrintBtn.addEventListener("click", () => {
-    document.body.classList.add("pk-grid-print-mode");
-    window.print();
-  });
-  window.addEventListener("afterprint", () => {
-    document.body.classList.remove("pk-grid-print-mode");
+    printWideTable(document.getElementById("pick-grid-table"), "pk-grid-print-mode");
   });
 
   /* Excel export: SheetJS reads the CURRENTLY RENDERED table straight
-     out of the DOM (whatever week is selected) and turns it into a
-     real .xlsx workbook, client-side — no server round trip. */
+     out of the DOM (whatever week is selected) and turns it into a real
+     .xlsx workbook, client-side — no server round trip.
+     setNarrowColumnWidths() (shared.js) gives every column a narrow,
+     consistent width so the sheet doesn't open in Excel needing a wide
+     horizontal scroll to see every game. */
   gridExcelBtn.addEventListener("click", () => {
     if (typeof XLSX === "undefined" || currentGridWeek == null) return;
     const table = document.getElementById("pick-grid-table");
-    const wb = XLSX.utils.table_to_book(table, { sheet: `Week ${currentGridWeek}` });
+    const ws = XLSX.utils.table_to_sheet(table);
+    setNarrowColumnWidths(ws, table);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Week ${currentGridWeek}`);
     XLSX.writeFile(wb, `vd-pool-week-${currentGridWeek}-picks.xlsx`);
   });
 })();

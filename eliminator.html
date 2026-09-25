@@ -75,12 +75,18 @@
     <div class="elim-grid-wrap">
       <table class="elim-grid-table" id="elim-grid-table"></table>
     </div>
+    <div class="pk-grid-actions" id="elim-grid-actions" data-no-print>
+      <button type="button" class="btn btn-secondary" id="elim-grid-print-btn" disabled>🖨️ Print</button>
+      <button type="button" class="btn btn-secondary" id="elim-grid-excel-btn" disabled>⬇️ Download Excel</button>
+      <span class="pk-grid-actions-hint" id="elim-grid-actions-hint"></span>
+    </div>
   </div>
 </div>
 
 <footer>Powered by a Google Sheet, not a database</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
@@ -270,12 +276,23 @@
     return `<span class="team-badge" style="background:${t.color};color:${t.text};" title="${t.name}">${code}</span>`;
   }
 
+  const elimGridPrintBtn = document.getElementById("elim-grid-print-btn");
+  const elimGridExcelBtn = document.getElementById("elim-grid-excel-btn");
+  const elimGridActionsHint = document.getElementById("elim-grid-actions-hint");
+  function setElimGridActionsEnabled(enabled, hint) {
+    elimGridPrintBtn.disabled = !enabled;
+    elimGridExcelBtn.disabled = !enabled;
+    elimGridActionsHint.textContent = enabled ? "" : (hint || "");
+  }
+
   function renderEliminatorGrid() {
     const mount = document.getElementById("elim-grid-table");
     if (!players.length || !weeksForGrid.length) {
       mount.innerHTML = `<tr><td class="empty-state">No Eliminator picks to show yet.</td></tr>`;
+      setElimGridActionsEnabled(false, "Nothing to print or download yet.");
       return;
     }
+    setElimGridActionsEnabled(true);
 
     const picksByPlayerWeek = {};
     state.eliminatorPicks.forEach(p => { picksByPlayerWeek[p.player + "|" + p.week] = p; });
@@ -331,6 +348,33 @@
   }
 
   renderEliminatorGrid();
+
+  /* Print: this table can run to 18+ week columns for a full season, far
+     too wide for a plain portrait printout — the browser would just clip
+     everything past the page's right edge instead of wrapping it, which
+     is exactly the "only shows the first few columns, the rest is lost"
+     problem. printWideTable() (shared.js) switches the page to landscape
+     for just this one print job (via a temporary injected <style>, undone
+     right after) and shrinks the grid's font/padding under print media so
+     everything actually fits. */
+  elimGridPrintBtn.addEventListener("click", () => {
+    printWideTable(document.getElementById("elim-grid-table"), "elim-grid-print-mode");
+  });
+
+  /* Excel export: SheetJS reads the CURRENTLY RENDERED table straight out
+     of the DOM and turns it into a real .xlsx workbook, client-side — no
+     server round trip. setNarrowColumnWidths() (shared.js) gives every
+     column a narrow, consistent width so the sheet doesn't open in Excel
+     needing 18 screens' worth of horizontal scrolling to see everything. */
+  elimGridExcelBtn.addEventListener("click", () => {
+    if (typeof XLSX === "undefined") return;
+    const table = document.getElementById("elim-grid-table");
+    const ws = XLSX.utils.table_to_sheet(table);
+    setNarrowColumnWidths(ws, table);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Eliminator Picks");
+    XLSX.writeFile(wb, "vd-pool-eliminator-everyone-picks.xlsx");
+  });
 })();
 </script>
 </body>

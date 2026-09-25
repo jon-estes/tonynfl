@@ -454,6 +454,64 @@ function formatUSD(amount) {
   return "$" + Number(amount).toLocaleString("en-US");
 }
 
+/* ---------- Wide "everyone's picks" grid printing/export ----------
+   A few tables on this site have one column per GAME (up to 16, Pick'em)
+   or one column per WEEK (up to 18, Eliminator) — plenty wide enough
+   that a plain portrait printout just clips everything past the page's
+   right edge instead of wrapping it, which looks like the data past
+   column 6 or so "got lost". These two helpers fix that for BOTH the
+   Print button and the Download Excel button on any such grid. */
+
+/* Prints ONE specific table, landscape, at a small enough font that a
+   full-width grid actually fits instead of clipping. Temporarily injects
+   print-only CSS (removed again once the print dialog closes) rather
+   than editing style.css per page, so this works the same way no matter
+   which page's grid calls it. `table` must have an id. `modeClass` is
+   just a unique string (doesn't need to exist in any stylesheet already
+   — this function defines everything it needs). */
+function printWideTable(table, modeClass) {
+  if (!table || !table.id) return;
+  const styleTag = document.createElement("style");
+  styleTag.textContent = `
+    @page { size: landscape; margin: 0.35in; }
+    @media print {
+      body.${modeClass} * { visibility: hidden; }
+      body.${modeClass} #${table.id}, body.${modeClass} #${table.id} * { visibility: visible; }
+      body.${modeClass} #${table.id} {
+        position: absolute; left: 0; top: 0; width: 100%;
+        font-size: 8px;
+      }
+      body.${modeClass} #${table.id} th,
+      body.${modeClass} #${table.id} td {
+        padding: 2px 4px !important;
+        white-space: nowrap;
+      }
+    }
+  `;
+  document.head.appendChild(styleTag);
+  document.body.classList.add(modeClass);
+  function cleanup() {
+    document.body.classList.remove(modeClass);
+    styleTag.remove();
+    window.removeEventListener("afterprint", cleanup);
+  }
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+}
+
+/* Gives a freshly built worksheet (from XLSX.utils.table_to_sheet) a
+   narrow, uniform column width based on the source table's own column
+   count, so a many-column grid doesn't open in Excel requiring a long
+   horizontal scroll (or looking "cut off") before every column is
+   visible. The first column (always the player name here) gets a little
+   more room than the rest. */
+function setNarrowColumnWidths(ws, table) {
+  const headerRow = table.querySelector("tr");
+  const colCount = headerRow ? headerRow.children.length : 0;
+  if (!colCount) return;
+  ws["!cols"] = Array.from({ length: colCount }, (_, i) => ({ wch: i === 0 ? 14 : 8 }));
+}
+
 /* ---------- High Week bonus winner ----------
    Everyone's own single best week already shows in the Pick'em
    leaderboard's "High Week" column (see computeHighWeeks). The $75

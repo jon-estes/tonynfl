@@ -48,6 +48,7 @@
     <a class="pw-back" href="pickem.html">← Back to Pick'em</a>
     <div class="pw-actions">
       <button type="button" class="btn btn-secondary" id="pw-print-btn">🖨️ Print</button>
+      <button type="button" class="btn btn-secondary" id="pw-excel-btn" disabled>⬇️ Download Excel</button>
     </div>
   </div>
 
@@ -76,6 +77,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="teams.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
@@ -91,6 +93,8 @@
   const contentEl = document.getElementById("pw-content");
   const playerSelect = document.getElementById("pw-player-select");
   const weekSelect = document.getElementById("pw-week-select");
+  const excelBtn = document.getElementById("pw-excel-btn");
+  let currentExport = null; // { player, week } once a real table is on screen, else null
 
   /* Storage key must match what week.html writes right after a
      successful submission (see the comment there) — this is what lets
@@ -129,6 +133,12 @@
     </tr>`;
   }
 
+  const ALL_PLAYERS_VALUE = "__ALL__";
+  const gameIdNum = id => {
+    const parts = String(id).split("-");
+    return parseInt(parts[parts.length - 1], 10) || 0;
+  };
+
   const state = await loadPoolData();
   const gamesById = Object.fromEntries(state.schedule.map(g => [g.gameId, g]));
   const scheduleWeeks = getWeeks(state.schedule);
@@ -138,7 +148,16 @@
      that already have picks on file — someone who hasn't submitted THIS
      week yet should still be able to pick their own name here (they'll
      just see "no picks found" until they do, or "hidden until locked"
-     if picks exist but the week hasn't locked). */
+     if picks exist but the week hasn't locked). "All Players" is its own
+     option at the top — one week, everyone's picks side by side, same
+     grid as the Everyone's Picks table on Pick'em, just reachable
+     straight from this page's own Player dropdown too. There's
+     deliberately no equivalent "all weeks" option — per-week only. */
+  const allPlayersOpt = document.createElement("option");
+  allPlayersOpt.value = ALL_PLAYERS_VALUE;
+  allPlayersOpt.textContent = "— All Players —";
+  playerSelect.appendChild(allPlayersOpt);
+
   const rosterPlayers = (POOL_CONFIG.players || []).slice().sort((a, b) => a.localeCompare(b));
   rosterPlayers.forEach(p => {
     const opt = document.createElement("option");
@@ -151,20 +170,93 @@
     weekSelect.appendChild(opt);
   });
 
-  const initialPlayer = qsPlayer && rosterPlayers.includes(qsPlayer) ? qsPlayer : "";
+  const qsPlayerNormalized = qsPlayer.toLowerCase() === "all" ? ALL_PLAYERS_VALUE : qsPlayer;
+  const initialPlayer = qsPlayerNormalized === ALL_PLAYERS_VALUE || rosterPlayers.includes(qsPlayerNormalized)
+    ? qsPlayerNormalized
+    : "";
   const initialWeek = scheduleWeeks.includes(qsWeek) ? qsWeek : activeWeek;
   playerSelect.value = initialPlayer;
   weekSelect.value = initialWeek;
 
   function updateUrl(player, week) {
     const url = new URL(location.href);
-    if (player) url.searchParams.set("player", player); else url.searchParams.delete("player");
+    const urlPlayer = player === ALL_PLAYERS_VALUE ? "all" : player;
+    if (urlPlayer) url.searchParams.set("player", urlPlayer); else url.searchParams.delete("player");
     if (week) url.searchParams.set("week", week); else url.searchParams.delete("week");
     url.searchParams.delete("auto");
     history.replaceState(null, "", url);
   }
 
+  /* All-players view for one week: same shape as the Everyone's Picks
+     grid on Pick'em (rows = players, columns = games), just reachable
+     from this page directly. Same "hidden until locked" rule as
+     everything else — this is other people's picks, not the viewer's
+     own, so there's no just-submitted-it-myself exception here. */
+  function renderAllPlayersGrid(week) {
+    const games = state.schedule
+      .filter(g => g.week === week)
+      .slice()
+      .sort((a, b) => gameIdNum(a.gameId) - gameIdNum(b.gameId));
+    const gridPlayers = getPlayers(state.pickemPicks);
+
+    if (!gridPlayers.length || !games.length) {
+      contentEl.innerHTML = `<div class="pw-empty">No picks to show for Week ${week}.</div>`;
+      return false;
+    }
+
+    const picksByPlayerGame = {};
+    state.pickemPicks.filter(p => p.week === week).forEach(p => {
+      picksByPlayerGame[p.player + "|" + p.gameId] = p;
+    });
+
+    let html = "<thead><tr><th class=\"pgt-player-col\">Player</th>";
+    games.forEach(g => {
+      html += `<th>${g.away}<span class="pgt-at">@</span>${g.home}</th>`;
+    });
+    html += "</tr></thead><tbody>";
+    gridPlayers.forEach(p => {
+      html += `<tr><td class="pgt-player-col">${p}</td>`;
+      games.forEach(g => {
+        const pick = picksByPlayerGame[p + "|" + g.gameId];
+        if (!pick || !pick.pick) {
+          html += `<td class="pick-cell pending">—</td>`;
+          return;
+        }
+        const { result, earned } = pointsEarnedForPick(g, pick);
+        const ptsText = result === "correct" ? `+${earned}` : pick.points;
+        html += `<td class="pick-cell ${result}">${pick.pick}<span class="pgt-pts">${ptsText}</span></td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</tbody>";
+
+    contentEl.innerHTML = `<div class="pick-grid-wrap"><table class="pw-table pick-grid-table" id="pw-grid-table">${html}</table></div>`;
+    return true;
+  }
+
   function render(player, week, allowAutoPrint) {
+    currentExport = null;
+    excelBtn.disabled = true;
+
+    if (player === ALL_PLAYERS_VALUE) {
+      titleEl.textContent = `All Players — Week ${week} Picks`;
+      subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season`.trim();
+      if (!isWeekLocked(state.schedule, week)) {
+        const deadlineText = formatDeadline(getWeekDeadline(state.schedule, week)) || "the weekly deadline";
+        contentEl.innerHTML = `<div class="pw-empty">🔒 Week ${week} picks stay hidden until they lock (${deadlineText}) — so nobody can see anyone's picks early.</div>`;
+        return;
+      }
+      const rendered = renderAllPlayersGrid(week);
+      if (rendered) {
+        currentExport = { player: "All-Players", week };
+        excelBtn.disabled = false;
+        if (allowAutoPrint) {
+          setTimeout(() => printWideTable(document.getElementById("pw-grid-table"), "pw-grid-print-mode"), 350);
+        }
+      }
+      return;
+    }
+
     if (!player) {
       titleEl.textContent = "Print My Picks";
       subtitleEl.textContent = `${POOL_CONFIG.season || ""} Season · Week ${week}`.trim();
@@ -192,6 +284,8 @@
         contentEl.innerHTML = `<div class="pw-empty">No picks found in this submission.</div>`;
       } else {
         renderRows(rowsHtml);
+        currentExport = { player, week };
+        excelBtn.disabled = false;
       }
       if (allowAutoPrint) setTimeout(() => window.print(), 350);
       return;
@@ -234,6 +328,8 @@
       return;
     }
     renderRows(rowsHtml);
+    currentExport = { player, week };
+    excelBtn.disabled = false;
     if (allowAutoPrint) setTimeout(() => window.print(), 350);
   }
 
@@ -246,10 +342,48 @@
   playerSelect.addEventListener("change", onSelectorChange);
   weekSelect.addEventListener("change", onSelectorChange);
 
+  /* Excel export: SheetJS reads the CURRENTLY RENDERED table straight
+     out of the DOM (whichever player/week is on screen) and turns it
+     into a real .xlsx workbook, client-side — no server round trip. The
+     button itself starts disabled and only enables once a real table
+     (not an empty-state message) is on screen — see render() above.
+     The "All Players" grid gets narrow, uniform column widths
+     (setNarrowColumnWidths, shared.js) so it doesn't open in Excel
+     needing a wide horizontal scroll to see every game — the single-
+     player table is only 4 columns and doesn't need that. */
+  excelBtn.addEventListener("click", () => {
+    if (typeof XLSX === "undefined" || !currentExport) return;
+    const table = document.querySelector(".pw-table");
+    if (!table) return;
+    const isAllPlayers = currentExport.player === "All-Players";
+    let wb;
+    if (isAllPlayers) {
+      const ws = XLSX.utils.table_to_sheet(table);
+      setNarrowColumnWidths(ws, table);
+      wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `Week ${currentExport.week}`);
+    } else {
+      wb = XLSX.utils.table_to_book(table, { sheet: `Week ${currentExport.week}` });
+    }
+    const safeName = currentExport.player.replace(/[^a-z0-9]+/gi, "-");
+    XLSX.writeFile(wb, `vd-pool-${safeName}-week-${currentExport.week}-picks.xlsx`);
+  });
+
+  /* Print: the "All Players" grid can run to 16 game columns, far too
+     wide for a plain portrait printout — printWideTable() (shared.js)
+     switches to landscape and shrinks the font just for that print job.
+     The single-player table is only 4 columns and prints fine as-is. */
+  document.getElementById("pw-print-btn").addEventListener("click", () => {
+    const gridTable = document.getElementById("pw-grid-table");
+    if (gridTable) {
+      printWideTable(gridTable, "pw-grid-print-mode");
+    } else {
+      window.print();
+    }
+  });
+
   render(initialPlayer, initialWeek, autoPrint);
 })();
-
-document.getElementById("pw-print-btn").addEventListener("click", () => window.print());
 </script>
 </body>
 </html>
