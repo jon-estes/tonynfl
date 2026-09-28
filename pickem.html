@@ -112,6 +112,7 @@
       Every player's pick and confidence points for every game that week, side by side. Scroll
       right on smaller screens.
     </p>
+    <p class="pgt-crowd-note" id="pgt-crowd-note" style="display:none;"></p>
     <div class="pick-grid-wrap">
       <table class="pick-grid-table" id="pick-grid-table"></table>
     </div>
@@ -408,9 +409,63 @@
       .filter(p => p.week === week)
       .forEach(p => { picksByPlayerGame[p.player + "|" + p.gameId] = p; });
 
+    // Majority pick per game: tally how many players took each side, so
+    // we can show "who the pool likes" right in the column header. Also
+    // surface the single most lopsided game as a one-line callout above
+    // the table.
+    const majorityByGame = {};
+    games.forEach(g => {
+      const tally = {};
+      let totalPicked = 0;
+      players.forEach(player => {
+        const p = picksByPlayerGame[player + "|" + g.gameId];
+        if (p && p.pick) {
+          tally[p.pick] = (tally[p.pick] || 0) + 1;
+          totalPicked++;
+        }
+      });
+      let topTeam = null, topCount = 0;
+      Object.entries(tally).forEach(([team, count]) => {
+        if (count > topCount) { topTeam = team; topCount = count; }
+      });
+      if (topTeam && totalPicked) {
+        majorityByGame[g.gameId] = {
+          team: topTeam,
+          pct: Math.round((topCount / totalPicked) * 100),
+          count: topCount,
+          total: totalPicked,
+        };
+      }
+    });
+
+    let mostLopsided = null;
+    Object.entries(majorityByGame).forEach(([gameId, m]) => {
+      if (!mostLopsided || m.pct > mostLopsided.pct) {
+        mostLopsided = { ...m, gameId };
+      }
+    });
+    const crowdNote = document.getElementById("pgt-crowd-note");
+    if (crowdNote) {
+      if (mostLopsided && mostLopsided.pct < 100) {
+        const g = games.find(gg => gg.gameId === mostLopsided.gameId);
+        const matchup = g ? `${g.away} @ ${g.home}` : "";
+        crowdNote.innerHTML = `📊 The pool's most one-sided pick this week: <strong>${mostLopsided.pct}%</strong> took <strong>${mostLopsided.team}</strong> in ${matchup}.`;
+        crowdNote.style.display = "";
+      } else if (mostLopsided && mostLopsided.pct === 100) {
+        const g = games.find(gg => gg.gameId === mostLopsided.gameId);
+        const matchup = g ? `${g.away} @ ${g.home}` : "";
+        crowdNote.innerHTML = `📊 Everyone who's picked so far agrees on ${matchup}: <strong>${mostLopsided.team}</strong> (${mostLopsided.pct}%).`;
+        crowdNote.style.display = "";
+      } else {
+        crowdNote.style.display = "none";
+      }
+    }
+
     let html = "<thead><tr><th class=\"pgt-player-col\">Player</th>";
     games.forEach(g => {
-      html += `<th>${g.away}<span class="pgt-at">@</span>${g.home}</th>`;
+      const m = majorityByGame[g.gameId];
+      const majorityTag = m ? `<span class="pgt-majority">${m.team} ${m.pct}%</span>` : "";
+      html += `<th>${g.away}<span class="pgt-at">@</span>${g.home}${majorityTag}</th>`;
     });
     html += "</tr></thead><tbody>";
 

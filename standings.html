@@ -84,7 +84,21 @@
   } else {
     const leaderTotal = seasonBoard[0].total;
     const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
-    let html = "<thead><tr><th>#</th><th>Player</th><th>Score</th><th>Total Games</th><th>Total Correct</th><th>High Week</th><th>Back</th></tr></thead><tbody>";
+
+    // Recent Moves: compare today's rank per player to the rank we saw
+    // last time this browser loaded the page, stored client-side. Not a
+    // true "since last week" tracker (it's per-device, per-browser), but
+    // gives a quick sense of who's trending up/down since the last visit.
+    const RANK_SNAPSHOT_KEY = "vdpoolStandingsRankSnapshot";
+    let prevRanks = {};
+    try {
+      prevRanks = JSON.parse(localStorage.getItem(RANK_SNAPSHOT_KEY) || "{}");
+    } catch (e) {
+      prevRanks = {};
+    }
+    const hasPrevSnapshot = Object.keys(prevRanks).length > 0;
+
+    let html = "<thead><tr><th>#</th><th>Player</th><th>Score</th><th>Total Games</th><th>Total Correct</th><th>High Week</th><th>Back</th><th>Move</th></tr></thead><tbody>";
     seasonBoard.forEach((s, i) => {
       const high = highByPlayer[s.player];
       const highText = high && high.bestWeek ? `${high.bestTotal} pts <span style="color:var(--text-dim); font-weight:400;">(Wk ${high.bestWeek})</span>` : "—";
@@ -95,12 +109,40 @@
       // leaderboard week to week (the note above the table says so).
       const payoutAmount = pickemPayoutByRank[i + 1];
       const payoutTag = payoutAmount ? ` <span class="payout-tag">${formatUSD(payoutAmount)}</span>` : "";
+
+      const currentRank = i + 1;
+      let moveText;
+      if (!hasPrevSnapshot) {
+        moveText = `<span style="color:var(--text-dim);">—</span>`;
+      } else if (!(s.player in prevRanks)) {
+        moveText = `<span class="stand-move-new">NEW</span>`;
+      } else {
+        const prevRank = prevRanks[s.player];
+        const delta = prevRank - currentRank; // positive = moved up (lower rank number is better)
+        if (delta > 0) {
+          moveText = `<span class="stand-move-up">▲ ${delta}</span>`;
+        } else if (delta < 0) {
+          moveText = `<span class="stand-move-down">▼ ${Math.abs(delta)}</span>`;
+        } else {
+          moveText = `<span class="stand-move-same">–</span>`;
+        }
+      }
+
       html += `<tr class="rank-${i + 1}">
         <td>${rankText}</td><td>${s.player}${payoutTag}</td><td><strong>${s.total}</strong></td><td>${s.played}</td>
-        <td>${s.correct}</td><td>${highText}</td><td>${backText}</td></tr>`;
+        <td>${s.correct}</td><td>${highText}</td><td>${backText}</td><td>${moveText}</td></tr>`;
     });
     html += "</tbody>";
     snapshotTable.innerHTML = html;
+
+    // Save today's ranks as the baseline for the NEXT visit.
+    try {
+      const currentRanks = {};
+      seasonBoard.forEach((s, i) => { currentRanks[s.player] = i + 1; });
+      localStorage.setItem(RANK_SNAPSHOT_KEY, JSON.stringify(currentRanks));
+    } catch (e) {
+      /* localStorage unavailable — Move column just won't persist */
+    }
   }
 
   // High Week bonus — whoever's had the single best week in the whole

@@ -2547,6 +2547,28 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .pick-grid-table td.correct .pgt-pts { color: #15803d; }
 .pick-grid-table td.wrong .pgt-pts { color: #b91c1c; }
 
+/* Crowd-favorite indicators: majority-pick % badge in each game's column
+   header, plus the one-line "most one-sided pick" callout above the
+   whole Everyone's Picks table. */
+.pgt-majority {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--pk-text-dim);
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+.pgt-crowd-note {
+  font-size: 13px;
+  color: var(--text-dim);
+  background: rgba(37,99,235,0.06);
+  border: 1px solid rgba(37,99,235,0.14);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 0 12px;
+}
+.pgt-crowd-note strong { color: var(--text); }
+
 .pk-grid-actions {
   display: flex;
   align-items: center;
@@ -2832,6 +2854,23 @@ body.stand-page { background: #ffffff; }
   color: var(--text-dim);
 }
 .stand-payout-note strong { color: var(--text); }
+
+/* Recent Moves column — up/down ranking arrows since this browser's
+   last visit to the standings page (client-side snapshot, not a true
+   server-tracked history). */
+.stand-move-up { color: #15803d; font-weight: 700; }
+.stand-move-down { color: #dc2626; font-weight: 700; }
+.stand-move-same { color: var(--text-dim); }
+.stand-move-new {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #1d4ed8;
+  background: rgba(37,99,235,0.10);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
 
 /* ============================================================
    HISTORY PAGE — permanently dark "hall of fame" theme (no light
