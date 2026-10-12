@@ -298,11 +298,23 @@
     state.eliminatorPicks.forEach(p => { picksByPlayerWeek[p.player + "|" + p.week] = p; });
     const statusByPlayer = Object.fromEntries(board.map(b => [b.player, b]));
 
+    // Still-alive / on-notice players stay up top (their picks are the
+    // ones still in play each week); eliminated players sink to the
+    // bottom of the table, out of the way, where their rows just trail
+    // off in X's once their elimination week passes. Stable sort keeps
+    // each group's original order.
+    const gridPlayers = players.slice().sort((a, b) => {
+      const aOut = statusByPlayer[a] && statusByPlayer[a].status === "eliminated" ? 1 : 0;
+      const bOut = statusByPlayer[b] && statusByPlayer[b].status === "eliminated" ? 1 : 0;
+      return aOut - bOut;
+    });
+
     let html = "<thead><tr><th class=\"egt-player-col\">Player</th>";
     weeksForGrid.forEach(w => { html += `<th>Wk ${w}</th>`; });
     html += "</tr></thead><tbody>";
 
-    players.forEach(player => {
+    let eliminatedGroupStarted = false;
+    gridPlayers.forEach(player => {
       const status = statusByPlayer[player];
       const isEliminated = status && status.status === "eliminated";
       const isOnNotice = status && status.status === "onNotice";
@@ -312,7 +324,15 @@
       // so a glance down the player column shows who's in danger without
       // reading every row's picks.
       const nameHtml = isOnNotice ? `<span class="egt-name-onnotice">${player}</span>` : player;
-      html += `<tr><td class="egt-player-col">${nameHtml}${rowTag}</td>`;
+      // A visual break above the first eliminated row, so the "still
+      // alive" rows up top read as a clearly separate group from the
+      // eliminated ones sinking to the bottom.
+      let rowClass = "";
+      if (isEliminated && !eliminatedGroupStarted) {
+        rowClass = ' class="egt-eliminated-divider"';
+        eliminatedGroupStarted = true;
+      }
+      html += `<tr${rowClass}><td class="egt-player-col">${nameHtml}${rowTag}</td>`;
       weeksForGrid.forEach(w => {
         // Once eliminated, every week AFTER the one that knocked them out
         // is moot — they're not picking anymore, win or lose. Mark those

@@ -2547,27 +2547,33 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .pick-grid-table td.correct .pgt-pts { color: #15803d; }
 .pick-grid-table td.wrong .pgt-pts { color: #b91c1c; }
 
-/* Crowd-favorite indicators: majority-pick % badge in each game's column
-   header, plus the one-line "most one-sided pick" callout above the
-   whole Everyone's Picks table. */
-.pgt-majority {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
+/* Week Total column — each player's running point total for the week,
+   pinned to the right edge of the Everyone's Picks grid. */
+.pgt-total-col {
+  background: var(--pk-panel-2);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
   color: var(--pk-text-dim);
-  margin-top: 2px;
-  letter-spacing: 0;
 }
-.pgt-crowd-note {
-  font-size: 13px;
-  color: var(--text-dim);
-  background: rgba(37,99,235,0.06);
-  border: 1px solid rgba(37,99,235,0.14);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin: 0 0 12px;
+.pgt-total-cell {
+  font-weight: 800;
+  text-align: center;
+  background: var(--pk-panel-2);
 }
-.pgt-crowd-note strong { color: var(--text); }
+
+/* Lone-wolf highlight: the one player in the whole pool who got a
+   specific game right while everyone else who picked got it wrong. */
+.pick-grid-table td.pgt-lone-wolf {
+  background: rgba(252,211,77,0.22);
+  box-shadow: inset 0 0 0 1px rgba(217,119,6,0.45);
+}
+.pgt-lone-star {
+  display: inline-block;
+  margin-right: 2px;
+  font-size: 11px;
+  filter: drop-shadow(0 0 1px rgba(217,119,6,0.6));
+}
 
 .pk-grid-actions {
   display: flex;
@@ -2668,6 +2674,11 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
    visible right in the player column without scrolling up. */
 .egt-name-onnotice { color: #f5b942; font-weight: 800; }
 .theme-light .egt-name-onnotice { color: #92650a; }
+
+/* Divider above the first eliminated row — separates the still-alive
+   group (sorted to the top) from the eliminated group (sunk to the
+   bottom) in the Everyone's Picks grid. */
+.egt-eliminated-divider td { border-top: 2px solid var(--border, rgba(148,163,184,0.4)); }
 
 /* ============================================================
    HOW TO page
