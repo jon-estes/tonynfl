@@ -76,15 +76,15 @@
         </div>
 
         <div class="pk-pane" id="pane-standings">
-          <div class="pk-row-header" style="grid-template-columns: 50px 1fr 70px 70px 70px 90px;">
-            <span>#</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Total</span>
+          <div class="pk-row-header" style="grid-template-columns: 50px 1fr 70px 70px 60px 70px 90px;">
+            <span>#</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Tie</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Total</span>
           </div>
           <table id="standings-table"></table>
         </div>
 
         <div class="pk-pane" id="pane-history">
-          <div class="pk-row-header" style="grid-template-columns: 90px 1fr 70px 70px 70px 90px;">
-            <span>Week</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Points</span>
+          <div class="pk-row-header" style="grid-template-columns: 90px 1fr 70px 70px 60px 70px 90px;">
+            <span>Week</span><span>Player</span><span style="text-align:center;">Correct</span><span style="text-align:center;">Wrong</span><span style="text-align:center;">Tie</span><span style="text-align:center;">Pending</span><span style="text-align:center;">Points</span>
           </div>
           <table id="history-table"></table>
         </div>
@@ -260,6 +260,7 @@
             <div class="pk-points-cell">${
               result === "correct" ? "+" + earned + " PTS" :
               result === "wrong" ? p.points :
+              result === "tie" ? "TIE — 0 PTS" :
               p.points + " PTS"
             }</div>
             <div class="pk-winner-cell">${winnerText}</div>
@@ -306,7 +307,7 @@
     board.forEach((s, i) => {
       rows += `<tr class="rank-${i + 1}">
         <td>${i + 1}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
-        <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
+        <td>${s.tie}</td><td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
     });
     return rows;
   }
@@ -330,7 +331,7 @@
         if (s.picksMade === 0) return;
         html += `<tr>
           <td>Week ${w}</td><td>${s.player}</td><td>${s.correct}</td><td>${s.wrong}</td>
-          <td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
+          <td>${s.tie}</td><td>${s.pending}</td><td><strong>${s.total}</strong></td></tr>`;
       });
     });
     html += "</tbody>";
@@ -458,7 +459,7 @@
           return;
         }
         const { result, earned } = pointsEarnedForPick(g, p);
-        const ptsText = result === "correct" ? `+${earned}` : p.points;
+        const ptsText = result === "correct" ? `+${earned}` : result === "tie" ? "TIE" : p.points;
         if (result === "correct") weekTotal += earned;
         // Lone-wolf highlight: this player was the ONLY one in the whole
         // pool to get this specific game right.

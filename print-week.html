@@ -223,7 +223,7 @@
           return;
         }
         const { result, earned } = pointsEarnedForPick(g, pick);
-        const ptsText = result === "correct" ? `+${earned}` : pick.points;
+        const ptsText = result === "correct" ? `+${earned}` : result === "tie" ? "TIE" : pick.points;
         html += `<td class="pick-cell ${result}">${pick.pick}<span class="pgt-pts">${ptsText}</span></td>`;
       });
       html += "</tr>";
@@ -313,7 +313,7 @@
       const { result, earned } = pointsEarnedForPick(game, p);
       const matchup = game ? `${teamName(game.away)} @ ${teamName(game.home)}` : p.gameId;
       const winnerText = game && game.winner ? game.winner : "--";
-      const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : String(p.points));
+      const ptsText = result === "correct" ? `+${earned}` : (result === "wrong" ? "0" : (result === "tie" ? "TIE" : String(p.points)));
       rowsHtml += pickRow(matchup, teamName(p.pick), ptsText, winnerText);
     });
     elimPicks.forEach(ep => {

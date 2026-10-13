@@ -236,9 +236,15 @@
       const game = findGameForTeamWeek(gamesForLookup, p.week, p.team);
       let result = "pending", pillClass = "pill-pending", pillText = "Pending";
       if (game && game.winner) {
-        result = game.winner === p.team ? "correct" : "wrong";
-        pillClass = result === "correct" ? "pill-win" : "pill-loss";
-        pillText = result === "correct" ? "Survived" : "Eliminated";
+        if (game.winner === "TIE") {
+          result = "tie";
+          pillClass = "pill-tie";
+          pillText = "Tie — Push";
+        } else {
+          result = game.winner === p.team ? "correct" : "wrong";
+          pillClass = result === "correct" ? "pill-win" : "pill-loss";
+          pillText = result === "correct" ? "Survived" : "Eliminated";
+        }
       }
       html += `<tr>
         <td>${p.week}</td>
@@ -359,7 +365,8 @@
         const badge = String(p.team).toUpperCase() === "MISS"
           ? `<span class="team-badge" style="background:#4b5563;color:#fff;">MISS</span>`
           : elimTeamBadgeHtml(p.team);
-        html += `<td class="egt-cell ${result}">${badge}</td>`;
+        const tieTag = result === "push" ? `<span class="egt-tie-tag">TIE</span>` : "";
+        html += `<td class="egt-cell ${result}">${badge}${tieTag}</td>`;
       });
       html += "</tr>";
     });

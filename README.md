@@ -74,6 +74,14 @@ Create one Sheet with three tabs and these exact headers in row 1:
 - `gameId` just needs to be unique per game.
 - Leave `winner` blank until final, then fill in the winning team's code —
   both leaderboards update automatically next page load.
+- **Regular-season tie:** type `TIE` into `winner` instead of a team code.
+  The automatic ESPN sync (below) doesn't write this in for you — it skips
+  tied games entirely, so type `TIE` in by hand whenever one happens. The
+  site then shows that game as a neutral push everywhere (never red/green):
+  in Pick'em, nobody's confidence points score on it (0 for everyone, shown
+  as "TIE" instead of a win or loss); in Eliminator, a tied pick doesn't
+  cost a player one of their two lives — they survive the week clean, same
+  as a win, just without "winning" it.
 
 **Tab: `PickemPicks`** — ideally *is* your Pick'em Google Form's response
 tab (rename/reshape columns to match):

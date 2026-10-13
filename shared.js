@@ -155,6 +155,10 @@ function getPlayers(picks) {
 
 function gameResultForPick(game, pick) {
   if (!game || !game.winner) return "pending";
+  // A regular-season tie: typed in as "TIE" by hand in the Schedule
+  // tab's winner column (see README). Nobody's pick scores — it's not
+  // a win or a loss for anyone, just a neutral push.
+  if (game.winner === "TIE") return "tie";
   return game.winner === pick ? "correct" : "wrong";
 }
 
@@ -178,16 +182,17 @@ function computePickemSeasonLeaderboard(schedule, picks) {
 
   const board = players.map(player => {
     const playerPicks = picks.filter(p => p.player === player);
-    let total = 0, correct = 0, wrong = 0, pending = 0, possible = 0;
+    let total = 0, correct = 0, wrong = 0, tie = 0, pending = 0, possible = 0;
     playerPicks.forEach(p => {
       const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
       total += earned;
       possible += p.points;
       if (result === "correct") correct++;
       else if (result === "wrong") wrong++;
+      else if (result === "tie") tie++;
       else pending++;
     });
-    return { player, total, possible, correct, wrong, pending, played: correct + wrong };
+    return { player, total, possible, correct, wrong, tie, pending, played: correct + wrong + tie };
   });
 
   board.sort((a, b) => b.total - a.total);
@@ -201,15 +206,16 @@ function computePickemWeekLeaderboard(schedule, picks, week) {
 
   const board = players.map(player => {
     const weekPicks = picks.filter(p => p.player === player && p.week === week);
-    let total = 0, correct = 0, wrong = 0, pending = 0;
+    let total = 0, correct = 0, wrong = 0, tie = 0, pending = 0;
     weekPicks.forEach(p => {
       const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
       total += earned;
       if (result === "correct") correct++;
       else if (result === "wrong") wrong++;
+      else if (result === "tie") tie++;
       else pending++;
     });
-    return { player, total, correct, wrong, pending, picksMade: weekPicks.length };
+    return { player, total, correct, wrong, tie, pending, picksMade: weekPicks.length };
   });
 
   board.sort((a, b) => b.total - a.total);
@@ -250,6 +256,10 @@ function eliminatorPickResult(schedule, pick) {
   if (String(pick.team).toUpperCase() === "MISS") return "wrong";
   const game = findGameForTeamWeek(schedule, pick.week, pick.team);
   if (!game || !game.winner) return "pending";
+  // A tie (typed in as "TIE" in the Schedule tab) is a push in
+  // Eliminator — not a win, but not a loss either. The player survives
+  // and keeps both their lives; it just doesn't earn them anything.
+  if (game.winner === "TIE") return "push";
   return game.winner === pick.team ? "correct" : "wrong";
 }
 
@@ -272,7 +282,9 @@ function computeEliminatorBoard(schedule, picks) {
 
     playerPicks.forEach(p => {
       const result = eliminatorPickResult(schedule, p);
-      if (result === "correct") weeksSurvived++;
+      // A push (tie) still counts as a week survived — the player
+      // wasn't eliminated by it, same as a win.
+      if (result === "correct" || result === "push") weeksSurvived++;
       if (result === "wrong") {
         losses++;
         if (losses === 1) firstLossWeek = p.week;
@@ -725,5 +737,6 @@ function formatDeadline(deadline) {
 }
 
 function fmtRecord(s) {
-  return `${s.correct}-${s.wrong}${s.pending ? ` (${s.pending} pending)` : ""}`;
+  const tiePart = s.tie ? `-${s.tie}` : "";
+  return `${s.correct}-${s.wrong}${tiePart}${s.pending ? ` (${s.pending} pending)` : ""}`;
 }
