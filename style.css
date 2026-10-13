@@ -2547,6 +2547,17 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
 .pick-grid-table td.correct .pgt-pts { color: #15803d; }
 .pick-grid-table td.wrong .pgt-pts { color: #b91c1c; }
 
+/* Majority-pick % badge in each game's column header — shows who the
+   pool likes for that matchup. */
+.pgt-majority {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--pk-text-dim);
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+
 /* Week Total column — each player's running point total for the week,
    pinned to the right edge of the Everyone's Picks grid. */
 .pgt-total-col {
