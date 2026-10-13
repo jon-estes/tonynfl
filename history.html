@@ -181,11 +181,12 @@
   /* ---- Pool Records grid ---- */
   function renderRecordCards(mountId, records) {
     document.getElementById(mountId).innerHTML = records.map(r => `
-      <div class="hist-record-card">
+      <div class="hist-record-card${r.featured ? " hist-record-featured" : ""}">
+        ${r.featured ? `<div class="hist-record-featured-tag">🏅 Standing Tie</div>` : ""}
         <div class="hist-record-title">${r.title}</div>
         <div class="hist-record-value">${r.value}</div>
         ${r.note ? `<div class="hist-record-note">${r.note}</div>` : ""}
-        <div class="hist-record-holders">
+        <div class="hist-record-holders${r.featured ? " hist-record-holders-grid" : ""}">
           ${r.holders.map(h => `<div>${h}</div>`).join("")}
         </div>
       </div>
@@ -236,9 +237,10 @@
   /* ---- All-time leaderboards ---- */
   function renderLeaderboard(mountId, rows) {
     const max = Math.max(...rows.map(r => r.count));
+    const medals = { 0: "🥇", 1: "🥈", 2: "🥉" };
     document.getElementById(mountId).innerHTML = rows.map((r, i) => `
       <div class="hist-lb-row ${i < 3 ? "hist-lb-top" : ""}">
-        <div class="hist-lb-rank">${i + 1}.</div>
+        <div class="hist-lb-rank">${medals[i] || (i + 1) + "."}</div>
         <div class="hist-lb-name" title="${r.name}">${r.name}</div>
         <div class="hist-lb-bar-track"><div class="hist-lb-bar-fill" style="width:${(r.count / max * 100).toFixed(0)}%"></div></div>
         <div class="hist-lb-count">${r.count}</div>

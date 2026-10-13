@@ -155,10 +155,12 @@ function getPlayers(picks) {
 
 function gameResultForPick(game, pick) {
   if (!game || !game.winner) return "pending";
-  // A regular-season tie: typed in as "TIE" by hand in the Schedule
-  // tab's winner column (see README). Nobody's pick scores — it's not
-  // a win or a loss for anyone, just a neutral push.
-  if (game.winner === "TIE") return "tie";
+  // A regular-season tie: typed in as "TIE" by hand in the Schedule tab's
+  // winner column (see README). House rule: BOTH teams "win" a tie, so
+  // everyone's pick on that game scores — whichever side they took.
+  if (game.winner === "TIE") {
+    return (pick === game.away || pick === game.home) ? "correct" : "wrong";
+  }
   return game.winner === pick ? "correct" : "wrong";
 }
 
@@ -182,17 +184,16 @@ function computePickemSeasonLeaderboard(schedule, picks) {
 
   const board = players.map(player => {
     const playerPicks = picks.filter(p => p.player === player);
-    let total = 0, correct = 0, wrong = 0, tie = 0, pending = 0, possible = 0;
+    let total = 0, correct = 0, wrong = 0, pending = 0, possible = 0;
     playerPicks.forEach(p => {
       const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
       total += earned;
       possible += p.points;
       if (result === "correct") correct++;
       else if (result === "wrong") wrong++;
-      else if (result === "tie") tie++;
       else pending++;
     });
-    return { player, total, possible, correct, wrong, tie, pending, played: correct + wrong + tie };
+    return { player, total, possible, correct, wrong, pending, played: correct + wrong };
   });
 
   board.sort((a, b) => b.total - a.total);
@@ -206,16 +207,15 @@ function computePickemWeekLeaderboard(schedule, picks, week) {
 
   const board = players.map(player => {
     const weekPicks = picks.filter(p => p.player === player && p.week === week);
-    let total = 0, correct = 0, wrong = 0, tie = 0, pending = 0;
+    let total = 0, correct = 0, wrong = 0, pending = 0;
     weekPicks.forEach(p => {
       const { result, earned } = pointsEarnedForPick(gamesById[p.gameId], p);
       total += earned;
       if (result === "correct") correct++;
       else if (result === "wrong") wrong++;
-      else if (result === "tie") tie++;
       else pending++;
     });
-    return { player, total, correct, wrong, tie, pending, picksMade: weekPicks.length };
+    return { player, total, correct, wrong, pending, picksMade: weekPicks.length };
   });
 
   board.sort((a, b) => b.total - a.total);
@@ -737,6 +737,5 @@ function formatDeadline(deadline) {
 }
 
 function fmtRecord(s) {
-  const tiePart = s.tie ? `-${s.tie}` : "";
-  return `${s.correct}-${s.wrong}${tiePart}${s.pending ? ` (${s.pending} pending)` : ""}`;
+  return `${s.correct}-${s.wrong}${s.pending ? ` (${s.pending} pending)` : ""}`;
 }

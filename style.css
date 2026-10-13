@@ -1400,18 +1400,16 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 3
 #standings-table th:nth-child(1), #standings-table td:nth-child(1) { width: 50px; }
 #standings-table th:nth-child(2), #standings-table td:nth-child(2) { width: auto; text-align: left; }
 #standings-table th:nth-child(3), #standings-table td:nth-child(3),
-#standings-table th:nth-child(4), #standings-table td:nth-child(4) { width: 70px; }
-#standings-table th:nth-child(5), #standings-table td:nth-child(5) { width: 60px; }
-#standings-table th:nth-child(6), #standings-table td:nth-child(6) { width: 70px; }
-#standings-table th:nth-child(7), #standings-table td:nth-child(7) { width: 90px; }
+#standings-table th:nth-child(4), #standings-table td:nth-child(4),
+#standings-table th:nth-child(5), #standings-table td:nth-child(5) { width: 70px; }
+#standings-table th:nth-child(6), #standings-table td:nth-child(6) { width: 90px; }
 
 #history-table th:nth-child(1), #history-table td:nth-child(1) { width: 90px; }
 #history-table th:nth-child(2), #history-table td:nth-child(2) { width: auto; text-align: left; }
 #history-table th:nth-child(3), #history-table td:nth-child(3),
-#history-table th:nth-child(4), #history-table td:nth-child(4) { width: 70px; }
-#history-table th:nth-child(5), #history-table td:nth-child(5) { width: 60px; }
-#history-table th:nth-child(6), #history-table td:nth-child(6) { width: 70px; }
-#history-table th:nth-child(7), #history-table td:nth-child(7) { width: 90px; }
+#history-table th:nth-child(4), #history-table td:nth-child(4),
+#history-table th:nth-child(5), #history-table td:nth-child(5) { width: 70px; }
+#history-table th:nth-child(6), #history-table td:nth-child(6) { width: 90px; }
 
 .pk-game-row {
   display: grid;
@@ -2604,6 +2602,17 @@ select.ps-pts-select option:disabled { color: #b9b9b9; }
   filter: drop-shadow(0 0 1px rgba(217,119,6,0.6));
 }
 
+/* Tie indicator on a pick-grid cell — the game ended in a tie, which
+   under house rules means both sides scored (the cell still shows
+   green/"correct" like a normal win; this just explains why). */
+.pgt-tie-tag {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--pk-text-dim);
+}
+
 .pk-grid-actions {
   display: flex;
   align-items: center;
@@ -3191,6 +3200,35 @@ body.stand-page { background: #ffffff; }
 }
 .hist-records-grid-muted .hist-record-value { color: #c9bfa8; font-size: 21px; }
 .hist-records-grid-muted .hist-record-card::before { display: none; }
+
+/* Featured record card — a standout multi-way tie worth calling out
+   bigger than the rest of the grid (e.g. "Times in 1st Place"). Spans
+   the full row and lays its holders out side by side instead of
+   stacked, so five tied names read as a lineup, not a list. */
+.hist-record-featured {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(212,175,55,0.14), rgba(255,255,255,0.03));
+  border-color: rgba(212,175,55,0.45);
+  padding: 22px 24px 20px;
+}
+.hist-record-featured-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #1a1206;
+  background: linear-gradient(90deg, #d4af37, #f3dfa0);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+}
+.hist-record-holders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 16px;
+}
+.hist-record-holders-grid div + div { margin-top: 0; }
 
 /* ---- Champions table ---- */
 .hist-table-wrap {

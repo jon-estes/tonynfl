@@ -29,19 +29,20 @@ const HISTORY_LATEST_PAYOUT = {
 };
 
 /* One row per completed season. `first`/`second`/`third` are the money
-   finishers; `highWeek` is that season's single best week. (The original
-   record book also tracked a "Fourth" place column, but it was NA for
-   every single year on record, so it's left out here.) */
+   finishers; `highWeek` is that season's single best week. The original
+   record book also tracked a "Fourth" place column — NA for every year
+   except three (1990, 1996, 1997), so those three carry a `fourth` field
+   and everyone else leaves it out. */
 const HISTORY_CHAMPIONS = [
   { year: 1989, first: "Roy",      second: "John",     third: "Kurt",    highWeek: "" },
-  { year: 1990, first: "Vince",    second: "Ryan",      third: "Miguel",  highWeek: "" },
+  { year: 1990, first: "Vince",    second: "Ryan",      third: "Miguel",  fourth: "Bob", highWeek: "" },
   { year: 1991, first: "John",     second: "Vince",     third: "Sam",     highWeek: "Dave B. / Jeff" },
   { year: 1992, first: "Tom B.",   second: "John",      third: "Vince",   highWeek: "Tom B." },
   { year: 1993, first: "Tom B.",   second: "John",      third: "Pat",     highWeek: "Sam" },
   { year: 1994, first: "Vince",    second: "Kurt",      third: "Tom C.",  highWeek: "Tom B." },
   { year: 1995, first: "Kurt",     second: "John",      third: "Ryan",    highWeek: "" },
-  { year: 1996, first: "John",     second: "Vince",     third: "Dick",    highWeek: "" },
-  { year: 1997, first: "Miguel",   second: "Kenny",     third: "Ryan",    highWeek: "Miguel" },
+  { year: 1996, first: "John",     second: "Vince",     third: "Dick",    fourth: "Roy", highWeek: "" },
+  { year: 1997, first: "Miguel",   second: "Kenny",     third: "Ryan",    fourth: "Roy", highWeek: "Miguel" },
   { year: 1998, first: "Roy",      second: "Manuel",    third: "Kurt",    highWeek: "Edy" },
   { year: 1999, first: "Dick",     second: "Lisa",      third: "Kenny",   highWeek: "David" },
   { year: 2000, first: "Roy",      second: "Lisa",      third: "Dick",    highWeek: "Dick" },
@@ -150,11 +151,14 @@ const HISTORY_RECORDS = [
   {
     title: "Times in 1st Place",
     value: "4 (tied)",
+    note: "A five-way tie at the top — nobody's broken away yet",
+    featured: true,
     holders: [
       "Roy — 1989, 1998, 2000, 2009",
       "Dick — 1999, 2008, 2015, 2016",
       "Richard — 2001, 2004, 2010, 2017",
-      "Ryan — 2005, 2011, 2020, 2021"
+      "Ryan — 2005, 2011, 2020, 2021",
+      "Pat — 2002, 2014, 2023, 2025"
     ]
   },
   {
@@ -242,6 +246,11 @@ const HISTORY_ALL_TIME_MONEY = [
   { name: "Skip", count: 1 },
   { name: "Tom C.", count: 1 }
 ];
+/* Cross-checked against "POOL_RECORDS_2026v2.doc": counting 1st/2nd/3rd
+   AND the rare 4th-place finish (Bob — 1990, Roy — 1996 & 1997; every
+   other year's 4th place was "NA") reproduces every number in the doc's
+   own "# Times in the Money" list exactly — Roy's 13 in particular only
+   checks out once those two 4th-place finishes are included. */
 
 /* All-time leaderboard: how many times each player has taken High Week. */
 const HISTORY_ALL_TIME_HIGH_WEEK = [
