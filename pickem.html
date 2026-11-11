@@ -403,6 +403,14 @@
     }
     setGridActionsEnabled(true);
 
+    // Row order for this grid specifically: the current overall Pick'em
+    // Scoreboard order (highest total points first), not alphabetical —
+    // re-computed fresh every render, so it stays in sync as standings
+    // change week to week. Everything below in this function uses
+    // gridPlayers, not the page's alphabetical `players` list (that one
+    // stays alphabetical for the "My Picks" name selector).
+    const gridPlayers = getPlayersByStandings(state.schedule, state.pickemPicks);
+
     const picksByPlayerGame = {};
     state.pickemPicks
       .filter(p => p.week === week)
@@ -420,7 +428,7 @@
       let count = 0;
       const tally = {};
       let totalPicked = 0;
-      players.forEach(player => {
+      gridPlayers.forEach(player => {
         const p = picksByPlayerGame[player + "|" + g.gameId];
         if (p && p.pick) {
           const { result } = pointsEarnedForPick(g, p);
@@ -448,7 +456,7 @@
     html += `<th class="pgt-total-col">Week Total</th>`;
     html += "</tr></thead><tbody>";
 
-    players.forEach(player => {
+    gridPlayers.forEach(player => {
       html += `<tr><td class="pgt-player-col">${player}</td>`;
       let weekTotal = 0;
       games.forEach(g => {
@@ -464,7 +472,7 @@
         // Lone-wolf highlight: this player was the ONLY one in the whole
         // pool to get this specific game right. (Never fires on a tied
         // game — a TIE pays out both sides, so there's no "lone" winner.)
-        const isLoneWolf = result === "correct" && correctCountByGame[g.gameId] === 1 && players.length > 1;
+        const isLoneWolf = result === "correct" && correctCountByGame[g.gameId] === 1 && gridPlayers.length > 1;
         const loneClass = isLoneWolf ? " pgt-lone-wolf" : "";
         const loneStar = isLoneWolf ? `<span class="pgt-lone-star" title="Only one in the pool to get this right">⭐</span>` : "";
         const tieTag = isTieGame ? `<span class="pgt-tie-tag" title="Game ended in a tie — both sides scored">TIE</span>` : "";

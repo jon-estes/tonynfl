@@ -153,6 +153,25 @@ function getPlayers(picks) {
   return [...new Set(picks.map(p => p.player))].sort((a, b) => a.localeCompare(b));
 }
 
+/* Same player set as getPlayers(), but ordered to match the main Pick'em
+   season Scoreboard (computePickemSeasonLeaderboard) instead of
+   alphabetically — highest total points first. This is "dynamic": it's
+   just a different sort over the same live data, so it automatically
+   re-ranks week to week as standings change, with no separate list to
+   maintain. Ties in total points keep a stable alphabetical order so the
+   grid doesn't jitter between otherwise-equal players. Used by the
+   Everyone's Picks grid on pickem.html and the "All Players" view on
+   print-week.html — NOT by every getPlayers() consumer (e.g. the "My
+   Picks" name selector stays alphabetical on purpose, since that's for
+   finding your own name quickly, not for showing rank). */
+function getPlayersByStandings(schedule, picks) {
+  const board = computePickemSeasonLeaderboard(schedule, picks);
+  return board
+    .slice()
+    .sort((a, b) => b.total - a.total || a.player.localeCompare(b.player))
+    .map(row => row.player);
+}
+
 function gameResultForPick(game, pick) {
   if (!game || !game.winner) return "pending";
   // A regular-season tie: typed in as "TIE" by hand in the Schedule tab's
