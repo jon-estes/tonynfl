@@ -45,7 +45,7 @@
 <body class="pk-page theme-light">
 <div class="pw-wrap">
   <div class="pw-bar" data-no-print>
-    <a class="pw-back" href="pickem.html">← Back to Pick'em</a>
+    <a class='pw-back' href='/pickem'>← Back to Pick'em</a>
     <div class="pw-actions">
       <button type="button" class="btn btn-secondary" id="pw-print-btn">🖨️ Print</button>
       <button type="button" class="btn btn-secondary" id="pw-excel-btn" disabled>⬇️ Download Excel</button>
@@ -66,7 +66,7 @@
       <label for="pw-week-select">Week</label>
       <select id="pw-week-select" class="pk-select"></select>
     </div>
-    <a class="pw-everyone-link" href="pickem.html#everyone-picks">Looking for everyone's picks for the week instead? →</a>
+    <a class='pw-everyone-link' href='/pickem#everyone-picks'>Looking for everyone's picks for the week instead? →</a>
   </div>
 
   <div id="pw-content">
@@ -197,7 +197,10 @@
       .filter(g => g.week === week)
       .slice()
       .sort((a, b) => gameIdNum(a.gameId) - gameIdNum(b.gameId));
-    const gridPlayers = getPlayers(state.pickemPicks);
+    // Same order as the Everyone's Picks grid on pickem.html: current
+    // Pick'em Scoreboard standings (highest total first), not
+    // alphabetical — recomputed each render so it tracks live standings.
+    const gridPlayers = getPlayersByStandings(state.schedule, state.pickemPicks);
 
     if (!gridPlayers.length || !games.length) {
       contentEl.innerHTML = `<div class="pw-empty">No picks to show for Week ${week}.</div>`;

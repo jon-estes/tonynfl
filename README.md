@@ -46,6 +46,17 @@ spreadsheet, not touching code.
   `week.html` print sheet** via **Netlify Forms** — no separate form to
   visit. Below the Pick'em matchups is an Eliminator Pick dropdown; picking
   your name at the top fills in both.
+- **Hitting "Review My Picks" doesn't submit right away.** It checks the
+  passcode, then takes the player to `review-week.html` — a print-preview-
+  style look at exactly what's about to go in (every matchup, pick, point
+  value, and the Eliminator pick), with a big **Finalize & Submit** button.
+  That's the step that actually sends it to the sheet. "← Back to Edit"
+  returns to `week.html` with everything still filled in (picks, points,
+  Eliminator pick, even the passcode) — nothing gets submitted until
+  Finalize is actually clicked. The in-progress draft lives in the
+  browser's `sessionStorage` (cleared once Finalize succeeds), so it
+  survives a trip back and forth between the two pages but doesn't linger
+  once the tab is closed.
 - **One Google Sheet, four tabs** — `Schedule`, `PickemPicks`,
   `EliminatorPicks`, `Content` — each published as a CSV link.
 - **The website** fetches those CSV links live in the browser and renders
@@ -410,6 +421,7 @@ that file.
 - `eliminator.html` — Eliminator leaderboard + player team-grid dropdown
 - `schedule.html` — list of weeks, links into the print sheets
 - `week.html` — one week's printable/fillable Pick'em matchup sheet + form link
+- `review-week.html` — "one more look before it's final" page between Submit and the real sheet write (see "How it works" above)
 - `history.html` — Hall of Fame page: champions back to 1989, all-time records, leaderboards
 - `history-data.js` — **the file you edit** to update history.html each year (see below)
 - `config.js` — **the file you edit**: sheet links, form links, season info

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Review My Picks — Vince and Dave's Pool</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Deliberately the same minimal shell as print-week.html — this page
+     is a focused "one more look before it's final" screen, not a full
+     site page with nav/hero to scroll past. */
+  .pw-wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 60px; }
+  .pw-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .pw-back { color: var(--pk-text-dim, #6b7280); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .pw-back:hover { text-decoration: underline; }
+  .pw-head { text-align: center; margin-bottom: 18px; }
+  .pw-head h1 { margin: 0 0 4px; font-size: 22px; }
+  .pw-head p { margin: 0; color: var(--pk-text-dim, #6b7280); font-size: 14px; }
+  .pw-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+  .pw-table th, .pw-table td { padding: 9px 10px; border: 1px solid var(--pk-border, #e5e7eb); font-size: 14px; text-align: left; }
+  .pw-table th { background: var(--pk-panel-2, #f3f4f6); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--pk-text-dim, #6b7280); }
+  .pw-table td.pw-pick-col, .pw-table th.pw-pick-col { text-align: center; }
+  .pw-elim-row td { font-weight: 700; background: rgba(59,130,246,0.06); }
+  .pw-empty { text-align: center; padding: 40px 20px; color: var(--pk-text-dim, #6b7280); }
+  .pw-brand { text-align: center; margin-top: 30px; font-size: 12px; color: var(--pk-text-dim, #6b7280); }
+  .rv-banner {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 20px;
+    border-radius: 10px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);
+    font-size: 14px; font-weight: 600;
+  }
+  .rv-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .rv-actions .btn { flex: 1; min-width: 160px; text-align: center; }
+  .rv-edit-link { font-size: 14px; font-weight: 600; text-decoration: none; }
+  .rv-status { display: block; margin-top: 10px; font-size: 13px; font-weight: 600; min-height: 18px; }
+  .rv-status.rv-status-error { color: var(--err, #c0392b); }
+  .rv-edit-link.rv-disabled { opacity: 0.5; pointer-events: none; }
+  @media print {
+    .rv-banner, .rv-actions, .rv-edit-link, header.site-header, #sample-banner { display: none !important; }
+    .pw-wrap { padding: 0; max-width: none; }
+  }
+</style>
+</head>
+<body class="pk-page theme-light">
+<header class="site-header" id="site-header" data-no-print></header>
+
+<div class="ps-success-overlay" id="rv-success-overlay" hidden data-no-print>
+  <div class="ps-success-card">
+    <div class="ps-success-check">✅</div>
+    <h2>Thanks — your picks are in!</h2>
+    <p>Please allow up to <strong>5 minutes</strong> for the sheet to sync before going back in to double-check. If you don't see them right away, there's no need to submit again — just give it a few minutes and refresh.</p>
+    <div class="ps-success-actions">
+      <a class="btn btn-secondary" id="rv-success-print-link" href="#" target="_blank" rel="noopener">🖨️ Print My Picks</a>
+      <a class="btn" id="rv-success-done" href="/schedule">Done</a>
+    </div>
+  </div>
+</div>
+
+<div class="pw-wrap" id="rv-wrap">
+  <div class="pw-bar" data-no-print>
+    <a class='pw-back' id="rv-back-link" href='#'>← Back to Edit</a>
+  </div>
+
+  <div class="pw-head">
+    <h1 id="rv-title">Review My Picks</h1>
+    <p id="rv-subtitle"></p>
+  </div>
+
+  <div class="rv-banner" data-no-print id="rv-banner">
+    👀 Nothing's been submitted yet — check everything below, then hit Finalize.
+  </div>
+
+  <div id="rv-content">
+    <div class="pw-empty">Loading…</div>
+  </div>
+
+  <div class="rv-actions" data-no-print id="rv-actions" hidden>
+    <a class='btn btn-secondary rv-edit-link' id="rv-edit-link" href="#">✏️ Back to Edit</a>
+    <button type="button" class="btn" id="rv-finalize-btn">✅ Finalize &amp; Submit</button>
+  </div>
+  <span class="rv-status" id="rv-status" data-no-print></span>
+
+  <p class="pw-brand">Vince and Dave's Pool</p>
+</div>
+
+<script src="teams.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("schedule");
+
+  const params = new URLSearchParams(location.search);
+  const week = parseInt(params.get("week"), 10);
+  const qsPlayer = (params.get("player") || "").trim();
+
+  const titleEl = document.getElementById("page-title");
+  const rvTitle = document.getElementById("rv-title");
+  const rvSubtitle = document.getElementById("rv-subtitle");
+  const contentEl = document.getElementById("rv-content");
+  const actionsEl = document.getElementById("rv-actions");
+  const bannerEl = document.getElementById("rv-banner");
+  const statusEl = document.getElementById("rv-status");
+  const backLink = document.getElementById("rv-back-link");
+  const editLink = document.getElementById("rv-edit-link");
+  const finalizeBtn = document.getElementById("rv-finalize-btn");
+
+  const editHref = week ? `week.html?week=${week}` : "schedule.html";
+  backLink.href = editHref;
+  editLink.href = editHref;
+
+  function showEmpty(message) {
+    contentEl.innerHTML = `<div class="pw-empty">${message}</div>`;
+    actionsEl.hidden = true;
+    bannerEl.hidden = true;
+  }
+
+  if (!week) {
+    titleEl.textContent = "Review My Picks — Vince and Dave's Pool";
+    rvTitle.textContent = "Nothing to review";
+    showEmpty(`Couldn't tell which week this is. <a href="schedule.html">Pick a week from the list</a>.`);
+    return;
+  }
+
+  function draftKeyFor(w) { return `vdpoolDraft:${w}`; }
+
+  let draft;
+  try {
+    const raw = sessionStorage.getItem(draftKeyFor(week));
+    draft = raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    draft = null;
+  }
+
+  // No draft on hand — either this page was opened directly/refreshed
+  // after finalizing (sessionStorage is cleared on success), the tab was
+  // closed and reopened, or the handoff from week.html failed somehow.
+  // Either way there's nothing to show here; send them back to fill the
+  // sheet out again rather than showing a broken review screen.
+  if (!draft || !draft.player || !draft.formBody) {
+    titleEl.textContent = "Review My Picks — Vince and Dave's Pool";
+    rvTitle.textContent = "Nothing to review";
+    showEmpty(
+      `We don't have a pending submission for Week ${week} in this browser tab — it may have already ` +
+      `gone through, or the page was reopened after the draft expired. ` +
+      `<a href="${editHref}">Go fill out Week ${week}</a> and hit Review again.`
+    );
+    return;
+  }
+
+  const player = draft.player || qsPlayer;
+  titleEl.textContent = `Review Week ${week} Picks — Vince and Dave's Pool`;
+  rvTitle.textContent = `${player} — Week ${week} Review`;
+  rvSubtitle.textContent = `${draft.season || ""} Season · not submitted yet`.trim();
+
+  function pickRow(matchup, pickText, points, extraClass) {
+    return `<tr class="${extraClass || ""}">
+      <td>${matchup}</td><td class="pw-pick-col">${pickText}</td><td class="pw-pick-col">${points}</td>
+    </tr>`;
+  }
+
+  const picks = (draft.printPayload && draft.printPayload.picks) || [];
+  const eliminator = (draft.printPayload && draft.printPayload.eliminator) || [];
+
+  let rowsHtml = "";
+  picks.forEach(p => {
+    rowsHtml += pickRow(p.matchup, p.pickName || p.pick, p.points);
+  });
+  eliminator.forEach(e => {
+    rowsHtml += pickRow(e.matchup || e.label, `${e.teamName || e.team} (${e.label})`, "—", "pw-elim-row");
+  });
+
+  if (!rowsHtml) {
+    showEmpty("No picks found in this draft — go back and fill out the sheet.");
+    return;
+  }
+
+  contentEl.innerHTML = `
+    <table class="pw-table">
+      <thead><tr><th>Matchup</th><th class="pw-pick-col">Pick</th><th class="pw-pick-col">Points</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+  actionsEl.hidden = false;
+
+  finalizeBtn.addEventListener("click", function () {
+    finalizeBtn.disabled = true;
+    editLink.classList.add("rv-disabled");
+    statusEl.textContent = "Submitting…";
+    statusEl.className = "rv-status";
+
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: draft.formBody
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Bad response");
+
+        // Done — clear the draft so a refresh/back-button visit to this
+        // page (or week.html's own restore-on-load check) doesn't treat
+        // an already-finalized submission as still pending.
+        try { sessionStorage.removeItem(draftKeyFor(week)); } catch (err) {}
+
+        // Save a local copy of exactly what was just submitted, keyed by
+        // player+week, so print-week.html can show and print it
+        // immediately — no need to wait for the sheet to sync, or for
+        // the week to lock (this is the player's OWN just-submitted
+        // picks, so there's no privacy concern showing it back to them
+        // right away). See the matching comment in print-week.html.
+        // localStorage, not sessionStorage — the print link below opens
+        // in a new tab with rel="noopener", which severs the
+        // window.opener relationship sessionStorage would otherwise need.
+        const printKey = `vdpoolPrint:${player}:${week}`;
+        try {
+          localStorage.setItem(printKey, JSON.stringify(draft.printPayload));
+          localStorage.setItem("vdpoolPrintLastKey", printKey);
+        } catch (err) {
+          // Not fatal — print-week.html falls back to the sheet once the
+          // week locks.
+        }
+        document.getElementById("rv-success-print-link").href =
+          `print-week.html?player=${encodeURIComponent(player)}&week=${week}&auto=1`;
+
+        bannerEl.hidden = true;
+        actionsEl.hidden = true;
+        statusEl.textContent = "";
+        document.getElementById("rv-success-overlay").hidden = false;
+      })
+      .catch(() => {
+        statusEl.textContent = "⚠️ Couldn't submit — this only works once the site is live on Netlify. Try again, or check with the commissioner.";
+        statusEl.className = "rv-status rv-status-error";
+        finalizeBtn.disabled = false;
+        editLink.classList.remove("rv-disabled");
+      });
+  });
+})();
+</script>
+</body>
+</html>
