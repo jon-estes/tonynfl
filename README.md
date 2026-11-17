@@ -414,30 +414,32 @@ that file.
   eliminated players by the week they went out so it's easy to see who to
   split with.
 
-## Preview home page (`/mockhome`)
+## Home page
 
-A redesigned home page lives at `/mockhome` (`mockhome.html` + `mockhome.js`)
-without touching the real one. It adds:
+The home page (`index.html` + `mockhome.js`) leads with:
 
+- **Pool Pics**: anyone can upload photos/videos (Cloudinary upload
+  widget, same account as the clementinexiong.com album). The newest 6
+  rotate in a big featured frame; older ones are under "See all". The
+  list of photos is stored by `netlify/functions/pool-photos.mjs` in
+  Netlify Blobs (that's why there's a `package.json`). To remove a photo,
+  set a `PHOTO_ADMIN_KEY` environment variable in Netlify, redeploy, open
+  `/?admin=1`, and use the Remove button.
+- **Leaderboard** with week-over-week movement, a **pick-lock countdown**
+  with who still hasn't submitted, and an **Eliminator** survivors card.
 - **Press Box**: headlines and trash talk written automatically from the
   sheet (week winner, big movers, upsets, lone wolves, bad beats, streaks,
   Eliminator knockouts), plus a scrolling ticker.
-- **Leaderboard** with week-over-week movement, a **pick-lock countdown**
-  with who still hasn't submitted, an **Eliminator** survivors card, a
-  **"The Chase"** chart, and **season superlatives**.
-- **Pool Pics**: anyone can upload photos/videos (Cloudinary upload
-  widget, same account as the clementinexiong.com album). The list of
-  photos is stored by `netlify/functions/pool-photos.mjs` in Netlify
-  Blobs (that's why there's now a `package.json`). To remove a photo, set
-  a `PHOTO_ADMIN_KEY` environment variable in Netlify, open
-  `/mockhome?admin=1`, and use the Remove button.
+- **The Chase** chart and **season superlatives**.
 
-To make it the real home page later, copy `mockhome.html` over
-`index.html` (and drop the yellow "Preview" bar).
+The previous home page (intro video + tiles) is kept at `/old`
+(`old.html`) in case you want it back: copy it over `index.html`.
 
 ## Files
 
-- `index.html` — home page ("Welcome to Vince and Dave's Pool" + five cards)
+- `index.html` — home page (Pool Pics, leaderboard, Press Box, stats)
+- `mockhome.js` — the Press Box engine that writes the home page's headlines
+- `old.html` — the previous home page (intro video + five cards), kept at `/old`
 - `pickem.html` — Pick'em leaderboard + player picks dropdown
 - `eliminator.html` — Eliminator leaderboard + player team-grid dropdown
 - `schedule.html` — list of weeks, links into the print sheets

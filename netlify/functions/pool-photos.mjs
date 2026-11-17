@@ -14,7 +14,7 @@
    To remove a photo: set an environment variable PHOTO_ADMIN_KEY in
    Netlify (Project configuration > Environment variables) and use the
    little "Remove" link that shows on each photo when the page is
-   opened as /mockhome?admin=1.
+   opened as /?admin=1.
    ============================================================ */
 import { getStore } from "@netlify/blobs";
 

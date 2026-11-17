@@ -6,3 +6,9 @@
   for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
+
+# The preview page became the real home page.
+[[redirects]]
+  from = "/mockhome"
+  to = "/"
+  status = 301

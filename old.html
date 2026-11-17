@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Vince and Dave's Pool (Old Home Page)</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+<div class="home-hero-row">
+  <div class="home-rail home-rail-left" id="home-rail-week">
+    <div class="home-rail-stripe home-rail-stripe-top"></div>
+    <div class="home-rail-banner-label home-rail-stacked">
+      <span>Y</span><span>E</span><span>A</span><span>R</span>
+    </div>
+    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
+  </div>
+
+  <section class="hero-photo">
+    <div class="hero-photo-frame">
+      <video id="hero-video" autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+      </video>
+      <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
+      <div class="hero-anniversary-badge" id="hero-anniversary-badge" hidden>
+        <span class="haa-icon">🏆</span><span id="hero-anniversary-text"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="home-rail home-rail-right" id="home-rail-standings">
+    <div class="home-rail-stripe home-rail-stripe-top"></div>
+    <div class="home-rail-banner-label" id="home-rail-year-num">38</div>
+    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
+  </div>
+</div>
+
+<main>
+  <div class="pool-cards">
+    <a class='pool-card card-pickem' href='/pickem'>
+      <div class="pool-card-glow"></div>
+      <img class="pool-card-art" src="assets/pickem-icon.png" alt="Pick'em Football Pool">
+      <h2 class="pool-card-title">Pick 'Em</h2>
+      <div class="go">Enter the Pool <span class="arrow">→</span></div>
+    </a>
+    <a class='pool-card card-eliminator' href='/eliminator'>
+      <div class="pool-card-glow"></div>
+      <img class="pool-card-art" src="assets/eliminator-icon.png" alt="Eliminator Football Pool">
+      <h2 class="pool-card-title">Eliminator</h2>
+      <div class="go">Enter the Pool <span class="arrow">→</span></div>
+    </a>
+    <a class='pool-card card-schedule' href='/schedule'>
+      <div class="pool-card-glow"></div>
+      <div class="pool-card-icon">🗓️</div>
+      <h2 class="pool-card-title">Weekly Submissions</h2>
+      <p>Pick a week, fill in your Pick'em numbers and Eliminator pick right on the page, and submit — no separate form to visit.</p>
+      <div class="go">View Weeks <span class="arrow">→</span></div>
+    </a>
+    <a class='pool-card card-howto' href='/howto'>
+      <div class="pool-card-glow"></div>
+      <div class="pool-card-icon">🎓</div>
+      <h2 class="pool-card-title">How To</h2>
+      <p>New to the pool? A quick walkthrough of how picks, points, and standings work.</p>
+      <div class="go">Learn More <span class="arrow">→</span></div>
+    </a>
+    <a class='pool-card card-history' href='/history'>
+      <div class="pool-card-glow"></div>
+      <div class="pool-card-icon">🏆</div>
+      <h2 class="pool-card-title">History</h2>
+      <p>Champions going back to 1989, all-time records, and the names that show up again and again.</p>
+      <div class="go">See the Records <span class="arrow">→</span></div>
+    </a>
+  </div>
+</main>
+
+<footer>Powered by a Google Sheet, not a database</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async function () {
+  renderHeader("home");
+  const state = await loadPoolData();
+  renderContent(state.content);
+
+  const yearNum = poolYearNumber();
+  if (yearNum) {
+    document.getElementById("hero-anniversary-text").textContent = `${ordinalSuffix(yearNum)} Year · Est. ${POOL_CONFIG.foundedYear}`;
+    document.getElementById("hero-anniversary-badge").hidden = false;
+  }
+
+  /* ---- Flanking "Year 38" banners ---- */
+  if (yearNum) {
+    document.getElementById("home-rail-year-num").textContent = String(yearNum);
+  }
+})();
+
+/* Hero video starts muted so autoplay is allowed everywhere — this button
+   lets a visitor turn sound on (and back off) themselves. */
+(function () {
+  const video = document.getElementById("hero-video");
+  const btn = document.getElementById("hero-mute-btn");
+  if (!video || !btn) return;
+  btn.addEventListener("click", () => {
+    video.muted = !video.muted;
+    btn.textContent = video.muted ? "🔇" : "🔊";
+    btn.setAttribute("aria-label", video.muted ? "Unmute video" : "Mute video");
+    btn.setAttribute("aria-pressed", String(!video.muted));
+  });
+})();
+</script>
+</body>
+</html>
