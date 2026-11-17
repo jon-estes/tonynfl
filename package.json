@@ -1,0 +1,8 @@
+{
+  "name": "vince-and-daves-pool",
+  "private": true,
+  "description": "Static site; this file only exists so Netlify installs the photo wall function's dependency.",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.13"
+  }
+}

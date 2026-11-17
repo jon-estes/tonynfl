@@ -414,6 +414,27 @@ that file.
   eliminated players by the week they went out so it's easy to see who to
   split with.
 
+## Preview home page (`/mockhome`)
+
+A redesigned home page lives at `/mockhome` (`mockhome.html` + `mockhome.js`)
+without touching the real one. It adds:
+
+- **Press Box**: headlines and trash talk written automatically from the
+  sheet (week winner, big movers, upsets, lone wolves, bad beats, streaks,
+  Eliminator knockouts), plus a scrolling ticker.
+- **Leaderboard** with week-over-week movement, a **pick-lock countdown**
+  with who still hasn't submitted, an **Eliminator** survivors card, a
+  **"The Chase"** chart, and **season superlatives**.
+- **Pool Pics**: anyone can upload photos/videos (Cloudinary upload
+  widget, same account as the clementinexiong.com album). The list of
+  photos is stored by `netlify/functions/pool-photos.mjs` in Netlify
+  Blobs (that's why there's now a `package.json`). To remove a photo, set
+  a `PHOTO_ADMIN_KEY` environment variable in Netlify, open
+  `/mockhome?admin=1`, and use the Remove button.
+
+To make it the real home page later, copy `mockhome.html` over
+`index.html` (and drop the yellow "Preview" bar).
+
 ## Files
 
 - `index.html` — home page ("Welcome to Vince and Dave's Pool" + five cards)
