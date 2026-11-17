@@ -15,6 +15,7 @@
 <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
 <style>
   /* Everything new on this page is prefixed .mh- so it can't affect any other page. */
+  [class^="mh-"][hidden], [class*=" mh-"][hidden] { display: none !important; }
   .mh-preview-flag { background: #fff7d6; color: #6b4e00; text-align: center; font-size: 13px; padding: 6px 12px; border-bottom: 1px solid #f0e2a8; }
 
   /* ---------- Ticker crawl ---------- */
@@ -31,6 +32,7 @@
   /* ---------- Shared section chrome ---------- */
   .mh-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
   .mh-section { margin: 40px auto; }
+  .mh-press { margin: 8px 0; }
   .mh-kicker { font-family: Oswald, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .12em; font-size: 13px; color: #c8102e; font-weight: 600; }
   .mh-h2 { font-family: Cinzel, serif; font-size: clamp(24px, 3.4vw, 34px); margin: 4px 0 16px; color: #12151a; }
   .mh-sub { color: var(--text-dim); margin: -8px 0 18px; font-size: 15px; }
@@ -105,20 +107,52 @@
   .mh-award-title { font-family: Oswald, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; font-size: 12.5px; color: #c8102e; font-weight: 600; }
   .mh-award-name { font-family: Oswald, system-ui, sans-serif; font-size: 22px; font-weight: 600; }
 
-  /* ---------- Photo wall ---------- */
-  .mh-photo-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
-  .mh-photo-bar select, .mh-photo-bar input { font: inherit; padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; background: #fff; }
-  .mh-photo-bar input { flex: 1; min-width: 200px; }
-  .mh-upload-btn { font: inherit; font-weight: 700; border: 0; cursor: pointer; background: #c8102e; color: #fff; padding: 10px 18px; border-radius: 9px; }
-  .mh-upload-btn:hover { background: #a50d26; }
-  .mh-photos { columns: 4 220px; column-gap: 12px; }
-  .mh-photo { break-inside: avoid; margin: 0 0 12px; border-radius: 12px; overflow: hidden; background: #f1f3f6; position: relative; cursor: zoom-in; border: 1px solid var(--border); }
+  /* ---------- Pool Pics stage (top of page) ---------- */
+  .mh-gallery { background: radial-gradient(900px 500px at 80% 0%, #3a1020 0%, rgba(58,16,32,0) 60%), radial-gradient(900px 500px at 0% 100%, #10264f 0%, rgba(16,38,79,0) 60%), #070a12; color: #fff; padding: 34px 0 40px; }
+  .mh-gallery .mh-kicker { color: #f3c64a; }
+  .mh-gallery-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
+  .mh-gallery-title { font-family: Cinzel, serif; font-size: clamp(36px, 6vw, 64px); margin: 2px 0 4px; line-height: 1; letter-spacing: .01em; }
+  .mh-gallery-sub { color: #b8c3dd; margin: 0; font-size: 15.5px; }
+  .mh-year-chip { flex: none; border: 1px solid rgba(243,198,74,.55); color: #f3c64a; border-radius: 99px; padding: 7px 14px; font-family: Oswald, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
+  .mh-gallery-grid { display: grid; grid-template-columns: 1.75fr 1fr; gap: 16px; }
+  .mh-feature { position: relative; border-radius: 18px; overflow: hidden; background: #111; min-height: 460px; aspect-ratio: 4 / 3; box-shadow: 0 20px 60px rgba(0,0,0,.45); cursor: zoom-in; }
+  .mh-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; }
+  .mh-slide { pointer-events: none; }
+  .mh-slide.on { opacity: 1; pointer-events: auto; z-index: 1; }
+  .mh-slide img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.02); transition: transform 7s ease; }
+  .mh-slide.on img { transform: scale(1.08); }
+  .mh-slide .mh-vid { position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,.6); border-radius: 99px; padding: 4px 12px; font-size: 13px; }
+  .mh-feature-cap { z-index: 2; position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 22px 22px; background: linear-gradient(transparent, rgba(0,0,0,.78)); pointer-events: none; }
+  .mh-feature-cap b { display: block; font-family: Oswald, system-ui, sans-serif; color: #f3c64a; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; }
+  .mh-feature-cap span { font-family: Oswald, system-ui, sans-serif; font-size: clamp(20px, 2.6vw, 28px); font-weight: 600; }
+  .mh-feature-nav { z-index: 3; position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(0,0,0,.45); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; }
+  .mh-feature-nav:hover { background: rgba(0,0,0,.7); }
+  .mh-prev { left: 14px; } .mh-next { right: 14px; }
+  .mh-feature-dots { z-index: 3; position: absolute; right: 18px; bottom: 22px; display: flex; gap: 6px; }
+  .mh-feature-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.4); }
+  .mh-feature-dots i.on { background: #f3c64a; width: 22px; border-radius: 99px; }
+  .mh-gallery-side { display: flex; flex-direction: column; gap: 14px; }
+  .mh-upload-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 9px; }
+  .mh-upload-title { font-family: Oswald, system-ui, sans-serif; font-size: 20px; font-weight: 600; }
+  .mh-upload-card select, .mh-upload-card input { font: inherit; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(0,0,0,.35); color: #fff; }
+  .mh-upload-card input::placeholder { color: #9aa6c2; }
+  .mh-upload-card option { color: #12151a; }
+  .mh-upload-btn { font: inherit; font-weight: 700; border: 0; cursor: pointer; background: #c8102e; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 16px; box-shadow: 0 6px 20px rgba(200,16,46,.4); }
+  .mh-upload-btn:hover { background: #e0173a; }
+  .mh-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; align-content: start; }
+  .mh-thumb { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 2px solid transparent; padding: 0; background: #1b2233; cursor: pointer; }
+  .mh-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mh-thumb.on { border-color: #f3c64a; }
+  .mh-thumb.mh-ghost { cursor: default; background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.15); }
+  .mh-photos { columns: 4 220px; column-gap: 12px; margin-top: 22px; }
+  .mh-photo { break-inside: avoid; margin: 0 0 12px; border-radius: 12px; overflow: hidden; position: relative; cursor: zoom-in; background: #111; }
   .mh-photo img { width: 100%; display: block; }
-  .mh-photo figcaption { padding: 8px 10px; font-size: 13.5px; background: #fff; }
-  .mh-photo figcaption b { display: block; font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .mh-photo figcaption { padding: 8px 10px; font-size: 13.5px; background: rgba(255,255,255,.06); color: #e5e9f2; }
+  .mh-photo figcaption b { display: block; font-size: 12px; color: #f3c64a; font-weight: 600; }
   .mh-photo .mh-vid { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.6); color: #fff; border-radius: 99px; padding: 2px 9px; font-size: 12px; }
-  .mh-photo .mh-del { position: absolute; top: 8px; left: 8px; background: #c8102e; color: #fff; border: 0; border-radius: 6px; font-size: 12px; padding: 3px 8px; cursor: pointer; }
-  .mh-empty { text-align: center; padding: 36px 16px; color: var(--text-dim); border: 2px dashed var(--border); border-radius: 14px; }
+  .mh-del { position: absolute; top: 8px; left: 8px; z-index: 2; background: #c8102e; color: #fff; border: 0; border-radius: 6px; font-size: 12px; padding: 3px 8px; cursor: pointer; }
+  .mh-showall { display: block; margin: 18px auto 0; font: inherit; font-weight: 600; color: #fff; background: transparent; border: 1px solid rgba(255,255,255,.3); border-radius: 99px; padding: 9px 20px; cursor: pointer; }
+  .mh-showall:hover { border-color: #f3c64a; color: #f3c64a; }
   .mh-lightbox { position: fixed; inset: 0; background: rgba(5,10,25,.92); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
   .mh-lightbox.open { display: flex; }
   .mh-lightbox img, .mh-lightbox video { max-width: 100%; max-height: 82vh; border-radius: 10px; }
@@ -129,6 +163,9 @@
     .mh-stories { grid-template-columns: 1fr 1fr; }
     .mh-story.mh-lead { grid-row: auto; }
     .mh-grid2 { grid-template-columns: 1fr; }
+    .mh-gallery-grid { grid-template-columns: 1fr; }
+    .mh-feature { min-height: 0; }
+    .mh-thumbs { grid-template-columns: repeat(6, 1fr); }
     .mh-awards { grid-template-columns: 1fr 1fr; }
     .mh-stats { grid-template-columns: repeat(3, 1fr); }
   }
@@ -136,6 +173,8 @@
     .mh-stories, .mh-awards { grid-template-columns: 1fr; }
     .mh-story.mh-lead { grid-column: auto; }
     .mh-stats { grid-template-columns: 1fr 1fr; }
+    .mh-thumbs { grid-template-columns: repeat(3, 1fr); }
+    .mh-gallery-head { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
@@ -148,78 +187,39 @@
   <div class="mh-ticker-track"><div class="mh-ticker-run" id="mh-ticker-run"></div></div>
 </div>
 
-<div class="home-hero-row">
-  <div class="home-rail home-rail-left">
-    <div class="home-rail-stripe home-rail-stripe-top"></div>
-    <div class="home-rail-banner-label home-rail-stacked"><span>Y</span><span>E</span><span>A</span><span>R</span></div>
-    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
-  </div>
-  <section class="hero-photo">
-    <div class="hero-photo-frame">
-      <video id="hero-video" autoplay muted loop playsinline poster="assets/hero-stadium.jpg" aria-label="Vince and Dave's Pool — The Ultimate Football Challenge">
-        <source src="assets/hero-video.mp4" type="video/mp4">
-      </video>
-      <button type="button" class="hero-mute-btn" id="hero-mute-btn" aria-label="Unmute video" aria-pressed="false">🔇</button>
-      <div class="hero-anniversary-badge" id="hero-anniversary-badge" hidden>
-        <span class="haa-icon">🏆</span><span id="hero-anniversary-text"></span>
+<!-- ===== POOL PICS: the photo wall, front and center ===== -->
+<section class="mh-gallery" id="mh-gallery">
+  <div class="mh-wrap">
+    <div class="mh-gallery-head">
+      <div>
+        <div class="mh-kicker">The Tailgate Wall</div>
+        <h1 class="mh-gallery-title">Pool Pics</h1>
+        <p class="mh-gallery-sub">Watch parties, jerseys, bad beats, victory laps. <span id="mh-photo-count"></span></p>
+      </div>
+      <div class="mh-year-chip" id="mh-year-chip" hidden></div>
+    </div>
+    <div class="mh-gallery-grid">
+      <div class="mh-feature" id="mh-feature">
+        <div class="mh-feature-slides" id="mh-feature-slides"></div>
+        <div class="mh-feature-cap" id="mh-feature-cap"></div>
+        <button type="button" class="mh-feature-nav mh-prev" id="mh-prev" aria-label="Previous photo" hidden>‹</button>
+        <button type="button" class="mh-feature-nav mh-next" id="mh-next" aria-label="Next photo" hidden>›</button>
+        <div class="mh-feature-dots" id="mh-feature-dots"></div>
+      </div>
+      <div class="mh-gallery-side">
+        <div class="mh-upload-card">
+          <div class="mh-upload-title">📸 Post a pic</div>
+          <select id="mh-photo-name" aria-label="Your name"><option value="">Who's uploading?</option></select>
+          <input id="mh-photo-caption" maxlength="140" placeholder="Caption (optional)" aria-label="Caption">
+          <button type="button" class="mh-upload-btn" id="mh-upload-btn">Upload Photos / Videos</button>
+        </div>
+        <div class="mh-thumbs" id="mh-thumbs"></div>
       </div>
     </div>
-  </section>
-  <div class="home-rail home-rail-right">
-    <div class="home-rail-stripe home-rail-stripe-top"></div>
-    <div class="home-rail-banner-label" id="home-rail-year-num">38</div>
-    <div class="home-rail-stripe home-rail-stripe-bottom"></div>
-  </div>
-</div>
-
-<!-- ===== PRESS BOX: auto-written headlines ===== -->
-<section class="mh-press" id="mh-press" hidden>
-  <div class="mh-wrap">
-    <div class="mh-kicker" id="mh-press-kicker">Press Box</div>
-    <h2 class="mh-h2" id="mh-press-title">The Week in Review</h2>
-    <p class="mh-sub">Written automatically from the scoreboard. Don't shoot the messenger.</p>
-    <div class="mh-stories" id="mh-stories"></div>
-    <div class="mh-stats" id="mh-stats"></div>
+    <div class="mh-photos" id="mh-photos" hidden></div>
+    <button type="button" class="mh-showall" id="mh-showall" hidden></button>
   </div>
 </section>
-
-<main class="mh-cards-main">
-    <div class="pool-cards">
-      <a class='pool-card card-pickem' href='/pickem'>
-        <div class="pool-card-glow"></div>
-        <img class="pool-card-art" src="assets/pickem-icon.png" alt="Pick'em Football Pool">
-        <h2 class="pool-card-title">Pick 'Em</h2>
-        <div class="go">Enter the Pool <span class="arrow">→</span></div>
-      </a>
-      <a class='pool-card card-eliminator' href='/eliminator'>
-        <div class="pool-card-glow"></div>
-        <img class="pool-card-art" src="assets/eliminator-icon.png" alt="Eliminator Football Pool">
-        <h2 class="pool-card-title">Eliminator</h2>
-        <div class="go">Enter the Pool <span class="arrow">→</span></div>
-      </a>
-      <a class='pool-card card-schedule' href='/schedule'>
-        <div class="pool-card-glow"></div>
-        <div class="pool-card-icon">🗓️</div>
-        <h2 class="pool-card-title">Weekly Submissions</h2>
-        <p>Pick a week, fill in your Pick'em numbers and Eliminator pick right on the page, and submit — no separate form to visit.</p>
-        <div class="go">View Weeks <span class="arrow">→</span></div>
-      </a>
-      <a class='pool-card card-howto' href='/howto'>
-        <div class="pool-card-glow"></div>
-        <div class="pool-card-icon">🎓</div>
-        <h2 class="pool-card-title">How To</h2>
-        <p>New to the pool? A quick walkthrough of how picks, points, and standings work.</p>
-        <div class="go">Learn More <span class="arrow">→</span></div>
-      </a>
-      <a class='pool-card card-history' href='/history'>
-        <div class="pool-card-glow"></div>
-        <div class="pool-card-icon">🏆</div>
-        <h2 class="pool-card-title">History</h2>
-        <p>Champions going back to 1989, all-time records, and the names that show up again and again.</p>
-        <div class="go">See the Records <span class="arrow">→</span></div>
-      </a>
-    </div>
-</main>
 
 <div class="mh-wrap">
   <!-- ===== Board + this week + eliminator ===== -->
@@ -236,6 +236,20 @@
     </div>
   </section>
 
+</div>
+
+<!-- ===== PRESS BOX: auto-written headlines ===== -->
+<section class="mh-press" id="mh-press" hidden>
+  <div class="mh-wrap">
+    <div class="mh-kicker" id="mh-press-kicker">Press Box</div>
+    <h2 class="mh-h2" id="mh-press-title">The Week in Review</h2>
+    <p class="mh-sub">Written automatically from the scoreboard. Don't shoot the messenger.</p>
+    <div class="mh-stories" id="mh-stories"></div>
+    <div class="mh-stats" id="mh-stats"></div>
+  </div>
+</section>
+
+<div class="mh-wrap">
   <!-- ===== The chase ===== -->
   <section class="mh-section mh-card" id="mh-chase" hidden>
     <div class="mh-kicker">The Chase</div>
@@ -251,21 +265,6 @@
     <h2 class="mh-h2">The Hardware</h2>
     <div class="mh-awards" id="mh-awards"></div>
   </section>
-
-  <!-- ===== Photo wall ===== -->
-  <section class="mh-section" id="mh-photos-wrap">
-    <div class="mh-kicker">The Tailgate Wall</div>
-    <h2 class="mh-h2">Pool Pics</h2>
-    <p class="mh-sub">Watch parties, jerseys, bad beats, victory laps. Upload a photo or video and it shows up here for everyone.</p>
-    <div class="mh-photo-bar">
-      <select id="mh-photo-name" aria-label="Your name"><option value="">Who's uploading?</option></select>
-      <input id="mh-photo-caption" maxlength="140" placeholder="Caption (optional)" aria-label="Caption">
-      <button type="button" class="mh-upload-btn" id="mh-upload-btn">📸 Upload Photos</button>
-    </div>
-    <div class="mh-photos" id="mh-photos"></div>
-    <div class="mh-empty" id="mh-photos-empty" hidden>📷<br>No pics yet. Be the first to post one.</div>
-  </section>
-
 </div>
 
 <div class="mh-lightbox" id="mh-lightbox" role="dialog" aria-modal="true">
@@ -298,9 +297,9 @@ const esc = (s) => String(s == null ? "" : s)
   renderHeader("home");
   const yearNum = poolYearNumber();
   if (yearNum) {
-    document.getElementById("hero-anniversary-text").textContent = `${ordinalSuffix(yearNum)} Year · Est. ${POOL_CONFIG.foundedYear}`;
-    document.getElementById("hero-anniversary-badge").hidden = false;
-    document.getElementById("home-rail-year-num").textContent = String(yearNum);
+    const chip = document.getElementById("mh-year-chip");
+    chip.textContent = `🏆 ${ordinalSuffix(yearNum)} Year · Est. ${POOL_CONFIG.foundedYear}`;
+    chip.hidden = false;
   }
 
   const nameSel = document.getElementById("mh-photo-name");
@@ -503,34 +502,118 @@ function renderChase(pb) {
   hit.addEventListener("mouseleave", leave);
 }
 
-/* ---------- Photo wall ---------- */
+/* ---------- Pool Pics (top of page) ---------- */
 const MH_ADMIN = new URLSearchParams(location.search).has("admin");
-function thumb(url, type) {
-  const t = type === "video" ? "w_600,c_limit,q_auto,f_jpg/" : "w_600,c_limit,q_auto,f_auto/";
-  let u = url.replace("/upload/", "/upload/" + t);
+const MH_SLIDES = 6;          // how many recent photos rotate in the big frame
+let PHOTOS = [], slideIdx = 0, slideTimer = null;
+
+function cdn(url, type, t) {
+  let u = url.replace("/upload/", "/upload/" + t + "/");
   if (type === "video") u = u.replace(/\.(mp4|mov|avi|webm|mkv)$/i, ".jpg");
   return u;
 }
-function photoHtml(p) {
-  return `<figure class="mh-photo" data-url="${esc(p.url)}" data-type="${esc(p.type)}" data-cap="${esc(p.caption)}" data-name="${esc(p.name)}">
-    <img src="${esc(thumb(p.url, p.type))}" alt="${esc(p.caption || "Pool photo")}" loading="lazy">
-    ${p.type === "video" ? `<span class="mh-vid">▶ video</span>` : ""}
-    ${MH_ADMIN && p.id ? `<button class="mh-del" data-id="${esc(p.id)}">Remove</button>` : ""}
-    ${p.caption || p.name ? `<figcaption>${p.name ? `<b>${esc(p.name)}</b>` : ""}${esc(p.caption)}</figcaption>` : ""}
-  </figure>`;
+const big = (p) => cdn(p.url, p.type, "w_1400,h_1050,c_fill,g_auto,q_auto,f_" + (p.type === "video" ? "jpg" : "auto"));
+const sq = (p) => cdn(p.url, p.type, "w_300,h_300,c_fill,g_auto,q_auto,f_" + (p.type === "video" ? "jpg" : "auto"));
+const wall = (p) => cdn(p.url, p.type, "w_600,c_limit,q_auto,f_" + (p.type === "video" ? "jpg" : "auto"));
+const delBtn = (p) => (MH_ADMIN && p.id ? `<button class="mh-del" data-id="${esc(p.id)}">Remove</button>` : "");
+
+function renderPhotos() {
+  const slides = PHOTOS.slice(0, MH_SLIDES);
+  const n = PHOTOS.length;
+  document.getElementById("mh-photo-count").textContent = n ? `${n} posted so far.` : "";
+
+  const box = document.getElementById("mh-feature-slides");
+  if (!slides.length) {
+    box.innerHTML = `<div class="mh-slide on"><img src="assets/hero-stadium.jpg" alt=""></div>`;
+    document.getElementById("mh-feature-cap").innerHTML = `<b>Nobody's posted yet</b><span>Be the first. Hit Upload →</span>`;
+  } else {
+    box.innerHTML = slides.map((p, i) => `<div class="mh-slide${i === slideIdx ? " on" : ""}" data-i="${i}">
+      <img src="${esc(big(p))}" alt="${esc(p.caption || "Pool photo")}" ${i ? 'loading="lazy"' : ""}>
+      ${p.type === "video" ? `<span class="mh-vid">▶ video</span>` : ""}${delBtn(p)}</div>`).join("");
+  }
+  document.getElementById("mh-prev").hidden = document.getElementById("mh-next").hidden = slides.length < 2;
+
+  const thumbs = slides.map((p, i) => `<button type="button" class="mh-thumb${i === slideIdx ? " on" : ""}" data-i="${i}" aria-label="Show photo ${i + 1}">
+      <img src="${esc(sq(p))}" alt="" loading="lazy"></button>`);
+  while (thumbs.length < MH_SLIDES) thumbs.push(`<div class="mh-thumb mh-ghost"></div>`);
+  document.getElementById("mh-thumbs").innerHTML = thumbs.join("");
+
+  const rest = PHOTOS.slice(MH_SLIDES);
+  const wallEl = document.getElementById("mh-photos"), more = document.getElementById("mh-showall");
+  wallEl.innerHTML = rest.map(p => `<figure class="mh-photo" data-url="${esc(p.url)}" data-type="${esc(p.type)}" data-cap="${esc(p.caption)}" data-name="${esc(p.name)}">
+      <img src="${esc(wall(p))}" alt="${esc(p.caption || "Pool photo")}" loading="lazy">
+      ${p.type === "video" ? `<span class="mh-vid">▶ video</span>` : ""}${delBtn(p)}
+      ${p.caption || p.name ? `<figcaption>${p.name ? `<b>${esc(p.name)}</b>` : ""}${esc(p.caption)}</figcaption>` : ""}</figure>`).join("");
+  more.hidden = !rest.length;
+  more.textContent = wallEl.hidden ? `See all ${n} photos ↓` : "Hide older photos ↑";
+  showSlide(slideIdx);
 }
-async function loadPhotos() {
-  const grid = document.getElementById("mh-photos"), empty = document.getElementById("mh-photos-empty");
-  try {
-    const r = await fetch(MH_PHOTO_API, { cache: "no-store" });
-    const data = await r.json();
-    const photos = data.photos || [];
-    grid.innerHTML = photos.map(photoHtml).join("");
-    empty.hidden = photos.length > 0;
-  } catch (e) {
-    empty.hidden = false;
+
+function showSlide(i) {
+  const slides = PHOTOS.slice(0, MH_SLIDES);
+  if (!slides.length) return;
+  slideIdx = (i + slides.length) % slides.length;
+  document.querySelectorAll(".mh-slide").forEach(el => el.classList.toggle("on", +el.dataset.i === slideIdx));
+  document.querySelectorAll(".mh-thumb[data-i]").forEach(el => el.classList.toggle("on", +el.dataset.i === slideIdx));
+  const p = slides[slideIdx];
+  document.getElementById("mh-feature-cap").innerHTML =
+    (p.name ? `<b>${esc(p.name)}</b>` : "") + (p.caption ? `<span>${esc(p.caption)}</span>` : "");
+  document.getElementById("mh-feature-dots").innerHTML = slides.length > 1
+    ? slides.map((_, k) => `<i class="${k === slideIdx ? "on" : ""}"></i>`).join("") : "";
+  clearTimeout(slideTimer);
+  if (slides.length > 1 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    slideTimer = setTimeout(() => showSlide(slideIdx + 1), 6000);
   }
 }
+
+async function loadPhotos() {
+  try {
+    const r = await fetch(MH_PHOTO_API, { cache: "no-store" });
+    PHOTOS = (await r.json()).photos || [];
+  } catch (e) { PHOTOS = []; }
+  renderPhotos();
+}
+
+function openLightbox(p) {
+  const media = document.getElementById("mh-lightbox-media");
+  media.innerHTML = p.type === "video"
+    ? `<video src="${esc(p.url)}" controls autoplay playsinline></video>`
+    : `<img src="${esc(p.url)}" alt="">`;
+  document.getElementById("mh-lightbox-cap").textContent = [p.name, p.caption].filter(Boolean).join(" · ");
+  document.getElementById("mh-lightbox").classList.add("open");
+  clearTimeout(slideTimer);
+}
+
+async function removePhoto(id, btn) {
+  const key = sessionStorage.getItem("mhAdminKey") || prompt("Admin key:");
+  if (!key) return;
+  const r = await fetch(`${MH_PHOTO_API}?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-admin-key": key } });
+  if (r.ok) { sessionStorage.setItem("mhAdminKey", key); PHOTOS = PHOTOS.filter(p => p.id !== id); slideIdx = 0; renderPhotos(); }
+  else { sessionStorage.removeItem("mhAdminKey"); alert("That key didn't work."); }
+}
+
+document.getElementById("mh-prev").addEventListener("click", (e) => { e.stopPropagation(); showSlide(slideIdx - 1); });
+document.getElementById("mh-next").addEventListener("click", (e) => { e.stopPropagation(); showSlide(slideIdx + 1); });
+document.getElementById("mh-thumbs").addEventListener("click", (e) => {
+  const t = e.target.closest(".mh-thumb[data-i]"); if (t) showSlide(+t.dataset.i);
+});
+document.getElementById("mh-feature").addEventListener("click", (e) => {
+  const del = e.target.closest(".mh-del");
+  if (del) { e.stopPropagation(); removePhoto(del.dataset.id); return; }
+  const p = PHOTOS[slideIdx]; if (p) openLightbox(p);
+});
+document.getElementById("mh-feature").addEventListener("mouseenter", () => clearTimeout(slideTimer));
+document.getElementById("mh-feature").addEventListener("mouseleave", () => showSlide(slideIdx));
+document.getElementById("mh-photos").addEventListener("click", (e) => {
+  const del = e.target.closest(".mh-del");
+  if (del) { e.stopPropagation(); removePhoto(del.dataset.id); return; }
+  const fig = e.target.closest(".mh-photo");
+  if (fig) openLightbox({ url: fig.dataset.url, type: fig.dataset.type, name: fig.dataset.name, caption: fig.dataset.cap });
+});
+document.getElementById("mh-showall").addEventListener("click", () => {
+  const w = document.getElementById("mh-photos"); w.hidden = !w.hidden; renderPhotos();
+});
+
 document.getElementById("mh-upload-btn").addEventListener("click", () => {
   if (!window.cloudinary) { alert("The uploader is still loading. Try again in a second."); return; }
   window.cloudinary.openUploadWidget({
@@ -547,49 +630,24 @@ document.getElementById("mh-upload-btn").addEventListener("click", () => {
       name: document.getElementById("mh-photo-name").value,
       caption: document.getElementById("mh-photo-caption").value
     };
-    document.getElementById("mh-photos").insertAdjacentHTML("afterbegin", photoHtml(payload));
-    document.getElementById("mh-photos-empty").hidden = true;
-    try { await fetch(MH_PHOTO_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch (e) {}
+    let saved = payload;
+    try {
+      const r = await fetch(MH_PHOTO_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const d = await r.json(); if (d.photo) saved = d.photo;
+    } catch (e) {}
+    PHOTOS.unshift(saved); slideIdx = 0; renderPhotos();
   });
 });
-document.getElementById("mh-photos").addEventListener("click", async (e) => {
-  const del = e.target.closest(".mh-del");
-  if (del) {
-    e.stopPropagation();
-    let key = sessionStorage.getItem("mhAdminKey") || prompt("Admin key:");
-    if (!key) return;
-    const r = await fetch(`${MH_PHOTO_API}?id=${encodeURIComponent(del.dataset.id)}`, { method: "DELETE", headers: { "x-admin-key": key } });
-    if (r.ok) { sessionStorage.setItem("mhAdminKey", key); del.closest(".mh-photo").remove(); }
-    else { sessionStorage.removeItem("mhAdminKey"); alert("That key didn't work."); }
-    return;
-  }
-  const fig = e.target.closest(".mh-photo");
-  if (!fig) return;
-  const media = document.getElementById("mh-lightbox-media");
-  media.innerHTML = fig.dataset.type === "video"
-    ? `<video src="${esc(fig.dataset.url)}" controls autoplay playsinline></video>`
-    : `<img src="${esc(fig.dataset.url)}" alt="">`;
-  document.getElementById("mh-lightbox-cap").textContent = [fig.dataset.name, fig.dataset.cap].filter(Boolean).join(" · ");
-  document.getElementById("mh-lightbox").classList.add("open");
-});
+
 function closeLightbox() {
   document.getElementById("mh-lightbox").classList.remove("open");
   document.getElementById("mh-lightbox-media").innerHTML = "";
+  showSlide(slideIdx);
 }
 document.getElementById("mh-lightbox-close").addEventListener("click", closeLightbox);
 document.getElementById("mh-lightbox").addEventListener("click", (e) => { if (e.target.id === "mh-lightbox") closeLightbox(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); });
 
-/* Hero video mute toggle (same as the current home page). */
-(function () {
-  const video = document.getElementById("hero-video"), btn = document.getElementById("hero-mute-btn");
-  btn.addEventListener("click", () => {
-    video.muted = !video.muted;
-    btn.textContent = video.muted ? "🔇" : "🔊";
-    btn.setAttribute("aria-label", video.muted ? "Unmute video" : "Mute video");
-    btn.setAttribute("aria-pressed", String(!video.muted));
-  });
-})();
 </script>
 </body>
 </html>
